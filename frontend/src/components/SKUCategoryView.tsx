@@ -27,7 +27,6 @@ interface CategoryMap {
 }
 
 const SKUCategoryView: React.FC = () => {
-  const [skus, setSkus] = useState<SKU[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [openCategories, setOpenCategories] = useState<{ [key: string]: boolean }>({});
   const [loading, setLoading] = useState(true);
@@ -36,7 +35,6 @@ const SKUCategoryView: React.FC = () => {
     const fetchSKUs = async () => {
       try {
         const data = await getSKUs();
-        setSkus(data);
         
         // Organize SKUs by category
         const grouped = data.reduce((acc: CategoryMap, sku: SKU) => {

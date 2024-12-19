@@ -3,7 +3,6 @@ import api from '../services/api';
 import {
   Box,
   Button,
-  Paper,
   Table,
   TableBody,
   TableCell,

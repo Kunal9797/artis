@@ -10,8 +10,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Box,
-  Input
+  Box
 } from '@mui/material';
 import { SKU, InventoryType, MeasurementUnit } from '../types';
 import api from '../services/api';
@@ -37,7 +36,6 @@ const SKUForm: React.FC<SKUFormProps> = ({ open, onClose, sku, onSubmit }) => {
     reorderPoint: 0
   });
 
-  const [excelFile, setExcelFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,7 +69,6 @@ const SKUForm: React.FC<SKUFormProps> = ({ open, onClose, sku, onSubmit }) => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setExcelFile(file);
       const reader = new FileReader();
       reader.onload = async (e) => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
