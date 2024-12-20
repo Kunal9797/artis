@@ -1,6 +1,7 @@
 import User from './User';
 import SKU from './SKU';
 import InventoryMovement from './InventoryMovement';
+import Product from './Product';
 
 // Define associations
 InventoryMovement.belongsTo(SKU, { as: 'sku', foreignKey: 'skuId' });
@@ -10,5 +11,6 @@ SKU.hasMany(InventoryMovement, { as: 'movements', foreignKey: 'skuId' });
 export {
   User,
   SKU,
-  InventoryMovement
+  InventoryMovement,
+  Product
 }; 

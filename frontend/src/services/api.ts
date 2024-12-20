@@ -18,8 +18,12 @@ api.interceptors.request.use((config) => {
 });
 
 export const login = async (email: string, password: string) => {
-  const response = await api.post('/auth/login', { email, password });
-  return response.data;
+  try {
+    const response = await api.post('/auth/login', { email, password });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const register = async (username: string, email: string, password: string) => {
@@ -32,21 +36,9 @@ export const getSKUs = async () => {
   return response.data;
 };
 
-// Add this function to test user creation
-const createTestUser = async () => {
-  try {
-    const response = await api.post('/auth/register', {
-      username: 'testuser',
-      email: 'test@artis.com',
-      password: 'test123'
-    });
-    console.log('User created successfully:', response.data);
-  } catch (error) {
-    console.error('Error creating user:', error);
-  }
+export const getInventoryMovements = async () => {
+  const response = await api.get('/inventory-movements');
+  return response.data;
 };
-
-// Call it once to create the user
-createTestUser();
 
 export default api; 

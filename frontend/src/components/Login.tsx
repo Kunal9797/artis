@@ -1,81 +1,162 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Container } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Container
+} from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import { login } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import Logo from '../assets/artislogo.png';
 
-const Login = () => {
+const Login: React.FC = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login: authLogin } = useAuth();
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setIsLoading(true);
     try {
-      const response = await login(email, password);
-      authLogin(response.token, response.user);
-      navigate('/dashboard');
-    } catch (error) {
-      setError('Invalid credentials');
+      const response = await fetch('http://localhost:8099/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      login(data.token, data.user);
+      navigate('/dashboard', { replace: true });
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      setError(error.message || 'Invalid email or password');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Typography component="h1" variant="h5">
-          Sign in
-        </Typography>
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          {error && (
-            <Typography color="error" sx={{ mt: 1 }}>
-              {error}
-            </Typography>
-          )}
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+    <Box
+      sx={{
+        height: '100vh',
+        width: '100vw',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#F5F7FA',
+      }}
+    >
+      <Container maxWidth="xs" sx={{ margin: 0 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.05)',
+            overflow: 'hidden',
+          }}
+        >
+          <Box 
+            sx={{ 
+              p: 3, 
+              display: 'flex', 
+              alignItems: 'center', 
+              flexDirection: 'column',
+              backgroundColor: '#1976d2',
+            }}
           >
-            Sign In
-          </Button>
-        </Box>
-      </Box>
-    </Container>
+            <img 
+              src={Logo} 
+              alt="Artis Laminate" 
+              style={{ 
+                height: '50px',
+                marginBottom: '16px',
+                filter: 'brightness(1.2) contrast(1.2)'
+              }} 
+            />
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                color: '#ffffff',
+                fontWeight: 600,
+                letterSpacing: '-0.5px'
+              }}
+            >
+              Artis Laminates
+            </Typography>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                mt: 1
+              }}
+            >
+              Inventory Management Portal
+            </Typography>
+          </Box>
+
+          <Box sx={{ p: 3 }}>
+            <form onSubmit={handleSubmit}>
+              {error && (
+                <Typography 
+                  color="error" 
+                  variant="body2" 
+                  sx={{ mb: 2, textAlign: 'center' }}
+                >
+                  {error}
+                </Typography>
+              )}
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoFocus
+                error={!!error}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={!!error}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={isLoading}
+                sx={{ mt: 3, mb: 2 }}
+              >
+                {isLoading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 

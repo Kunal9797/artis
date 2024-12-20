@@ -1,5 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
+import Product from './Product';
 
 export enum InventoryType {
   DESIGN_PAPER_ROLL = 'DESIGN_PAPER_ROLL',
@@ -14,12 +15,7 @@ export enum MeasurementUnit {
 
 interface SKUAttributes {
   id: string;
-  code: string;
-  name: string;
-  description?: string;
-  category: string;
-  inventoryType: InventoryType;
-  measurementUnit: MeasurementUnit;
+  productId: string;
   quantity: number;
   minimumStock?: number;
   reorderPoint?: number;
@@ -29,12 +25,7 @@ interface SKUCreationAttributes extends Omit<SKUAttributes, 'id'> {}
 
 class SKU extends Model<SKUAttributes, SKUCreationAttributes> {
   public id!: string;
-  public code!: string;
-  public name!: string;
-  public description!: string;
-  public category!: string;
-  public inventoryType!: InventoryType;
-  public measurementUnit!: MeasurementUnit;
+  public productId!: string;
   public quantity!: number;
   public minimumStock!: number;
   public reorderPoint!: number;
@@ -47,29 +38,13 @@ SKU.init(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    code: {
-      type: DataTypes.STRING,
+    productId: {
+      type: DataTypes.UUID,
       allowNull: false,
-      unique: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    description: {
-      type: DataTypes.TEXT,
-    },
-    category: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    inventoryType: {
-      type: DataTypes.ENUM(...Object.values(InventoryType)),
-      allowNull: false,
-    },
-    measurementUnit: {
-      type: DataTypes.ENUM(...Object.values(MeasurementUnit)),
-      allowNull: false,
+      references: {
+        model: 'Products',
+        key: 'id'
+      }
     },
     quantity: {
       type: DataTypes.DECIMAL(10, 2),
@@ -90,5 +65,10 @@ SKU.init(
     modelName: 'SKU',
   }
 );
+
+SKU.belongsTo(Product, {
+  foreignKey: 'productId',
+  as: 'product'
+});
 
 export default SKU; 

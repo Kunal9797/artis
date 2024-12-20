@@ -1,76 +1,147 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  Button, 
+import {
+  Box,
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
   Container,
-  ToggleButton,
-  ToggleButtonGroup 
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  useTheme,
+  Paper
 } from '@mui/material';
+import {
+  Menu as MenuIcon,
+  Inventory2 as Inventory2Icon,
+  Person as PersonIcon,
+} from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import SKUManagement from './SKUManagement';
-import SKUCategoryView from './SKUCategoryView';
+import ProductCatalog from './ProductCatalog';
+import Logo from '../assets/artislogo.png';
 
-interface DashboardProps {
-  children?: React.ReactNode;
-}
+const DRAWER_WIDTH = 240;
 
-const Dashboard: React.FC<DashboardProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+const Dashboard: React.FC = () => {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<'table' | 'category'>('table');
+  const theme = useTheme();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
   };
 
-  const handleViewChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newView: 'table' | 'category',
-  ) => {
-    if (newView !== null) {
-      setViewMode(newView);
-    }
-  };
+  const drawer = (
+    <Box sx={{ bgcolor: '#1a237e', height: '100%', color: 'white' }}>
+      <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img src={Logo} alt="Artis Logo" style={{ height: '40px' }} />
+      </Box>
+      <List>
+        <ListItem 
+          button 
+          selected={true}
+          sx={{
+            mb: 1,
+            mx: 1,
+            borderRadius: 1,
+            color: '#ffffff',
+            '&.Mui-selected': {
+              backgroundColor: 'rgba(255,255,255,0.08)',
+            },
+          }}
+        >
+          <ListItemIcon>
+            <Inventory2Icon color="primary" />
+          </ListItemIcon>
+          <ListItemText primary="Product Catalog" />
+        </ListItem>
+      </List>
+    </Box>
+  );
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Artis Dashboard
+    <Box sx={{ display: 'flex' }}>
+      <AppBar position="fixed" sx={{ bgcolor: 'white', color: 'black' }}>
+        <Toolbar sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' }, color: '#FFD700' }}
+          >
+            <MenuIcon />
+          </IconButton>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', mr: 4 }}>
+            <img 
+              src={Logo} 
+              alt="Artis Laminate" 
+              style={{ 
+                height: '40px',
+                marginRight: '12px',
+                filter: 'brightness(1.2) contrast(1.2)'
+              }} 
+            />
+            <Typography 
+              variant="h6" 
+              noWrap 
+              sx={{ 
+                color: '#ffffff',
+                fontWeight: 'bold',
+                fontSize: '1.3rem',
+                letterSpacing: '0.5px'
+              }}
+            >
+              Artis Laminates
+            </Typography>
+          </Box>
+
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div" 
+            sx={{ 
+              flexGrow: 1, 
+              color: '#ffffff',
+              fontWeight: 500
+            }}
+          >
+            Product Catalog
           </Typography>
-          <Typography sx={{ mr: 2 }}>
-            Welcome, {user?.username}
+          <Typography sx={{ mr: 2, color: '#ffffff' }}>
+            Welcome, {user?.name || 'User'}
           </Typography>
-          <Button color="inherit" onClick={handleLogout}>
+          <Button 
+            variant="outlined"
+            onClick={logout}
+            sx={{
+              borderColor: '#ffffff',
+              color: '#ffffff',
+              '&:hover': {
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255,255,255,0.08)',
+              },
+            }}
+          >
             Logout
           </Button>
         </Toolbar>
       </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Box sx={{ mb: 2 }}>
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={handleViewChange}
-            aria-label="view mode"
-          >
-            <ToggleButton value="table" aria-label="table view">
-              Table View
-            </ToggleButton>
-            <ToggleButton value="category" aria-label="category view">
-              Category View
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-        {viewMode === 'table' ? <SKUManagement /> : <SKUCategoryView />}
-        {children}
-      </Container>
+      
+      <Drawer variant="permanent" sx={{ width: DRAWER_WIDTH }}>
+        {drawer}
+      </Drawer>
+
+      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: '64px' }}>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+          <ProductCatalog />
+        </Paper>
+      </Box>
     </Box>
   );
 };

@@ -6,9 +6,14 @@ import App from './App';
 
 console.log('Starting application...');
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+// Check if root element exists
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  console.error('Root element not found!');
+  throw new Error('Root element not found');
+}
+
+const root = ReactDOM.createRoot(rootElement);
 
 try {
   console.log('Attempting to render App component...');

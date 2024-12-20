@@ -7,6 +7,7 @@ import { InventoryType, MeasurementUnit } from './models/SKU';
 import authRoutes from './routes/auth.routes';
 import skuRoutes from './routes/sku.routes';
 import inventoryMovementRoutes from './routes/inventoryMovement.routes';
+import productRoutes from './routes/product.routes';
 
 // Load environment variables
 dotenv.config();
@@ -18,69 +19,56 @@ const app: Express = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/api/inventory-movements', inventoryMovementRoutes);
 
-// Initialize database with proper migrations
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/skus', skuRoutes);
+app.use('/api/inventory-movements', inventoryMovementRoutes);
+app.use('/api/products', productRoutes);
+
+// Test route
+app.get('/api/test', (req: Request, res: Response) => {
+  res.json({ message: 'Backend is working!' });
+});
+
+// Initialize database and start server
 const initializeDatabase = async () => {
   try {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
     
-    // Drop the existing SKUs table and recreate it
-    await sequelize.query('DROP TABLE IF EXISTS "SKUs" CASCADE');
-    
     // Sync all models
     await sequelize.sync({ force: false });
     console.log('Database models synchronized.');
 
-    // Create some initial SKUs if none exist
-    const skuCount = await SKU.count();
-    if (skuCount === 0) {
-      await SKU.bulkCreate([
-        {
-          code: 'DPR001',
-          name: 'Design Paper Roll 1',
-          description: 'Standard design paper roll',
-          category: 'Standard',
-          inventoryType: InventoryType.DESIGN_PAPER_ROLL,
-          measurementUnit: MeasurementUnit.WEIGHT,
-          quantity: 100,
-          minimumStock: 20,
-          reorderPoint: 30
-        },
-        {
-          code: 'DPS001',
-          name: 'Design Paper Sheet 1',
-          description: 'Processed design paper sheet',
-          category: 'Standard',
-          inventoryType: InventoryType.DESIGN_PAPER_SHEET,
-          measurementUnit: MeasurementUnit.UNITS,
-          quantity: 1000,
-          minimumStock: 200,
-          reorderPoint: 300
-        }
-      ]);
-      console.log('Initial SKUs created.');
-    }
+    const createInitialUser = async () => {
+      const userCount = await User.count();
+      if (userCount === 0) {
+        await User.create({
+          username: 'admin',
+          email: 'admin@artis.com',
+          password: 'admin123',
+          role: 'admin'
+        });
+        console.log('Initial admin user created');
+      }
+    };
+
+    await createInitialUser();
+
   } catch (error) {
     console.error('Unable to initialize database:', error);
     process.exit(1);
   }
 };
 
-// Basic route
-app.get('/', (req: Request, res: Response) => {
-  res.json({ message: 'Welcome to Artis API' });
-});
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/skus', skuRoutes);
-app.use('/api/inventory-movements', inventoryMovementRoutes);
-
-// Start server
+// Start the server
 const PORT = process.env.PORT || 8099;
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  await initializeDatabase();
 });
+
+// Initialize the database
+initializeDatabase();
+
+export default app;

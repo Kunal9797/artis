@@ -15,14 +15,24 @@ export enum MovementType {
   CONVERSION = 'CONVERSION'
 }
 
-export interface SKU {
+export interface Product {
   id: string;
-  code: string;
+  artisCode: string;
+  supplierCode?: string;
   name: string;
-  description: string;
-  category: string;
+  category?: string;
+  supplier?: string;
+  texture?: string;
+  thickness?: string;
   inventoryType: InventoryType;
   measurementUnit: MeasurementUnit;
+  designPaperId?: string;
+  designPaper?: Product;
+}
+
+export interface SKU extends Product {
+  id: string;
+  productId: string;
   quantity: number;
   minimumStock?: number;
   reorderPoint?: number;
