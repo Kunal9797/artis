@@ -5,42 +5,54 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Stack
+  Stack,
+  Button
 } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 
 interface Props {
   catalogs: string[];
   suppliers: string[];
   categories: string[];
-  selectedCatalog: string;
-  selectedSupplier: string;
-  selectedCategory: string;
-  onCatalogChange: (value: string) => void;
-  onSupplierChange: (value: string) => void;
-  onCategoryChange: (value: string) => void;
+  selectedCatalogs: string[];
+  selectedSuppliers: string[];
+  selectedCategories: string[];
+  onCatalogChange: (value: string[]) => void;
+  onSupplierChange: (value: string[]) => void;
+  onCategoryChange: (value: string[]) => void;
 }
 
 const ProductFilters: React.FC<Props> = ({
   catalogs,
   suppliers,
   categories,
-  selectedCatalog,
-  selectedSupplier,
-  selectedCategory,
+  selectedCatalogs,
+  selectedSuppliers,
+  selectedCategories,
   onCatalogChange,
   onSupplierChange,
   onCategoryChange,
 }) => {
+  const handleClearFilters = () => {
+    onCatalogChange([]);
+    onSupplierChange([]);
+    onCategoryChange([]);
+  };
+
+  const hasActiveFilters = selectedCatalogs.length > 0 || 
+    selectedSuppliers.length > 0 || 
+    selectedCategories.length > 0;
+
   return (
-    <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+    <Stack direction="row" spacing={2} alignItems="center">
       <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel>Catalog</InputLabel>
+        <InputLabel>Catalogs</InputLabel>
         <Select
-          value={selectedCatalog}
-          label="Catalog"
-          onChange={(e) => onCatalogChange(e.target.value)}
+          multiple
+          value={selectedCatalogs}
+          label="Catalogs"
+          onChange={(e) => onCatalogChange(e.target.value as string[])}
         >
-          <MenuItem value="">All</MenuItem>
           {catalogs.map((catalog) => (
             <MenuItem key={catalog} value={catalog}>
               {catalog}
@@ -52,11 +64,11 @@ const ProductFilters: React.FC<Props> = ({
       <FormControl sx={{ minWidth: 200 }}>
         <InputLabel>Supplier</InputLabel>
         <Select
-          value={selectedSupplier}
+          multiple
+          value={selectedSuppliers}
           label="Supplier"
-          onChange={(e) => onSupplierChange(e.target.value)}
+          onChange={(e) => onSupplierChange(e.target.value as string[])}
         >
-          <MenuItem value="">All</MenuItem>
           {suppliers.map((supplier) => (
             <MenuItem key={supplier} value={supplier}>
               {supplier}
@@ -68,11 +80,11 @@ const ProductFilters: React.FC<Props> = ({
       <FormControl sx={{ minWidth: 200 }}>
         <InputLabel>Category</InputLabel>
         <Select
-          value={selectedCategory}
+          multiple
+          value={selectedCategories}
           label="Category"
-          onChange={(e) => onCategoryChange(e.target.value)}
+          onChange={(e) => onCategoryChange(e.target.value as string[])}
         >
-          <MenuItem value="">All</MenuItem>
           {categories.map((category) => (
             <MenuItem key={category} value={category}>
               {category}
@@ -80,6 +92,17 @@ const ProductFilters: React.FC<Props> = ({
           ))}
         </Select>
       </FormControl>
+
+      {hasActiveFilters && (
+        <Button
+          variant="outlined"
+          startIcon={<ClearIcon />}
+          onClick={handleClearFilters}
+          size="small"
+        >
+          Clear Filters
+        </Button>
+      )}
     </Stack>
   );
 };

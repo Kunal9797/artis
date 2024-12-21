@@ -76,7 +76,9 @@ export const bulkCreateProducts = async (req: Request, res: Response) => {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(worksheet);
-
+    
+    console.log('Parsed Excel data:', JSON.stringify(data[0], null, 2)); // Log first row
+    
     // First pass: check for duplicates within the Excel file
     const artisCodesInFile = new Set<string>();
     data.forEach((row: any) => {
@@ -164,10 +166,17 @@ export const bulkCreateProducts = async (req: Request, res: Response) => {
 
   } catch (error) {
     await t.rollback();
-    console.error('Error importing products:', error);
+    console.error('Error importing products:', {
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      } : error, // Log first row if available
+    });
     res.status(500).json({ 
       error: 'Error importing products',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      debugInfo: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
 }; 

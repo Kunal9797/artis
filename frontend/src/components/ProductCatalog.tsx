@@ -56,9 +56,9 @@ const ProductCatalog: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Filter states
-  const [selectedCatalog, setSelectedCatalog] = useState('');
-  const [selectedSupplier, setSelectedSupplier] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCatalogs, setSelectedCatalogs] = useState<string[]>([]);
+  const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Unique values for filters
   const uniqueCatalogs = Array.from(
@@ -84,7 +84,7 @@ const ProductCatalog: React.FC = () => {
     console.log('Effect triggered with:', {
       groupByAltCode,
       totalProducts: products.length,
-      selectedCatalog,
+      selectedCatalogs,
       searchQuery
     });
 
@@ -104,9 +104,10 @@ const ProductCatalog: React.FC = () => {
     }
 
     // Apply catalog filter
-    if (selectedCatalog) {
-      filtered = filtered.filter(p => p.catalogs?.includes(selectedCatalog));
-      console.log('After catalog filter:', filtered.length, 'products');
+    if (selectedCatalogs.length > 0) {
+      filtered = filtered.filter(p => 
+        p.catalogs?.some(catalog => selectedCatalogs.includes(catalog)) ?? false
+      );
     }
     
     // Apply grouping if enabled (moved outside catalog filter)
@@ -149,16 +150,19 @@ const ProductCatalog: React.FC = () => {
     }
 
     // Apply supplier filter
-    if (selectedSupplier) {
+    if (selectedSuppliers.length > 0) {
       filtered = filtered.filter(p => {
-        const normalizedSupplier = supplierNormalization[p.supplier || ''] || p.supplier;
-        return normalizedSupplier === selectedSupplier;
+        if (!p.supplier) return false;
+        const normalizedSupplier = supplierNormalization[p.supplier] || p.supplier;
+        return selectedSuppliers.includes(normalizedSupplier);
       });
     }
     
     // Apply category filter
-    if (selectedCategory) {
-      filtered = filtered.filter(p => p.category === selectedCategory);
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(p => 
+        p.category ? selectedCategories.includes(p.category) : false
+      );
     }
     
     // Apply sorting
@@ -169,7 +173,7 @@ const ProductCatalog: React.FC = () => {
     });
     
     setFilteredProducts(filtered);
-  }, [products, selectedCatalog, selectedSupplier, selectedCategory, sortDirection, groupByAltCode, searchQuery]);
+  }, [products, selectedCatalogs, selectedSuppliers, selectedCategories, sortDirection, groupByAltCode, searchQuery]);
 
   const fetchProducts = async () => {
     try {
@@ -253,12 +257,12 @@ const ProductCatalog: React.FC = () => {
         catalogs={uniqueCatalogs}
         suppliers={uniqueSuppliers}
         categories={uniqueCategories}
-        selectedCatalog={selectedCatalog}
-        selectedSupplier={selectedSupplier}
-        selectedCategory={selectedCategory}
-        onCatalogChange={setSelectedCatalog}
-        onSupplierChange={setSelectedSupplier}
-        onCategoryChange={setSelectedCategory}
+        selectedCatalogs={selectedCatalogs}
+        selectedSuppliers={selectedSuppliers}
+        selectedCategories={selectedCategories}
+        onCatalogChange={setSelectedCatalogs}
+        onSupplierChange={setSelectedSuppliers}
+        onCategoryChange={setSelectedCategories}
       />
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>

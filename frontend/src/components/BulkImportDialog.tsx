@@ -21,6 +21,7 @@ interface Props {
 const BulkImportDialog: React.FC<Props> = ({ open, onClose, onSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [updateMode, setUpdateMode] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +78,16 @@ const BulkImportDialog: React.FC<Props> = ({ open, onClose, onSuccess }) => {
           />
         </Box>
       </DialogContent>
+      {errorMessage && (
+        <Box sx={{ 
+          color: 'error.main', 
+          mt: 2, 
+          px: 3,
+          typography: 'body2' 
+        }}>
+          {errorMessage}
+        </Box>
+      )}
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained" disabled={!file}>

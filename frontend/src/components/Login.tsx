@@ -78,14 +78,14 @@ const Login: React.FC = () => {
               display: 'flex', 
               alignItems: 'center', 
               flexDirection: 'column',
-              backgroundColor: '#1A237E',
+              backgroundColor: '#2b2a29',
             }}
           >
             <img 
               src={Logo} 
               alt="Artis Laminate" 
               style={{ 
-                height: '50px',
+                height: '80px',
                 marginBottom: '16px',
                 filter: 'brightness(1.2) contrast(1.2)'
               }} 
@@ -93,17 +93,18 @@ const Login: React.FC = () => {
             <Typography 
               variant="h5" 
               sx={{ 
-                color: '#ffffff',
+                color: '#fecc00',
                 fontWeight: 600,
-                letterSpacing: '-0.5px'
+                letterSpacing: '-0.5px',
+                mb: 1
               }}
             >
-              Artis Laminates
+              Artis Laminate
             </Typography>
             <Typography 
               variant="subtitle1" 
               sx={{ 
-                color: 'rgba(255,255,255,0.8)',
+                color: '#ffffff',
                 mt: 1
               }}
             >
@@ -144,11 +145,18 @@ const Login: React.FC = () => {
                 error={!!error}
               />
               <Button
-                type="submit"
                 fullWidth
                 variant="contained"
-                disabled={isLoading}
-                sx={{ mt: 3, mb: 2 }}
+                type="submit"
+                sx={{
+                  mt: 3,
+                  mb: 2,
+                  backgroundColor: '#fecc00',
+                  color: '#000000',
+                  '&:hover': {
+                    backgroundColor: '#e5b800'
+                  }
+                }}
               >
                 {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>

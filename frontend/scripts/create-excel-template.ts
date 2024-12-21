@@ -4,6 +4,7 @@ const productTemplate = {
   headers: [
     'NAME',
     'OUR CODE',
+    'ALT CODE',
     'DESIGN CODE',
     'SUPPLIER',
     'CATEGORY',
@@ -14,11 +15,22 @@ const productTemplate = {
     [
       'SNOW COROBA',
       '501',
+      '501W',
       '9054-A',
       'MBEE',
       'Wooden',
       '60',
-      'Liner,Artis'
+      'Woodrica'
+    ],
+    [
+      'SNOW COROBA',
+      '501A',
+      '501W',
+      '9054-A',
+      'MBEE',
+      'Wooden',
+      '60',
+      'Artvio'
     ]
   ]
 };
@@ -32,6 +44,7 @@ const worksheet = XLSX.utils.aoa_to_sheet([
 worksheet['!cols'] = [
   { width: 20 }, // NAME
   { width: 15 }, // OUR CODE
+  { width: 15 }, // ALT CODE
   { width: 15 }, // DESIGN CODE
   { width: 15 }, // SUPPLIER
   { width: 15 }, // CATEGORY
