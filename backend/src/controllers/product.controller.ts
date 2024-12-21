@@ -1,17 +1,12 @@
 import { Request, Response } from 'express';
 import Product from '../models/Product';
 import * as XLSX from 'xlsx';
-import { InventoryType, MeasurementUnit } from '../models/Product';
+import { InventoryType } from '../models/Product';
+import sequelize from '../config/database';
 
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
-    const products = await Product.findAll({
-      include: [{
-        model: Product,
-        as: 'designPaper',
-        attributes: ['artisCode']
-      }]
-    });
+    const products = await Product.findAll();
     res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -27,49 +22,19 @@ export const createProduct = async (req: Request, res: Response) => {
       name,
       category,
       supplier,
-      texture,
-      thickness,
-      inventoryType,
-      measurementUnit,
-      designPaperId
+      gsm,
+      catalogs
     } = req.body;
 
-    console.log('Received product data:', req.body);
-
-    // Validate required fields
-    if (!artisCode || !name || !inventoryType || !measurementUnit) {
+    if (!artisCode) {
       return res.status(400).json({ 
-        error: 'Missing required fields',
-        required: ['artisCode', 'name', 'inventoryType', 'measurementUnit']
+        error: 'Missing required field',
+        required: ['artisCode']
       });
     }
 
-    // Validate design paper fields
-    if (inventoryType === InventoryType.DESIGN_PAPER_SHEET && !category) {
-      return res.status(400).json({ 
-        error: 'Category is required for design papers'
-      });
-    }
-
-    // If it's a laminate sheet, validate design paper reference
-    if (inventoryType === InventoryType.LAMINATE_SHEET) {
-      if (!designPaperId) {
-        return res.status(400).json({ 
-          error: 'Design paper reference is required for laminate sheets'
-        });
-      }
-
-      const designPaper = await Product.findByPk(designPaperId);
-      if (!designPaper || designPaper.inventoryType !== InventoryType.DESIGN_PAPER_SHEET) {
-        return res.status(400).json({ 
-          error: 'Invalid design paper reference'
-        });
-      }
-    }
-
-    // Check for duplicate artisCode
-    const existingProduct = await Product.findOne({ where: { artisCode } });
-    if (existingProduct) {
+    const existing = await Product.findOne({ where: { artisCode } });
+    if (existing) {
       return res.status(400).json({ 
         error: 'Product artisCode already exists'
       });
@@ -77,15 +42,13 @@ export const createProduct = async (req: Request, res: Response) => {
 
     const product = await Product.create({
       artisCode,
-      supplierCode,
       name,
       category,
+      supplierCode,
       supplier,
-      texture,
-      thickness,
-      inventoryType,
-      measurementUnit,
-      designPaperId
+      gsm,
+      catalogs,
+      inventoryType: InventoryType.DESIGN_PAPER_SHEET
     });
 
     res.status(201).json(product);
@@ -98,98 +61,108 @@ export const createProduct = async (req: Request, res: Response) => {
   }
 };
 
-export const updateProduct = async (req: Request, res: Response) => {
-  try {
-    const product = await Product.findByPk(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-    await product.update(req.body);
-    res.json(product);
-  } catch (error) {
-    console.error('Error updating product:', error);
-    res.status(500).json({ error: 'Error updating product' });
-  }
-};
-
-export const deleteProduct = async (req: Request, res: Response) => {
-  try {
-    const product = await Product.findByPk(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-    await product.destroy();
-    res.json({ message: 'Product deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ error: 'Error deleting product' });
-  }
-};
-
 export const bulkCreateProducts = async (req: Request, res: Response) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
+
+  const updateMode = req.query.mode === 'update';
+  const t = await sequelize.transaction();
+  const skippedProducts: { artisCode: string; reason: string }[] = [];
+  const validProducts: any[] = [];
+  const updatedProducts: any[] = [];
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(worksheet);
 
-    // Validate and transform the data
-    const products = await Promise.all(data.map(async (row: any) => {
-      // Validate required fields
-      if (!row.artisCode || !row.name || !row.inventoryType || !row.measurementUnit) {
-        throw new Error(`Missing required fields for product ${row.artisCode || 'unknown'}`);
-      }
-
-      // Check if this is a laminate sheet that references a design paper
-      if (row.inventoryType === InventoryType.LAMINATE_SHEET && row.designPaper) {
-        // Verify the referenced design paper exists
-        const designPaper = await Product.findOne({ 
-          where: { 
-            artisCode: row.designPaper,
-            inventoryType: InventoryType.DESIGN_PAPER_SHEET
-          }
+    // First pass: check for duplicates within the Excel file
+    const artisCodesInFile = new Set<string>();
+    data.forEach((row: any) => {
+      const artisCode = row['OUR CODE']?.toString();
+      if (artisCodesInFile.has(artisCode)) {
+        skippedProducts.push({ 
+          artisCode, 
+          reason: 'Duplicate entry in Excel file' 
         });
-        
-        if (!designPaper) {
-          throw new Error(`Design paper with code ${row.designPaper} not found`);
-        }
-
-        // For laminate sheets, copy category from design paper
-        row.category = designPaper.category;
       }
+      artisCodesInFile.add(artisCode);
+    });
 
-      // Check for duplicate artisCode
-      const existing = await Product.findOne({ where: { artisCode: row.artisCode } });
-      if (existing) {
-        throw new Error(`Product with artisCode ${row.artisCode} already exists`);
-      }
-
-      return {
-        artisCode: row.artisCode,
-        supplierCode: row.supplierCode,
-        name: row.name,
-        category: row.category,
-        supplier: row.supplier,
-        texture: row.texture,
-        thickness: row.thickness,
-        inventoryType: row.inventoryType,
-        measurementUnit: row.measurementUnit,
-        designPaperId: row.designPaper ? 
-          (await Product.findOne({ 
-            where: { artisCode: row.designPaper } 
-          }))?.id : null
+    // Second pass: process each row
+    await Promise.all(data.map(async (row: any) => {
+      const product = {
+        name: row.NAME || null,
+        artisCode: row['OUR CODE']?.toString(),
+        supplierCode: row['DESIGN CODE'] || null,
+        supplier: row.SUPPLIER || null,
+        category: row.CATEGORY || null,
+        catalogs: row.CATALOGS ? row.CATALOGS.split(',').map((c: string) => c.trim()) : null,
+        gsm: row.GSM?.toString() || null,
+        inventoryType: InventoryType.DESIGN_PAPER_SHEET
       };
+
+      if (!product.artisCode) {
+        skippedProducts.push({ 
+          artisCode: 'unknown', 
+          reason: 'Missing required field: artisCode' 
+        });
+        return;
+      }
+
+      const existing = await Product.findOne({ 
+        where: { artisCode: product.artisCode }
+      });
+      
+      if (existing) {
+        if (updateMode) {
+          await Product.update(product, { 
+            where: { artisCode: product.artisCode },
+            transaction: t 
+          });
+          updatedProducts.push(product);
+        } else {
+          skippedProducts.push({ 
+            artisCode: product.artisCode, 
+            reason: 'Already exists in database' 
+          });
+        }
+        return;
+      }
+
+      validProducts.push(product);
     }));
 
-    await Product.bulkCreate(products);
-    res.status(201).json({ 
-      message: 'Products imported successfully',
-      count: products.length 
+    let createdProducts: Product[] = [];
+    if (validProducts.length > 0) {
+      createdProducts = await Product.bulkCreate(validProducts, { transaction: t });
+    }
+    
+    if (validProducts.length > 0 || updatedProducts.length > 0) {
+      await t.commit();
+    } else {
+      await t.rollback();
+    }
+
+    res.status(201).json({
+      message: 'Import completed',
+      created: {
+        count: createdProducts.length,
+        products: createdProducts
+      },
+      updated: {
+        count: updatedProducts.length,
+        products: updatedProducts
+      },
+      skipped: {
+        count: skippedProducts.length,
+        products: skippedProducts
+      }
     });
+
   } catch (error) {
+    await t.rollback();
     console.error('Error importing products:', error);
     res.status(500).json({ 
       error: 'Error importing products',

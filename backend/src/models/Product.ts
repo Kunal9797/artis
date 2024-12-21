@@ -2,14 +2,7 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
 
 export enum InventoryType {
-  DESIGN_PAPER_ROLL = 'DESIGN_PAPER_ROLL',
-  DESIGN_PAPER_SHEET = 'DESIGN_PAPER_SHEET',
-  LAMINATE_SHEET = 'LAMINATE_SHEET'
-}
-
-export enum MeasurementUnit {
-  WEIGHT = 'WEIGHT',
-  UNITS = 'UNITS'
+  DESIGN_PAPER_SHEET = 'DESIGN_PAPER_SHEET'
 }
 
 class Product extends Model {
@@ -22,9 +15,10 @@ class Product extends Model {
   public texture?: string;
   public thickness?: string;
   public inventoryType!: InventoryType;
-  public measurementUnit!: MeasurementUnit;
   public designPaperId?: string;
   public designPaper?: Product;
+  public gsm?: string;
+  public catalogs?: string[];
 }
 
 Product.init(
@@ -45,11 +39,11 @@ Product.init(
     },
     name: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true
     },
     category: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: true
     },
     supplier: {
       type: DataTypes.STRING,
@@ -67,10 +61,6 @@ Product.init(
       type: DataTypes.ENUM(...Object.values(InventoryType)),
       allowNull: false,
     },
-    measurementUnit: {
-      type: DataTypes.ENUM(...Object.values(MeasurementUnit)),
-      allowNull: false,
-    },
     designPaperId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -78,6 +68,14 @@ Product.init(
         model: 'Products',
         key: 'id'
       }
+    },
+    gsm: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    catalogs: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      allowNull: true
     }
   },
   {
@@ -86,23 +84,10 @@ Product.init(
     tableName: 'Products',
     hooks: {
       beforeValidate: async (product: Product) => {
-        if (product.inventoryType === InventoryType.LAMINATE_SHEET) {
-          if (product.designPaperId) {
-            // Get the design paper and copy its category
-            const designPaper = await Product.findByPk(product.designPaperId);
-            if (designPaper) {
-              product.category = designPaper.category;
-            }
-          }
-          // Clear supplier fields
-          product.supplierCode = undefined;
-          product.supplier = undefined;
-        } else if (product.inventoryType === InventoryType.DESIGN_PAPER_SHEET) {
-          // For design papers, texture and thickness should be undefined
-          product.texture = undefined;
-          product.thickness = undefined;
-          product.designPaperId = undefined;
-        }
+        // For design papers, these fields should always be undefined
+        product.texture = undefined;
+        product.thickness = undefined;
+        product.designPaperId = undefined;
       }
     }
   }

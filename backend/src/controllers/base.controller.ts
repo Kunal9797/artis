@@ -3,13 +3,7 @@ import Product from '../models/Product';
 
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
-    const products = await Product.findAll({
-      include: [{
-        model: Product,
-        as: 'designPaper',
-        attributes: ['artisCode', 'category']
-      }]
-    });
+    const products = await Product.findAll();
     res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);

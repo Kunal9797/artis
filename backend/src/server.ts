@@ -2,11 +2,8 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import sequelize from './config/database';
-import { User, SKU } from './models';
-import { InventoryType, MeasurementUnit } from './models/SKU';
+import { User } from './models';
 import authRoutes from './routes/auth.routes';
-import skuRoutes from './routes/sku.routes';
-import inventoryMovementRoutes from './routes/inventoryMovement.routes';
 import productRoutes from './routes/product.routes';
 
 // Load environment variables
@@ -22,8 +19,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/skus', skuRoutes);
-app.use('/api/inventory-movements', inventoryMovementRoutes);
 app.use('/api/products', productRoutes);
 
 // Test route
@@ -62,13 +57,12 @@ const initializeDatabase = async () => {
   }
 };
 
-// Start the server
-const PORT = process.env.PORT || 8099;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Call initializeDatabase before starting the server
+initializeDatabase().then(() => {
+  const PORT = process.env.PORT || 8099;
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 });
-
-// Initialize the database
-initializeDatabase();
 
 export default app;

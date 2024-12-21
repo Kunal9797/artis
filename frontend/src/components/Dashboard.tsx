@@ -67,12 +67,19 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ bgcolor: 'white', color: 'black' }}>
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          backgroundColor: '#1A237E',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+        }}
+      >
         <Toolbar sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' }, color: '#FFD700' }}
+            sx={{ mr: 2, display: { sm: 'none' }, color: '#ffffff' }}
           >
             <MenuIcon />
           </IconButton>
@@ -84,7 +91,6 @@ const Dashboard: React.FC = () => {
               style={{ 
                 height: '40px',
                 marginRight: '12px',
-                filter: 'brightness(1.2) contrast(1.2)'
               }} 
             />
             <Typography 
