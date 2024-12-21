@@ -78,7 +78,7 @@ const Login: React.FC = () => {
               display: 'flex', 
               alignItems: 'center', 
               flexDirection: 'column',
-              backgroundColor: '#1976d2',
+              backgroundColor: '#1A237E',
             }}
           >
             <img 

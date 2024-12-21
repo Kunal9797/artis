@@ -19,6 +19,7 @@ class Product extends Model {
   public designPaper?: Product;
   public gsm?: string;
   public catalogs?: string[];
+  public altCode?: string;
 }
 
 Product.init(
@@ -76,6 +77,11 @@ Product.init(
     catalogs: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true
+    },
+    altCode: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Groups related products across catalogs'
     }
   },
   {

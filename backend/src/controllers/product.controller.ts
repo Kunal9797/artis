@@ -96,6 +96,7 @@ export const bulkCreateProducts = async (req: Request, res: Response) => {
         name: row.NAME || null,
         artisCode: row['OUR CODE']?.toString(),
         supplierCode: row['DESIGN CODE'] || null,
+        altCode: row['DESIGN CODE'] || null,
         supplier: row.SUPPLIER || null,
         category: row.CATEGORY || null,
         catalogs: row.CATALOGS ? row.CATALOGS.split(',').map((c: string) => c.trim()) : null,

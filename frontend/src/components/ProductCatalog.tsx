@@ -12,6 +12,10 @@ import {
   IconButton,
   Button,
   Stack,
+  FormControlLabel,
+  Switch,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -23,6 +27,24 @@ import ProductForm from './ProductForm';
 import BulkImportDialog from './BulkImportDialog';
 import CatalogTags from './CatalogTags';
 import ProductFilters from './ProductFilters';
+import SearchIcon from '@mui/icons-material/Search';
+
+const supplierNormalization: { [key: string]: string } = {
+  'MATCH ': 'MATCH',
+  'MATCH GRAPHICS': 'MATCH',
+  'INFINIAA': 'INFINIAA',
+  'INFINIAA DÉCOR': 'INFINIAA',
+  'UNIK DÉCOR': 'UNIQUE DÉCOR',
+  'UNIQUE DÉCOR': 'UNIQUE DÉCOR',
+  'SURFACE': 'SURFACE DÉCOR',
+  'SURFACE DÉCOR': 'SURFACE DÉCOR',
+};
+
+const normalizeSupplierCode = (code: string | undefined): string => {
+  if (!code) return '';
+  // Remove all spaces, dashes, dots and standardize
+  return code.replace(/[\s\-\.]+/g, '').replace(/([A-Za-z])$/, '-$1').toUpperCase();
+};
 
 const ProductCatalog: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -30,6 +52,8 @@ const ProductCatalog: React.FC = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Filter states
   const [selectedCatalog, setSelectedCatalog] = useState('');
@@ -42,30 +66,110 @@ const ProductCatalog: React.FC = () => {
   ).filter(Boolean) as string[];
 
   const uniqueSuppliers = Array.from(
-    new Set(products.map(p => p.supplier))
-  ).filter(Boolean) as string[];
+    new Set(
+      products
+        .map(p => p.supplier)
+        .filter(Boolean)
+        .map(supplier => supplierNormalization[supplier || ''] || supplier)
+    )
+  ).sort() as string[];
 
   const uniqueCategories = Array.from(
     new Set(products.map(p => p.category))
   ).filter(Boolean) as string[];
 
+  const [groupByAltCode, setGroupByAltCode] = useState(false);
+
   useEffect(() => {
+    console.log('Effect triggered with:', {
+      groupByAltCode,
+      totalProducts: products.length,
+      selectedCatalog,
+      searchQuery
+    });
+
     let filtered = [...products];
     
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        (p.artisCode?.toLowerCase() || '').includes(query) ||
+        (p.name?.toLowerCase() || '').includes(query) ||
+        (p.supplierCode?.toLowerCase() || '').includes(query) ||
+        (p.supplier?.toLowerCase() || '').includes(query) ||
+        (p.category?.toLowerCase() || '').includes(query)
+      );
+      console.log('After search filter:', filtered.length, 'products');
+    }
+
+    // Apply catalog filter
     if (selectedCatalog) {
       filtered = filtered.filter(p => p.catalogs?.includes(selectedCatalog));
+      console.log('After catalog filter:', filtered.length, 'products');
     }
     
+    // Apply grouping if enabled (moved outside catalog filter)
+    if (groupByAltCode) {
+      console.log('Starting grouping process...');
+      const groupedProducts = new Map();
+      filtered.forEach(p => {
+        const groupKey = p.supplierCode ? normalizeSupplierCode(p.supplierCode) : p.altCode;
+        console.log('Processing:', {
+          artisCode: p.artisCode,
+          supplierCode: p.supplierCode,
+          normalizedKey: groupKey
+        });
+        
+        if (!groupedProducts.has(groupKey)) {
+          groupedProducts.set(groupKey, {
+            ...p,
+            artisCode: p.artisCode,
+            supplierCode: p.supplierCode
+          });
+          console.log('Created new group for:', groupKey);
+        } else {
+          const existing = groupedProducts.get(groupKey);
+          existing.artisCode = `${existing.artisCode} / ${p.artisCode}`;
+          if (existing.supplierCode !== p.supplierCode) {
+            existing.supplierCode = `${existing.supplierCode} / ${p.supplierCode}`;
+          }
+          console.log('Added to existing group:', {
+            groupKey,
+            combinedArtisCodes: existing.artisCode
+          });
+        }
+      });
+      
+      filtered = Array.from(groupedProducts.values());
+      console.log('Grouping complete:', {
+        totalGroups: filtered.length,
+        groupKeys: Array.from(groupedProducts.keys())
+      });
+    }
+
+    // Apply supplier filter
     if (selectedSupplier) {
-      filtered = filtered.filter(p => p.supplier === selectedSupplier);
+      filtered = filtered.filter(p => {
+        const normalizedSupplier = supplierNormalization[p.supplier || ''] || p.supplier;
+        return normalizedSupplier === selectedSupplier;
+      });
     }
     
+    // Apply category filter
     if (selectedCategory) {
       filtered = filtered.filter(p => p.category === selectedCategory);
     }
     
+    // Apply sorting
+    filtered.sort((a, b) => {
+      const aCode = parseInt(a.artisCode.replace(/\D/g, '')) || 0;
+      const bCode = parseInt(b.artisCode.replace(/\D/g, '')) || 0;
+      return sortDirection === 'asc' ? aCode - bCode : bCode - aCode;
+    });
+    
     setFilteredProducts(filtered);
-  }, [products, selectedCatalog, selectedSupplier, selectedCategory]);
+  }, [products, selectedCatalog, selectedSupplier, selectedCategory, sortDirection, groupByAltCode, searchQuery]);
 
   const fetchProducts = async () => {
     try {
@@ -96,9 +200,13 @@ const ProductCatalog: React.FC = () => {
     }
   };
 
+  const handleSortToggle = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+    <Box sx={{ height: '100%', p: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h5" sx={{ color: 'text.primary' }}>
           All Products
         </Typography>
@@ -123,6 +231,24 @@ const ProductCatalog: React.FC = () => {
         </Stack>
       </Box>
 
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search by artis code, name, supplier code, supplier, or category..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          size="small"
+        />
+      </Box>
+
       <ProductFilters
         catalogs={uniqueCatalogs}
         suppliers={uniqueSuppliers}
@@ -135,9 +261,24 @@ const ProductCatalog: React.FC = () => {
         onCategoryChange={setSelectedCategory}
       />
 
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={groupByAltCode}
+              onChange={(e) => setGroupByAltCode(e.target.checked)}
+            />
+          }
+          label="Group same designs"
+        />
+      </Box>
+
       <TableContainer 
         component={Paper} 
         sx={{ 
+          flexGrow: 1,
+          height: 'calc(100vh - 280px)',
+          overflow: 'auto',
           boxShadow: 3,
           "& .MuiTableCell-root": {
             borderColor: 'divider',
@@ -159,7 +300,21 @@ const ProductCatalog: React.FC = () => {
               }
             }}>
               <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Artis Code</TableCell>
+              <TableCell 
+                sx={{ 
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+                onClick={handleSortToggle}
+              >
+                Artis Code
+                <Box component="span" sx={{ opacity: 0.5, fontSize: '0.8rem' }}>
+                  ({sortDirection === 'asc' ? '↑' : '↓'})
+                </Box>
+              </TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Supplier Code</TableCell>

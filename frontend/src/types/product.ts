@@ -12,4 +12,5 @@ export interface Product {
   gsm?: string;
   catalogs?: string[];
   inventoryType: InventoryType;
+  altCode?: string;
 } 
