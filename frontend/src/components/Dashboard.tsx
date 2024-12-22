@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import ProductCatalog from './ProductCatalog';
 import InfoPage from './InfoPage';
+import OrdersPage from './OrdersPage';
 import Logo from '../assets/artislogo.png';
 
 const Dashboard: React.FC = () => {
@@ -21,6 +22,8 @@ const Dashboard: React.FC = () => {
     switch (currentPage) {
       case 'info':
         return <InfoPage />;
+      case 'orders':
+        return <OrdersPage />;
       default:
         return <ProductCatalog />;
     }
@@ -49,6 +52,7 @@ const Dashboard: React.FC = () => {
               }}
             >
               <MenuItem value="catalog">Product Catalog</MenuItem>
+              <MenuItem value="orders">Orders</MenuItem>
               <MenuItem value="info">Information</MenuItem>
             </Select>
           </FormControl>

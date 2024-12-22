@@ -5,6 +5,8 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import { CssBaseline, ThemeProvider, createTheme, Box } from '@mui/material';
 import ProductCatalog from './components/ProductCatalog';
+import DesignPaperOrder from './components/DesignPaperOrder';
+import OrdersPage from './components/OrdersPage';
 
 const theme = createTheme({
   typography: {
@@ -167,6 +169,8 @@ const AuthWrapper = () => {
           path="/products" 
           element={isAuthenticated ? <ProductCatalog /> : <Navigate to="/login" />} 
         />
+        <Route path="/design-paper-order" element={<DesignPaperOrder />} />
+        <Route path="/orders" element={<OrdersPage />} />
       </Routes>
     </Box>
   );
