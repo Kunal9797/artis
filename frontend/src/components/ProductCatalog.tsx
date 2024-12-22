@@ -16,6 +16,8 @@ import {
   Switch,
   TextField,
   InputAdornment,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -47,6 +49,8 @@ const normalizeSupplierCode = (code: string | undefined): string => {
 };
 
 const ProductCatalog: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [formOpen, setFormOpen] = useState(false);
@@ -231,13 +235,24 @@ const ProductCatalog: React.FC = () => {
       p: 2 
     }}>
       <Box>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          justifyContent="space-between" 
+          alignItems={{ xs: 'stretch', sm: 'center' }} 
+          mb={2}
+          spacing={2}
+        >
           <Typography variant="h5">All Products</Typography>
-          <Stack direction="row" spacing={2}>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }} 
+            spacing={2}
+            width={{ xs: '100%', sm: 'auto' }}
+          >
             <Button
               variant="contained"
               startIcon={<UploadIcon />}
               onClick={() => setImportOpen(true)}
+              fullWidth={isMobile}
             >
               Bulk Import
             </Button>
@@ -245,6 +260,7 @@ const ProductCatalog: React.FC = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setFormOpen(true)}
+              fullWidth={isMobile}
             >
               Add Product
             </Button>
@@ -272,53 +288,67 @@ const ProductCatalog: React.FC = () => {
         <TableContainer 
           component={Paper} 
           sx={{ 
-            flexGrow: 1,
-            height: 'calc(100vh - 180px)',
+            maxHeight: { xs: 'calc(100vh - 400px)', md: 'calc(100vh - 250px)' },
             overflow: 'auto',
-            boxShadow: 3,
-            mt: 2,
-            "& .MuiTableCell-root": {
-              borderColor: 'divider',
-              fontSize: '0.95rem',
-              padding: '16px',
-              borderRight: '1px solid rgba(224, 224, 224, 1)',
+            '& .MuiTableCell-root': {
+              borderRight: '1px solid rgba(0, 0, 0, 0.15)',
+              padding: { xs: '12px 8px', md: '16px' },
+              whiteSpace: 'nowrap',
+              minWidth: {
+                xs: '100px',
+                md: 'auto'
+              },
               '&:last-child': {
                 borderRight: 'none'
               }
+            },
+            '& .MuiTable-root': {
+              minWidth: '800px' // Ensures horizontal scroll on mobile
             }
           }}
         >
           <Table stickyHeader>
             <TableHead>
-              <TableRow sx={{ 
-                backgroundColor: '#f5f5f5',
-                '& .MuiTableCell-root': {
-                  borderBottom: '2px solid rgba(224, 224, 224, 1)'
-                }
-              }}>
-                <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
+              <TableRow>
                 <TableCell 
                   sx={{ 
+                    backgroundColor: '#f5f5f5 !important',
+                    fontWeight: 'bold',
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 2
+                  }}
+                >
+                  #
+                </TableCell>
+                <TableCell 
+                  onClick={handleSortToggle}
+                  sx={{ 
+                    backgroundColor: '#f5f5f5 !important',
                     fontWeight: 'bold',
                     cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 2,
+                    '& .MuiBox-root': {
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      marginLeft: 1
+                    }
                   }}
-                  onClick={handleSortToggle}
                 >
                   Artis Code
                   <Box component="span" sx={{ opacity: 0.5, fontSize: '0.8rem' }}>
                     ({sortDirection === 'asc' ? '↑' : '↓'})
                   </Box>
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Supplier Code</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Supplier</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>GSM</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Catalogs</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Name</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Category</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Supplier Code</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Supplier</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>GSM</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Catalogs</TableCell>
+                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

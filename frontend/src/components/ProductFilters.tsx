@@ -65,12 +65,12 @@ const ProductFilters: React.FC<Props> = ({
     <Box sx={{ mb: 2 }}>
       <Stack spacing={2}>
         <Stack 
-          direction="row" 
+          direction={{ xs: 'column', md: 'row' }} 
           spacing={2} 
-          alignItems="center"
+          alignItems={{ xs: 'stretch', md: 'center' }}
           sx={{
             backgroundColor: 'background.paper',
-            p: 1,
+            p: { xs: 2, md: 1 },
             borderRadius: 1,
             border: '1px solid',
             borderColor: 'divider'
