@@ -80,17 +80,19 @@ const ProductCatalog: React.FC = () => {
 
   const [groupByAltCode, setGroupByAltCode] = useState(false);
 
+  // Add state for catalog filter mode
+  const [catalogFilterMode, setCatalogFilterMode] = useState<'AND' | 'OR'>('OR');
+
   useEffect(() => {
     console.log('Effect triggered with:', {
       groupByAltCode,
-      totalProducts: products.length,
       selectedCatalogs,
-      searchQuery
+      productsLength: products.length
     });
 
     let filtered = [...products];
     
-    // Apply search filter
+    // Apply search filter first
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(p => 
@@ -100,53 +102,6 @@ const ProductCatalog: React.FC = () => {
         (p.supplier?.toLowerCase() || '').includes(query) ||
         (p.category?.toLowerCase() || '').includes(query)
       );
-      console.log('After search filter:', filtered.length, 'products');
-    }
-
-    // Apply catalog filter
-    if (selectedCatalogs.length > 0) {
-      filtered = filtered.filter(p => 
-        p.catalogs?.some(catalog => selectedCatalogs.includes(catalog)) ?? false
-      );
-    }
-    
-    // Apply grouping if enabled (moved outside catalog filter)
-    if (groupByAltCode) {
-      console.log('Starting grouping process...');
-      const groupedProducts = new Map();
-      filtered.forEach(p => {
-        const groupKey = p.supplierCode ? normalizeSupplierCode(p.supplierCode) : p.altCode;
-        console.log('Processing:', {
-          artisCode: p.artisCode,
-          supplierCode: p.supplierCode,
-          normalizedKey: groupKey
-        });
-        
-        if (!groupedProducts.has(groupKey)) {
-          groupedProducts.set(groupKey, {
-            ...p,
-            artisCode: p.artisCode,
-            supplierCode: p.supplierCode
-          });
-          console.log('Created new group for:', groupKey);
-        } else {
-          const existing = groupedProducts.get(groupKey);
-          existing.artisCode = `${existing.artisCode} / ${p.artisCode}`;
-          if (existing.supplierCode !== p.supplierCode) {
-            existing.supplierCode = `${existing.supplierCode} / ${p.supplierCode}`;
-          }
-          console.log('Added to existing group:', {
-            groupKey,
-            combinedArtisCodes: existing.artisCode
-          });
-        }
-      });
-      
-      filtered = Array.from(groupedProducts.values());
-      console.log('Grouping complete:', {
-        totalGroups: filtered.length,
-        groupKeys: Array.from(groupedProducts.keys())
-      });
     }
 
     // Apply supplier filter
@@ -164,7 +119,73 @@ const ProductCatalog: React.FC = () => {
         p.category ? selectedCategories.includes(p.category) : false
       );
     }
-    
+
+    // Group by supplier code if enabled
+    if (groupByAltCode) {
+      const preGrouped = new Map();
+      
+      filtered.forEach(p => {
+        const normalizedSupplierCode = p.supplierCode ? normalizeSupplierCode(p.supplierCode) : '';
+        const groupKey = `${normalizedSupplierCode}_${p.supplier || ''}`;
+        
+        if (normalizedSupplierCode && p.supplier) {
+          if (!preGrouped.has(groupKey)) {
+            preGrouped.set(groupKey, {
+              ...p,
+              artisCode: p.artisCode,
+              supplierCode: p.supplierCode,
+              name: p.name || null,
+              category: p.category || null,
+              gsm: p.gsm || null,
+              _catalogSet: new Set(p.catalogs || [])
+            });
+          } else {
+            const existing = preGrouped.get(groupKey);
+            if (existing.supplier === p.supplier) {
+              existing.artisCode = `${existing.artisCode} / ${p.artisCode}`;
+              existing.name = existing.name || p.name;
+              existing.category = existing.category || p.category;
+              existing.gsm = existing.gsm || p.gsm;
+              
+              if (p.catalogs) {
+                p.catalogs.forEach(catalog => existing._catalogSet.add(catalog));
+              }
+            }
+          }
+        } else {
+          preGrouped.set(p.artisCode, {
+            ...p,
+            _catalogSet: new Set(p.catalogs || [])
+          });
+        }
+      });
+
+      filtered = Array.from(preGrouped.values()).map(product => {
+        const { _catalogSet, ...rest } = product;
+        return {
+          ...rest,
+          catalogs: Array.from(_catalogSet)
+        };
+      });
+    }
+
+    // Apply catalog filter AFTER grouping
+    if (selectedCatalogs.length > 0) {
+      filtered = filtered.filter(p => {
+        if (!p.catalogs) return false;
+        
+        if (catalogFilterMode === 'AND') {
+          return selectedCatalogs.every(selectedCatalog => 
+            p.catalogs?.includes(selectedCatalog)
+          );
+        } else {
+          return p.catalogs?.some(catalog => 
+            selectedCatalogs.includes(catalog)
+          );
+        }
+      });
+    }
+
     // Apply sorting
     filtered.sort((a, b) => {
       const aCode = parseInt(a.artisCode.replace(/\D/g, '')) || 0;
@@ -173,7 +194,7 @@ const ProductCatalog: React.FC = () => {
     });
     
     setFilteredProducts(filtered);
-  }, [products, selectedCatalogs, selectedSuppliers, selectedCategories, sortDirection, groupByAltCode, searchQuery]);
+  }, [products, selectedCatalogs, selectedSuppliers, selectedCategories, sortDirection, groupByAltCode, searchQuery, catalogFilterMode]);
 
   const fetchProducts = async () => {
     try {
@@ -210,177 +231,150 @@ const ProductCatalog: React.FC = () => {
 
   return (
     <Box sx={{ height: '100%', p: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5" sx={{ color: 'text.primary' }}>
-          All Products
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <Button
-            variant="contained"
-            startIcon={<UploadIcon />}
-            onClick={() => setImportOpen(true)}
-          >
-            Bulk Import
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setEditingProduct(null);
-              setFormOpen(true);
-            }}
-          >
-            Add Product
-          </Button>
+      <Box>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h5">All Products</Typography>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="contained"
+              startIcon={<UploadIcon />}
+              onClick={() => setImportOpen(true)}
+            >
+              Bulk Import
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setFormOpen(true)}
+            >
+              Add Product
+            </Button>
+          </Stack>
         </Stack>
-      </Box>
 
-      <Box sx={{ mb: 2 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search by artis code, name, supplier code, supplier, or category..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          size="small"
+        <ProductFilters
+          catalogs={uniqueCatalogs}
+          suppliers={uniqueSuppliers}
+          categories={uniqueCategories}
+          selectedCatalogs={selectedCatalogs}
+          selectedSuppliers={selectedSuppliers}
+          selectedCategories={selectedCategories}
+          catalogFilterMode={catalogFilterMode}
+          searchQuery={searchQuery}
+          groupByAltCode={groupByAltCode}
+          onCatalogChange={setSelectedCatalogs}
+          onSupplierChange={setSelectedSuppliers}
+          onCategoryChange={setSelectedCategories}
+          onCatalogFilterModeChange={setCatalogFilterMode}
+          onSearchQueryChange={setSearchQuery}
+          onGroupByAltCodeChange={setGroupByAltCode}
         />
-      </Box>
 
-      <ProductFilters
-        catalogs={uniqueCatalogs}
-        suppliers={uniqueSuppliers}
-        categories={uniqueCategories}
-        selectedCatalogs={selectedCatalogs}
-        selectedSuppliers={selectedSuppliers}
-        selectedCategories={selectedCategories}
-        onCatalogChange={setSelectedCatalogs}
-        onSupplierChange={setSelectedSuppliers}
-        onCategoryChange={setSelectedCategories}
-      />
-
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={groupByAltCode}
-              onChange={(e) => setGroupByAltCode(e.target.checked)}
-            />
-          }
-          label="Group same designs"
-        />
-      </Box>
-
-      <TableContainer 
-        component={Paper} 
-        sx={{ 
-          flexGrow: 1,
-          height: 'calc(100vh - 280px)',
-          overflow: 'auto',
-          boxShadow: 3,
-          "& .MuiTableCell-root": {
-            borderColor: 'divider',
-            fontSize: '0.95rem',
-            padding: '16px',
-            borderRight: '1px solid rgba(224, 224, 224, 1)',
-            '&:last-child': {
-              borderRight: 'none'
-            }
-          }
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow sx={{ 
-              backgroundColor: '#f5f5f5',
-              '& .MuiTableCell-root': {
-                borderBottom: '2px solid rgba(224, 224, 224, 1)'
+        <TableContainer 
+          component={Paper} 
+          sx={{ 
+            flexGrow: 1,
+            height: 'calc(100vh - 280px)',
+            overflow: 'auto',
+            boxShadow: 3,
+            "& .MuiTableCell-root": {
+              borderColor: 'divider',
+              fontSize: '0.95rem',
+              padding: '16px',
+              borderRight: '1px solid rgba(224, 224, 224, 1)',
+              '&:last-child': {
+                borderRight: 'none'
               }
-            }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
-              <TableCell 
-                sx={{ 
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-                onClick={handleSortToggle}
-              >
-                Artis Code
-                <Box component="span" sx={{ opacity: 0.5, fontSize: '0.8rem' }}>
-                  ({sortDirection === 'asc' ? '↑' : '↓'})
-                </Box>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Supplier Code</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Supplier</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>GSM</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Catalogs</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredProducts.map((product, index) => (
-              <TableRow 
-                key={product.id}
-                sx={{ 
-                  '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
-                  '&:hover': { backgroundColor: '#f5f5f5' }
-                }}
-              >
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{product.artisCode}</TableCell>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>{product.category}</TableCell>
-                <TableCell>{product.supplierCode}</TableCell>
-                <TableCell>{product.supplier}</TableCell>
-                <TableCell>{product.gsm}</TableCell>
-                <TableCell>
-                  <CatalogTags catalogs={product.catalogs} />
+            }
+          }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow sx={{ 
+                backgroundColor: '#f5f5f5',
+                '& .MuiTableCell-root': {
+                  borderBottom: '2px solid rgba(224, 224, 224, 1)'
+                }
+              }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>#</TableCell>
+                <TableCell 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                  onClick={handleSortToggle}
+                >
+                  Artis Code
+                  <Box component="span" sx={{ opacity: 0.5, fontSize: '0.8rem' }}>
+                    ({sortDirection === 'asc' ? '↑' : '↓'})
+                  </Box>
                 </TableCell>
-                <TableCell>
-                  <IconButton 
-                    onClick={() => handleEdit(product)}
-                    size="small"
-                    sx={{ mr: 1 }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton 
-                    onClick={() => handleDelete(product.id)}
-                    size="small"
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Supplier Code</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Supplier</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>GSM</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Catalogs</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {filteredProducts.map((product, index) => (
+                <TableRow 
+                  key={product.id}
+                  sx={{ 
+                    '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
+                    '&:hover': { backgroundColor: '#f5f5f5' }
+                  }}
+                >
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{product.artisCode}</TableCell>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.supplierCode}</TableCell>
+                  <TableCell>{product.supplier}</TableCell>
+                  <TableCell>{product.gsm}</TableCell>
+                  <TableCell>
+                    <CatalogTags catalogs={product.catalogs} />
+                  </TableCell>
+                  <TableCell>
+                    <IconButton 
+                      onClick={() => handleEdit(product)}
+                      size="small"
+                      sx={{ mr: 1 }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton 
+                      onClick={() => handleDelete(product.id)}
+                      size="small"
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      <ProductForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        product={editingProduct}
-        onSubmit={fetchProducts}
-      />
+        <ProductForm
+          open={formOpen}
+          onClose={() => setFormOpen(false)}
+          product={editingProduct}
+          onSubmit={fetchProducts}
+        />
 
-      <BulkImportDialog
-        open={importOpen}
-        onClose={() => setImportOpen(false)}
-        onSuccess={fetchProducts}
-      />
+        <BulkImportDialog
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          onSuccess={fetchProducts}
+        />
+      </Box>
     </Box>
   );
 };

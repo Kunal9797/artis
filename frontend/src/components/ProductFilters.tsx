@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   FormControl,
@@ -6,9 +6,15 @@ import {
   Select,
   MenuItem,
   Stack,
-  Button
+  Button,
+  FormControlLabel,
+  Switch,
+  TextField,
+  InputAdornment,
+  Tooltip
 } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
 
 interface Props {
   catalogs: string[];
@@ -17,9 +23,15 @@ interface Props {
   selectedCatalogs: string[];
   selectedSuppliers: string[];
   selectedCategories: string[];
+  catalogFilterMode: 'AND' | 'OR';
+  searchQuery: string;
+  groupByAltCode: boolean;
   onCatalogChange: (value: string[]) => void;
   onSupplierChange: (value: string[]) => void;
   onCategoryChange: (value: string[]) => void;
+  onCatalogFilterModeChange: (mode: 'AND' | 'OR') => void;
+  onSearchQueryChange: (value: string) => void;
+  onGroupByAltCodeChange: (value: boolean) => void;
 }
 
 const ProductFilters: React.FC<Props> = ({
@@ -29,9 +41,15 @@ const ProductFilters: React.FC<Props> = ({
   selectedCatalogs,
   selectedSuppliers,
   selectedCategories,
+  catalogFilterMode,
+  searchQuery,
+  groupByAltCode,
   onCatalogChange,
   onSupplierChange,
   onCategoryChange,
+  onCatalogFilterModeChange,
+  onSearchQueryChange,
+  onGroupByAltCodeChange,
 }) => {
   const handleClearFilters = () => {
     onCatalogChange([]);
@@ -44,66 +62,132 @@ const ProductFilters: React.FC<Props> = ({
     selectedCategories.length > 0;
 
   return (
-    <Stack direction="row" spacing={2} alignItems="center">
-      <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel>Catalogs</InputLabel>
-        <Select
-          multiple
-          value={selectedCatalogs}
-          label="Catalogs"
-          onChange={(e) => onCatalogChange(e.target.value as string[])}
+    <Box sx={{ mb: 2 }}>
+      <Stack spacing={2}>
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          alignItems="center"
+          sx={{
+            backgroundColor: 'background.paper',
+            p: 1,
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
         >
-          {catalogs.map((catalog) => (
-            <MenuItem key={catalog} value={catalog}>
-              {catalog}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          <TextField
+            size="small"
+            sx={{ width: 300 }}
+            variant="outlined"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
 
-      <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel>Supplier</InputLabel>
-        <Select
-          multiple
-          value={selectedSuppliers}
-          label="Supplier"
-          onChange={(e) => onSupplierChange(e.target.value as string[])}
-        >
-          {suppliers.map((supplier) => (
-            <MenuItem key={supplier} value={supplier}>
-              {supplier}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          <FormControl size="small" sx={{ width: 200 }}>
+            <InputLabel>
+              Catalogs {selectedCatalogs.length > 0 && `(${selectedCatalogs.length})`}
+            </InputLabel>
+            <Select
+              multiple
+              value={selectedCatalogs}
+              label="Catalogs"
+              onChange={(e) => onCatalogChange(e.target.value as string[])}
+            >
+              {catalogs.map((catalog) => (
+                <MenuItem key={catalog} value={catalog}>
+                  {catalog}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-      <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel>Category</InputLabel>
-        <Select
-          multiple
-          value={selectedCategories}
-          label="Category"
-          onChange={(e) => onCategoryChange(e.target.value as string[])}
-        >
-          {categories.map((category) => (
-            <MenuItem key={category} value={category}>
-              {category}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={catalogFilterMode === 'AND'}
+                onChange={(e) => onCatalogFilterModeChange(e.target.checked ? 'AND' : 'OR')}
+                size="small"
+              />
+            }
+            label={catalogFilterMode}
+            sx={{
+              bgcolor: (theme) => theme.palette.mode === 'light' ? 'grey.100' : 'grey.900',
+              borderRadius: 1,
+              px: 1,
+              width: 110,
+              '& .MuiFormControlLabel-label': {
+                fontWeight: 500,
+                color: (theme) => theme.palette.primary.main
+              }
+            }}
+          />
 
-      {hasActiveFilters && (
-        <Button
-          variant="outlined"
-          startIcon={<ClearIcon />}
-          onClick={handleClearFilters}
-          size="small"
-        >
-          Clear Filters
-        </Button>
-      )}
-    </Stack>
+          <FormControl size="small" sx={{ width: 200 }}>
+            <InputLabel>Supplier</InputLabel>
+            <Select
+              multiple
+              value={selectedSuppliers}
+              label="Supplier"
+              onChange={(e) => onSupplierChange(e.target.value as string[])}
+            >
+              {suppliers.map((supplier) => (
+                <MenuItem key={supplier} value={supplier}>
+                  {supplier}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ width: 200 }}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              multiple
+              value={selectedCategories}
+              label="Category"
+              onChange={(e) => onCategoryChange(e.target.value as string[])}
+            >
+              {categories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={groupByAltCode}
+                onChange={(e) => onGroupByAltCodeChange(e.target.checked)}
+                size="small"
+              />
+            }
+            label="Group same designs"
+            sx={{ minWidth: 160 }}
+          />
+
+          {hasActiveFilters && (
+            <Button
+              variant="outlined"
+              startIcon={<ClearIcon />}
+              onClick={handleClearFilters}
+              size="small"
+            >
+              Clear
+            </Button>
+          )}
+        </Stack>
+      </Stack>
+    </Box>
   );
 };
 
