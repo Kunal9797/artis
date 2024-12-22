@@ -19,9 +19,16 @@ api.interceptors.request.use((config) => {
 
 export const login = async (email: string, password: string) => {
   try {
+    console.log('Attempting login with API URL:', API_URL);
     const response = await api.post('/auth/login', { email, password });
+    console.log('Login response:', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Login error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
     throw error;
   }
 };
