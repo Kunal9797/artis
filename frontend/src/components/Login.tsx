@@ -10,9 +10,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../assets/artislogo.png';
+import { login as apiLogin } from '../services/api';
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login: authLogin } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,21 +25,8 @@ const Login: React.FC = () => {
     setError('');
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8099/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-
-      login(data.token, data.user);
+      const data = await apiLogin(email, password);
+      authLogin(data.token, data.user);
       navigate('/dashboard', { replace: true });
     } catch (error: any) {
       console.error('Login failed:', error);
