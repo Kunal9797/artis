@@ -7,15 +7,18 @@ import {
   Select,
   MenuItem,
   FormControl,
+  Button,
 } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import ProductCatalog from './ProductCatalog';
 import InfoPage from './InfoPage';
 import OrdersPage from './OrdersPage';
 import Logo from '../assets/artislogo.png';
+import ArtisLogoText from '../assets/artislaminatestext.png';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState('catalog');
 
   const renderPage = () => {
@@ -34,10 +37,23 @@ const Dashboard: React.FC = () => {
       <AppBar position="static">
         <Toolbar>
           <Box sx={{ display: 'flex', alignItems: 'center', mr: 4 }}>
-            <img src={Logo} alt="Artis Logo" style={{ height: '40px', marginRight: '16px' }} />
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 500 }}>
-              Artis Laminate
-            </Typography>
+            <img 
+              src={Logo} 
+              alt="Artis Logo" 
+              style={{ 
+                height: '50px', 
+                marginRight: '10px',
+                width: 'auto'
+              }} 
+            />
+            <img 
+              src={ArtisLogoText} 
+              alt="Artis Laminate" 
+              style={{ 
+                height: '40px',
+                width: 'auto'
+              }} 
+            />
           </Box>
 
           <FormControl size="small" sx={{ minWidth: 200, mr: 2 }}>
@@ -59,9 +75,22 @@ const Dashboard: React.FC = () => {
           
           <Box sx={{ flexGrow: 1 }} />
           
-          <Typography sx={{ color: '#ffffff' }}>
-            Welcome, {user?.name || 'User'}
+          <Typography sx={{ color: '#ffffff', mr: 2 }}>
+            Welcome, {user?.name || 'Kunal'}
           </Typography>
+
+          <Button
+            color="inherit"
+            startIcon={<LogoutIcon />}
+            onClick={logout}
+            sx={{
+              '&:hover': { 
+                backgroundColor: 'rgba(255,255,255,0.1)'
+              }
+            }}
+          >
+            Logout
+          </Button>
         </Toolbar>
       </AppBar>
 

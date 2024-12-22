@@ -102,6 +102,19 @@ const ProductFilters: React.FC<Props> = ({
               label="Catalogs"
               onChange={(e) => onCatalogChange(e.target.value as string[])}
             >
+              <MenuItem sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={catalogFilterMode === 'AND'}
+                      onChange={(e) => onCatalogFilterModeChange(e.target.checked ? 'AND' : 'OR')}
+                      size="small"
+                    />
+                  }
+                  label={catalogFilterMode === 'AND' ? 'AND' : 'OR'}
+                  sx={{ m: 0 }}
+                />
+              </MenuItem>
               {catalogs.map((catalog) => (
                 <MenuItem key={catalog} value={catalog}>
                   {catalog}
@@ -109,27 +122,6 @@ const ProductFilters: React.FC<Props> = ({
               ))}
             </Select>
           </FormControl>
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={catalogFilterMode === 'AND'}
-                onChange={(e) => onCatalogFilterModeChange(e.target.checked ? 'AND' : 'OR')}
-                size="small"
-              />
-            }
-            label={catalogFilterMode}
-            sx={{
-              bgcolor: (theme) => theme.palette.mode === 'light' ? 'grey.100' : 'grey.900',
-              borderRadius: 1,
-              px: 1,
-              width: 110,
-              '& .MuiFormControlLabel-label': {
-                fontWeight: 500,
-                color: (theme) => theme.palette.primary.main
-              }
-            }}
-          />
 
           <FormControl size="small" sx={{ width: 200 }}>
             <InputLabel>Supplier</InputLabel>

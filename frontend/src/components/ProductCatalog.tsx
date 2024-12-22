@@ -84,12 +84,6 @@ const ProductCatalog: React.FC = () => {
   const [catalogFilterMode, setCatalogFilterMode] = useState<'AND' | 'OR'>('OR');
 
   useEffect(() => {
-    console.log('Effect triggered with:', {
-      groupByAltCode,
-      selectedCatalogs,
-      productsLength: products.length
-    });
-
     let filtered = [...products];
     
     // Apply search filter first
@@ -101,22 +95,6 @@ const ProductCatalog: React.FC = () => {
         (p.supplierCode?.toLowerCase() || '').includes(query) ||
         (p.supplier?.toLowerCase() || '').includes(query) ||
         (p.category?.toLowerCase() || '').includes(query)
-      );
-    }
-
-    // Apply supplier filter
-    if (selectedSuppliers.length > 0) {
-      filtered = filtered.filter(p => {
-        if (!p.supplier) return false;
-        const normalizedSupplier = supplierNormalization[p.supplier] || p.supplier;
-        return selectedSuppliers.includes(normalizedSupplier);
-      });
-    }
-    
-    // Apply category filter
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(p => 
-        p.category ? selectedCategories.includes(p.category) : false
       );
     }
 
@@ -179,11 +157,27 @@ const ProductCatalog: React.FC = () => {
             p.catalogs?.includes(selectedCatalog)
           );
         } else {
-          return p.catalogs?.some(catalog => 
-            selectedCatalogs.includes(catalog)
+          return selectedCatalogs.some(catalog => 
+            p.catalogs?.includes(catalog)
           );
         }
       });
+    }
+
+    // Apply supplier filter
+    if (selectedSuppliers.length > 0) {
+      filtered = filtered.filter(p => {
+        if (!p.supplier) return false;
+        const normalizedSupplier = supplierNormalization[p.supplier] || p.supplier;
+        return selectedSuppliers.includes(normalizedSupplier);
+      });
+    }
+    
+    // Apply category filter
+    if (selectedCategories.length > 0) {
+      filtered = filtered.filter(p => 
+        p.category ? selectedCategories.includes(p.category) : false
+      );
     }
 
     // Apply sorting
