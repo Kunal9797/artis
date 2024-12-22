@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: artis-backend
+    env: node
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://artis-rust.vercel.app/
+      - key: DB_HOST
+        fromDatabase:
+          name: artis-db
+          property: host
+      - key: DB_USER
+        fromDatabase:
+          name: artis-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: artis-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: artis-db
+          property: database
+
+databases:
+  - name: artis-db
+    plan: free
+    ipAllowList: [] 

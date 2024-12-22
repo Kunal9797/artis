@@ -13,6 +13,12 @@ const sequelize = new Sequelize({
   database: process.env.DB_NAME || 'artis_db',
   port: parseInt(process.env.DB_PORT || '5432'),
   logging: false,
+  dialectOptions: process.env.NODE_ENV === 'production' ? {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  } : {},
   pool: {
     max: 5,
     min: 0,

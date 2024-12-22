@@ -30,10 +30,10 @@ import ProductFilters from './ProductFilters';
 import SearchIcon from '@mui/icons-material/Search';
 
 const supplierNormalization: { [key: string]: string } = {
-  'MATCH ': 'MATCH',
-  'MATCH GRAPHICS': 'MATCH',
-  'INFINIAA': 'INFINIAA',
-  'INFINIAA DÉCOR': 'INFINIAA',
+  'MATCH ': 'MATCH GRAPHICS',
+  'MATCH GRAPHICS': 'MATCH GRAPHICS',
+  'INFINIAA': 'INFINIAA DÉCOR',
+  'INFINIAA DÉCOR': 'INFINIAA DÉCOR',
   'UNIK DÉCOR': 'UNIQUE DÉCOR',
   'UNIQUE DÉCOR': 'UNIQUE DÉCOR',
   'SURFACE': 'SURFACE DÉCOR',
@@ -224,7 +224,12 @@ const ProductCatalog: React.FC = () => {
   };
 
   return (
-    <Box sx={{ height: '100%', p: 2 }}>
+    <Box sx={{ 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      p: 2 
+    }}>
       <Box>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h5">All Products</Typography>
@@ -268,9 +273,10 @@ const ProductCatalog: React.FC = () => {
           component={Paper} 
           sx={{ 
             flexGrow: 1,
-            height: 'calc(100vh - 280px)',
+            height: 'calc(100vh - 180px)',
             overflow: 'auto',
             boxShadow: 3,
+            mt: 2,
             "& .MuiTableCell-root": {
               borderColor: 'divider',
               fontSize: '0.95rem',
@@ -282,7 +288,7 @@ const ProductCatalog: React.FC = () => {
             }
           }}
         >
-          <Table>
+          <Table stickyHeader>
             <TableHead>
               <TableRow sx={{ 
                 backgroundColor: '#f5f5f5',

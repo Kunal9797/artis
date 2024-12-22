@@ -69,15 +69,24 @@ export const generateOrderPDF = async (orderData: OrderData) => {
         fillColor: [43, 42, 41],
         textColor: 255,
         fontSize: 11,
-        halign: 'left'
+        halign: 'center',
+        fontStyle: 'bold'
       },
       bodyStyles: {
-        fontSize: 10
+        fontSize: 10,
+        halign: 'center'
       },
       columnStyles: {
-        0: { cellWidth: 40, halign: 'left' },
-        1: { cellWidth: 100, halign: 'left' },
-        2: { cellWidth: 30, halign: 'right' }
+        0: { 
+          cellWidth: 40, 
+          fontStyle: 'bold'  // Bold design code
+        },
+        1: { 
+          cellWidth: 100
+        },
+        2: { 
+          cellWidth: 30
+        }
       },
       margin: { top: 30, right: 20, bottom: 50, left: 20 },
       theme: 'grid'
