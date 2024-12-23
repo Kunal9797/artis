@@ -13,20 +13,20 @@ export const generateOrderPDF = async (orderData: OrderData) => {
     console.log('Starting PDF generation...');
     const doc = new jsPDF();
     
-    console.log('Attempting to fetch letterhead...');
-    const letterheadUrl = process.env.PUBLIC_URL + '/templates/letterhead.png';
-    console.log('Letterhead URL:', letterheadUrl);
+    // Use absolute URL for production
+    const letterheadUrl = process.env.NODE_ENV === 'production'
+      ? 'https://artis-rust.vercel.app/templates/letterhead.png'
+      : '/templates/letterhead.png';
     
+    console.log('Attempting to fetch letterhead from:', letterheadUrl);
     const response = await fetch(letterheadUrl);
-    console.log('Fetch response status:', response.status);
-    console.log('Fetch response headers:', Object.fromEntries(response.headers));
     
     if (!response.ok) {
       console.error('Failed to load letterhead:', {
         status: response.status,
         statusText: response.statusText,
         url: letterheadUrl,
-        publicUrl: process.env.PUBLIC_URL
+        env: process.env.NODE_ENV
       });
       throw new Error(`Failed to load letterhead: ${response.status} ${response.statusText}`);
     }
