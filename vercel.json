@@ -17,6 +17,10 @@
         "dest": "backend/src/server.ts"
       },
       {
+        "src": "/templates/(.*)",
+        "dest": "frontend/public/templates/$1"
+      },
+      {
         "src": "/(.*)",
         "dest": "frontend/$1"
       }
