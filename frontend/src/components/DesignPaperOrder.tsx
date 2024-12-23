@@ -288,10 +288,10 @@ const DesignPaperOrder: React.FC = () => {
                               <TextField
                                 type="number"
                                 label="Quantity (kg)"
-                                value={item.quantity}
+                                value={item.quantity || ''}
                                 onChange={(e) => handleQuantityChange(
                                   item.product.id.toString(),
-                                  Number(e.target.value)
+                                  parseInt(e.target.value) || 0
                                 )}
                                 fullWidth
                                 size="small"

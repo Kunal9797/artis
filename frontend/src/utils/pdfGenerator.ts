@@ -14,7 +14,7 @@ export const generateOrderPDF = async (orderData: OrderData) => {
     const doc = new jsPDF();
     
     // Add letterhead as image (use PNG/JPEG format instead of PDF)
-    const response = await fetch('/templates/letterhead.png'); // Change file extension
+    const response = await fetch(process.env.PUBLIC_URL + '/templates/letterhead.png'); // Change file extension
     if (!response.ok) {
       console.error('Failed to load letterhead:', response.statusText);
       throw new Error(`Failed to load letterhead: ${response.status} ${response.statusText}`);
