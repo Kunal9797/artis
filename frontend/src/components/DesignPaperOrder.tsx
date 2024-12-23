@@ -105,14 +105,28 @@ const DesignPaperOrder: React.FC = () => {
     if (validOrderItems.length === 0) return;
     
     try {
+      console.log('Starting order generation with items:', validOrderItems);
+      console.log('Selected supplier:', selectedSupplier);
+      
       await generateOrderPDF({
         supplier: selectedSupplier,
         items: validOrderItems,
         date: new Date()
       });
+      
+      console.log('PDF generation completed successfully');
     } catch (error) {
-      console.error('Failed to generate PDF:', error);
-      // You might want to show an error message to the user here
+      if (error instanceof Error) {
+        console.error('Failed to generate PDF:', {
+          error,
+          message: error.message,
+          stack: error.stack
+        });
+        alert(`Failed to generate PDF: ${error.message}`);
+      } else {
+        console.error('Failed to generate PDF:', error);
+        alert('Failed to generate PDF: Unknown error');
+      }
     }
   };
 

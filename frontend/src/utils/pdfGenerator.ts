@@ -10,13 +10,24 @@ declare module 'jspdf' {
 
 export const generateOrderPDF = async (orderData: OrderData) => {
   try {
-    // Create new PDF
+    console.log('Starting PDF generation...');
     const doc = new jsPDF();
     
-    // Add letterhead as image (use PNG/JPEG format instead of PDF)
-    const response = await fetch(process.env.PUBLIC_URL + '/templates/letterhead.png'); // Change file extension
+    console.log('Attempting to fetch letterhead...');
+    const letterheadUrl = process.env.PUBLIC_URL + '/templates/letterhead.png';
+    console.log('Letterhead URL:', letterheadUrl);
+    
+    const response = await fetch(letterheadUrl);
+    console.log('Fetch response status:', response.status);
+    console.log('Fetch response headers:', Object.fromEntries(response.headers));
+    
     if (!response.ok) {
-      console.error('Failed to load letterhead:', response.statusText);
+      console.error('Failed to load letterhead:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: letterheadUrl,
+        publicUrl: process.env.PUBLIC_URL
+      });
       throw new Error(`Failed to load letterhead: ${response.status} ${response.statusText}`);
     }
     
