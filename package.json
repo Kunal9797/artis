@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@types/node": "^22.10.2",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
+    "xlsx": "^0.18.5"
+  }
+}

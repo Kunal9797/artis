@@ -1,10 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
 
-export enum InventoryType {
-  DESIGN_PAPER_SHEET = 'DESIGN_PAPER_SHEET'
-}
-
 class Product extends Model {
   public id!: string;
   public artisCode!: string;
@@ -14,7 +10,6 @@ class Product extends Model {
   public supplier?: string;
   public texture?: string;
   public thickness?: string;
-  public inventoryType!: InventoryType;
   public designPaperId?: string;
   public designPaper?: Product;
   public gsm?: string;
@@ -58,10 +53,6 @@ Product.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    inventoryType: {
-      type: DataTypes.ENUM(...Object.values(InventoryType)),
-      allowNull: false,
-    },
     designPaperId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -87,15 +78,7 @@ Product.init(
   {
     sequelize,
     modelName: 'Product',
-    tableName: 'Products',
-    hooks: {
-      beforeValidate: async (product: Product) => {
-        // For design papers, these fields should always be undefined
-        product.texture = undefined;
-        product.thickness = undefined;
-        product.designPaperId = undefined;
-      }
-    }
+    tableName: 'Products'
   }
 );
 

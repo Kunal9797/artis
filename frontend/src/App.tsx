@@ -7,6 +7,8 @@ import { CssBaseline, ThemeProvider, createTheme, Box } from '@mui/material';
 import ProductCatalog from './components/ProductCatalog';
 import DesignPaperOrder from './components/DesignPaperOrder';
 import OrdersPage from './components/OrdersPage';
+import InventoryList from './components/Inventory/InventoryList';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const theme = createTheme({
   typography: {
@@ -171,6 +173,11 @@ const AuthWrapper = () => {
         />
         <Route path="/design-paper-order" element={<DesignPaperOrder />} />
         <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/inventory" element={
+          <ProtectedRoute>
+            <InventoryList />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Box>
   );

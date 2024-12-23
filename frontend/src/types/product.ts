@@ -1,7 +1,3 @@
-export enum InventoryType {
-  DESIGN_PAPER_SHEET = 'DESIGN_PAPER_SHEET'
-}
-
 export interface Product {
   id: string;
   artisCode: string;
@@ -11,6 +7,5 @@ export interface Product {
   supplier?: string;
   gsm?: string;
   catalogs?: string[];
-  inventoryType: InventoryType;
   altCode?: string;
 } 

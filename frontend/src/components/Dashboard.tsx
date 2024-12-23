@@ -16,6 +16,7 @@ import InfoPage from './InfoPage';
 import OrdersPage from './OrdersPage';
 import Logo from '../assets/artislogo.png';
 import ArtisLogoText from '../assets/artislaminatestext.png';
+import InventoryList from './Inventory/InventoryList';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -27,6 +28,8 @@ const Dashboard: React.FC = () => {
         return <InfoPage />;
       case 'orders':
         return <OrdersPage />;
+      case 'inventory':
+        return <InventoryList />;
       default:
         return <ProductCatalog />;
     }
@@ -70,6 +73,7 @@ const Dashboard: React.FC = () => {
               <MenuItem value="catalog">Product Catalog</MenuItem>
               <MenuItem value="orders">Orders</MenuItem>
               <MenuItem value="info">Information</MenuItem>
+              <MenuItem value="inventory">Inventory Management</MenuItem>
             </Select>
           </FormControl>
           

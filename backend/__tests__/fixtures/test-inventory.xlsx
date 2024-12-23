@@ -1,0 +1,8 @@
+const workbook = XLSX.utils.book_new();
+const worksheet = XLSX.utils.aoa_to_sheet([
+  ['DESIGN CODE', 'SUPPLIER CODE', 'OCT_OPENING', 'OCT_CONS', 'NOV_OPENING', 'NOV_CONS', 'DEC_OPENING', 'DEC_CONS'],
+  ['901', '5501', '100', '20', '80', '30', '50', '10']
+]);
+
+XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+XLSX.writeFile(workbook, path.join(__dirname, 'test-inventory.xlsx')); 

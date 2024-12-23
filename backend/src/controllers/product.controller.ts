@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import Product from '../models/Product';
 import * as XLSX from 'xlsx';
-import { InventoryType } from '../models/Product';
 import sequelize from '../config/database';
 
 export const getAllProducts = async (req: Request, res: Response) => {
@@ -48,7 +47,6 @@ export const createProduct = async (req: Request, res: Response) => {
       supplier,
       gsm,
       catalogs,
-      inventoryType: InventoryType.DESIGN_PAPER_SHEET
     });
 
     res.status(201).json(product);
@@ -103,7 +101,6 @@ export const bulkCreateProducts = async (req: Request, res: Response) => {
         category: row.CATEGORY || null,
         catalogs: row.CATALOGS ? row.CATALOGS.split(',').map((c: string) => c.trim()) : null,
         gsm: row.GSM?.toString() || null,
-        inventoryType: InventoryType.DESIGN_PAPER_SHEET
       };
 
       if (!product.artisCode) {

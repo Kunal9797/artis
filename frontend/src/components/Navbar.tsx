@@ -9,6 +9,9 @@ const Navbar: React.FC = () => {
       <MenuItem component={Link} to="/orders">
         Orders
       </MenuItem>
+      <MenuItem component={Link} to="/inventory">
+        Inventory
+      </MenuItem>
     </div>
   );
 };
