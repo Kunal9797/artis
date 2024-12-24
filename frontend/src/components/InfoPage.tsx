@@ -1,42 +1,113 @@
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, Grid, Divider } from '@mui/material';
+import { useTheme } from '../context/ThemeContext';
 
 const InfoPage: React.FC = () => {
+  const { isDarkMode } = useTheme();
+
+  const sections = [
+    {
+      title: "Inventory Management",
+      items: [
+        "View current stock levels in List or Grid view",
+        "Sort inventory by stock levels (ascending/descending)",
+        "Add individual transactions (IN/OUT)",
+        "Bulk upload transactions via Excel",
+        "View transaction history for each product",
+        "Clear all inventory data (admin only)"
+      ]
+    },
+    {
+      title: "Product Catalog",
+      items: [
+        "Search products by code, name, supplier, or category",
+        "Filter by catalog, supplier, and category",
+        "Group similar designs by supplier code",
+        "Add, edit, or delete products",
+        "Bulk import products from Excel",
+        "Sort products by clicking column headers"
+      ]
+    },
+    {
+      title: "Orders Management",
+      items: [
+        "Create design paper orders by supplier",
+        "Filter and search products within orders",
+        "View current stock levels while ordering",
+        "Set order quantities with validation",
+        "Generate formatted order documents",
+        "Track order history"
+      ]
+    }
+  ];
+
   return (
     <Box sx={{ p: 3 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" sx={{ mb: 3 }}>
-          How to Use the Product Catalog
-        </Typography>
-        
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Basic Features
-        </Typography>
-        <Typography paragraph>
-          • Search: Use the search bar to find products by artis code, name, supplier code, supplier, or category
-          • Filters: Use the dropdown menus to filter by catalog, supplier, and category
-          • Grouping: Toggle "Group same designs" to combine products with the same supplier code
-        </Typography>
+      <Typography 
+        variant="h4" 
+        sx={{ 
+          mb: 4, 
+          fontWeight: 600,
+          color: isDarkMode ? '#fff' : '#2b2a29'
+        }}
+      >
+        System Guide
+      </Typography>
 
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Managing Products
-        </Typography>
-        <Typography paragraph>
-          • Add Product: Click the "Add Product" button to create a new product
-          • Edit: Use the edit icon to modify existing products
-          • Delete: Use the delete icon to remove products
-          • Bulk Import: Use the "Bulk Import" button to import multiple products from an Excel file
-        </Typography>
+      <Grid container spacing={3}>
+        {sections.map((section, index) => (
+          <Grid item xs={12} md={4} key={index}>
+            <Paper 
+              elevation={3}
+              sx={{ 
+                p: 3, 
+                height: '100%',
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)'
+                }
+              }}
+            >
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  mb: 2,
+                  color: isDarkMode ? '#90CAF9' : '#1A237E',
+                  fontWeight: 600
+                }}
+              >
+                {section.title}
+              </Typography>
+              
+              <Divider sx={{ mb: 2 }} />
 
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Tips
-        </Typography>
-        <Typography paragraph>
-          • Sort products by clicking on the Artis Code column header
-          • Use the catalog tags to quickly identify which catalogs a product belongs to
-          • When grouping designs, products with the same supplier code will be combined
-        </Typography>
-      </Paper>
+              {section.items.map((item, itemIndex) => (
+                <Box 
+                  key={itemIndex} 
+                  sx={{ 
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    mb: 1.5
+                  }}
+                >
+                  <Typography 
+                    sx={{ 
+                      color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+                      '&::before': {
+                        content: '"•"',
+                        marginRight: '8px',
+                        color: isDarkMode ? '#90CAF9' : '#1A237E'
+                      }
+                    }}
+                  >
+                    {item}
+                  </Typography>
+                </Box>
+              ))}
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 };

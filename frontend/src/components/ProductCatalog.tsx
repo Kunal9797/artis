@@ -310,55 +310,29 @@ const ProductCatalog: React.FC = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell 
-                  sx={{ 
-                    backgroundColor: '#f5f5f5 !important',
-                    fontWeight: 'bold',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 2
-                  }}
-                >
+                <TableCell>
                   #
                 </TableCell>
-                <TableCell 
-                  onClick={handleSortToggle}
-                  sx={{ 
-                    backgroundColor: '#f5f5f5 !important',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 2,
-                    '& .MuiBox-root': {
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      marginLeft: 1
-                    }
-                  }}
-                >
+                <TableCell onClick={handleSortToggle} sx={{ cursor: 'pointer' }}>
                   Artis Code
-                  <Box component="span" sx={{ opacity: 0.5, fontSize: '0.8rem' }}>
+                  <Box component="span" sx={{ opacity: 0.5, fontSize: '0.8rem', ml: 1 }}>
                     ({sortDirection === 'asc' ? '↑' : '↓'})
                   </Box>
                 </TableCell>
-                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Name</TableCell>
-                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Category</TableCell>
-                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Supplier Code</TableCell>
-                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Supplier</TableCell>
-                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>GSM</TableCell>
-                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Catalogs</TableCell>
-                <TableCell sx={{ backgroundColor: '#f5f5f5 !important', fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Supplier Code</TableCell>
+                <TableCell>Supplier</TableCell>
+                <TableCell>GSM</TableCell>
+                <TableCell>Catalogs</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {filteredProducts.map((product, index) => (
                 <TableRow 
                   key={product.id}
-                  sx={{ 
-                    '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
-                    '&:hover': { backgroundColor: '#f5f5f5' }
-                  }}
+                  
                 >
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{product.artisCode}</TableCell>

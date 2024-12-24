@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Logo from '../assets/artislogo.png';
 import { login as apiLogin } from '../services/api';
+import { useTheme } from '../context/ThemeContext';
 
 const Login: React.FC = () => {
   const { login: authLogin } = useAuth();
@@ -19,6 +20,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { isDarkMode } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,8 +94,9 @@ const Login: React.FC = () => {
             <Typography 
               variant="subtitle1" 
               sx={{ 
-                color: '#ffffff',
-                mt: 1
+                color: '#ffffff !important',
+                mt: 1,
+                fontWeight: 500
               }}
             >
               Inventory Management Portal

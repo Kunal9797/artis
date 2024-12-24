@@ -268,3 +268,23 @@ export const clearInventory = async (req: Request, res: Response) => {
     });
   }
 }; 
+
+export const getRecentTransactions = async (req: Request, res: Response) => {
+  try {
+    const transactions = await InventoryTransaction.findAll({
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+      include: [{
+        model: Product,
+        as: 'product',
+        attributes: ['artisCode', 'name']
+      }]
+    });
+    
+    console.log('Recent transactions:', transactions); // Debug log
+    res.json(transactions);
+  } catch (error) {
+    console.error('Error fetching recent transactions:', error);
+    res.status(500).json({ error: 'Error fetching recent transactions' });
+  }
+}; 

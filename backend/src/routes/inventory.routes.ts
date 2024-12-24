@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { auth } from '../middleware/auth';
 import multer from 'multer';
+import * as inventoryController from '../controllers/inventory.controller';
 import {
   getAllInventory,
   createTransaction,
@@ -16,7 +17,7 @@ const router = Router();
 router.get('/', auth, getAllInventory);
 router.post('/transaction', auth, createTransaction);
 router.get('/transactions/:productId', auth, getProductTransactions);
-
+router.get('/transactions', auth, inventoryController.getRecentTransactions);
 // Bulk upload route
 router.post('/bulk', auth, upload.single('file'), bulkUploadInventory);
 

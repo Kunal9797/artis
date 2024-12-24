@@ -12,7 +12,10 @@ import {
   Button,
   IconButton,
   Tooltip,
-  CircularProgress
+  CircularProgress,
+  Grid,
+  Card,
+  CardContent
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -21,6 +24,9 @@ import { getAllInventory, api } from '../../services/api';
 import TransactionDialog from './TransactionDialog';
 import HistoryDialog from './HistoryDialog';
 import BulkUploadDialog from './BulkUploadDialog';
+import GridViewIcon from '@mui/icons-material/GridView';
+import ListIcon from '@mui/icons-material/List';
+import { useTheme } from '../../context/ThemeContext';
 
 interface InventoryItem {
   id: string;
@@ -107,6 +113,7 @@ const groupInventoryBySupplierCode = async (inventory: InventoryItem[]): Promise
 };
 
 const InventoryList: React.FC = () => {
+  const { isDarkMode } = useTheme();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -115,6 +122,7 @@ const InventoryList: React.FC = () => {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const fetchInventory = async () => {
     try {
@@ -146,6 +154,53 @@ const InventoryList: React.FC = () => {
     });
   }, [inventory, sortOrder]);
 
+  const renderGridView = () => (
+    <Grid container spacing={2}>
+      {sortedInventory.map((item) => (
+        <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
+          <Card 
+            sx={{ 
+              height: '100%',
+              transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: 4
+              }
+            }}
+          >
+            <CardContent>
+              <Typography variant="h6">{item.product.artisCode}</Typography>
+              <Typography color="textSecondary">{item.product.supplierCode || '-'}</Typography>
+              <Typography>{item.product.supplier || '-'}</Typography>
+              <Typography>{item.product.category || '-'}</Typography>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  mt: 2,
+                  color: isDarkMode ? '#90CAF9' : '#1A237E',
+                  fontWeight: 'bold'
+                }}
+              >
+                {item.currentStock}<span className="unit">kgs</span>
+              </Typography>
+              <Button 
+                fullWidth 
+                variant="outlined" 
+                sx={{ mt: 2 }}
+                onClick={() => {
+                  setSelectedProduct(item.productId);
+                  setHistoryOpen(true);
+                }}
+              >
+                View History
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -153,6 +208,12 @@ const InventoryList: React.FC = () => {
           Inventory Management
         </Typography>
         <Box>
+          <IconButton 
+            onClick={() => setViewMode(prev => prev === 'list' ? 'grid' : 'list')} 
+            sx={{ mr: 1 }}
+          >
+            {viewMode === 'list' ? <GridViewIcon /> : <ListIcon />}
+          </IconButton>
           <Tooltip title="Refresh">
             <IconButton onClick={fetchInventory} sx={{ mr: 1 }}>
               <RefreshIcon />
@@ -173,23 +234,6 @@ const InventoryList: React.FC = () => {
           >
             Add Transaction
           </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            onClick={async () => {
-              if (window.confirm('Are you sure you want to clear all inventory?')) {
-                try {
-                  await api.delete('/inventory');
-                  fetchInventory();
-                } catch (error) {
-                  setError('Failed to clear inventory');
-                }
-              }
-            }}
-            sx={{ mr: 1 }}
-          >
-            Clear All
-          </Button>
         </Box>
       </Box>
 
@@ -203,7 +247,7 @@ const InventoryList: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress />
         </Box>
-      ) : (
+      ) : viewMode === 'list' ? (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -242,15 +286,16 @@ const InventoryList: React.FC = () => {
                     sx={{
                       fontWeight: 'bold',
                       fontSize: '1.1rem',
-                      color: 'primary.main',
                       '& .unit': {
                         fontSize: '0.8rem',
-                        color: 'text.secondary',
                         marginLeft: '4px'
                       }
                     }}
                   >
-                    {item.currentStock}<span className="unit">kgs</span>
+                    <Box component="span" sx={{ color: isDarkMode ? '#90CAF9' : '#1A237E' }}>
+                      {item.currentStock}
+                    </Box>
+                    <span className="unit">kgs</span>
                   </TableCell>
                   <TableCell>
                     <Button 
@@ -269,6 +314,8 @@ const InventoryList: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
+      ) : (
+        renderGridView()
       )}
 
       <TransactionDialog
@@ -289,6 +336,40 @@ const InventoryList: React.FC = () => {
         onClose={() => setBulkUploadOpen(false)}
         onSuccess={fetchInventory}
       />
+
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        mt: 4, 
+        borderTop: '1px solid',
+        borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+        pt: 2
+      }}>
+        <Button
+          variant="contained"
+          color="error"
+          onClick={async () => {
+            if (window.confirm('Are you sure you want to clear all inventory?')) {
+              try {
+                await api.delete('/inventory');
+                fetchInventory();
+              } catch (error) {
+                setError('Failed to clear inventory');
+              }
+            }
+          }}
+          sx={{ 
+            bgcolor: '#d32f2f',
+            '&:hover': { 
+              bgcolor: '#b71c1c'
+            },
+            fontWeight: 'bold',
+            px: 4
+          }}
+        >
+          Clear All
+        </Button>
+      </Box>
     </Box>
   );
 };

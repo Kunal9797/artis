@@ -8,6 +8,7 @@ import {
   MenuItem,
   FormControl,
   Button,
+  IconButton,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
@@ -17,10 +18,15 @@ import OrdersPage from './OrdersPage';
 import Logo from '../assets/artislogo.png';
 import ArtisLogoText from '../assets/artislaminatestext.png';
 import InventoryList from './Inventory/InventoryList';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import { useTheme } from '../context/ThemeContext';
+import DashboardHome from './DashboardHome';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [currentPage, setCurrentPage] = useState('catalog');
+  const [currentPage, setCurrentPage] = useState('home');
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const renderPage = () => {
     switch (currentPage) {
@@ -30,8 +36,10 @@ const Dashboard: React.FC = () => {
         return <OrdersPage />;
       case 'inventory':
         return <InventoryList />;
-      default:
+      case 'catalog':
         return <ProductCatalog />;
+      default:
+        return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
   };
 
@@ -39,7 +47,15 @@ const Dashboard: React.FC = () => {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
       <AppBar position="static">
         <Toolbar>
-          <Box sx={{ display: 'flex', alignItems: 'center', mr: 4 }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              mr: 4,
+              cursor: 'pointer' 
+            }}
+            onClick={() => setCurrentPage('home')}
+          >
             <img 
               src={Logo} 
               alt="Artis Logo" 
@@ -70,6 +86,7 @@ const Dashboard: React.FC = () => {
                 '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
               }}
             >
+              <MenuItem value="home">Dashboard</MenuItem>
               <MenuItem value="catalog">Product Catalog</MenuItem>
               <MenuItem value="orders">Orders</MenuItem>
               <MenuItem value="info">Information</MenuItem>
@@ -95,6 +112,10 @@ const Dashboard: React.FC = () => {
           >
             Logout
           </Button>
+
+          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit">
+            {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
         </Toolbar>
       </AppBar>
 

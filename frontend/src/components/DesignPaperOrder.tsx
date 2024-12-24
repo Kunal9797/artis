@@ -24,6 +24,7 @@ import { Product } from '../types/product';
 import { generateOrderPDF } from '../utils/pdfGenerator';
 import api from '../services/api';
 import CatalogTags from './CatalogTags';
+import { useTheme } from '../context/ThemeContext';
 
 interface OrderItem {
   product: Product;
@@ -36,22 +37,35 @@ const normalizeSupplierCode = (code: string | undefined): string => {
 };
 
 const DesignPaperOrder: React.FC = () => {
+  const { isDarkMode } = useTheme();
   const [selectedSupplier, setSelectedSupplier] = useState<string>('');
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [inventoryLevels, setInventoryLevels] = useState<Map<string, number>>(new Map());
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/products');
-        setProducts(response.data);
+        const [productsResponse, inventoryResponse] = await Promise.all([
+          api.get('/products'),
+          api.get('/inventory')
+        ]);
+        
+        setProducts(productsResponse.data);
+        
+        // Create a map of productId to current stock
+        const inventoryMap = new Map();
+        inventoryResponse.data.forEach((item: any) => {
+          inventoryMap.set(item.productId, item.currentStock);
+        });
+        setInventoryLevels(inventoryMap);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
       }
     };
-    fetchProducts();
+    fetchData();
   }, []);
 
   const uniqueSuppliers = useMemo(() => {
@@ -174,7 +188,7 @@ const DesignPaperOrder: React.FC = () => {
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
       <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" sx={{ mb: 3, color: '#2b2a29' }}>
+        <Typography variant="h5" sx={{ mb: 3, color: isDarkMode ? '#ffffff' : '#2b2a29' }}>
           Design Paper Order
         </Typography>
 
@@ -256,16 +270,24 @@ const DesignPaperOrder: React.FC = () => {
                           p.supplier === product.supplier
                         )} 
                       />
-                      <Box sx={{ ml: 2 }}>
-                        <Typography variant="subtitle1">
-                          {product.supplierCode} - {product.name}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          Artis Code: {product.artisCode}
-                        </Typography>
-                        <Box sx={{ mt: 0.5 }}>
-                          <CatalogTags catalogs={product.catalogs ?? []} />
+                      <Box sx={{ ml: 2, display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="subtitle1">
+                            {product.supplierCode} - {product.name}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            Artis Code: {product.artisCode}
+                          </Typography>
+                          <Box sx={{ mt: 0.5 }}>
+                            <CatalogTags catalogs={product.catalogs ?? []} />
+                          </Box>
                         </Box>
+                        <Chip
+                          label={`${inventoryLevels.get(product.id) || 0} kgs`}
+                          color={inventoryLevels.get(product.id) ? 'primary' : 'default'}
+                          size="small"
+                          sx={{ ml: 2 }}
+                        />
                       </Box>
                     </MenuItem>
                   ))}
@@ -298,35 +320,53 @@ const DesignPaperOrder: React.FC = () => {
                             </Box>
                           </Grid>
                           <Grid item xs={12} md={4}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <TextField
-                                type="number"
-                                label="Quantity (kg)"
-                                value={item.quantity || ''}
-                                onChange={(e) => handleQuantityChange(
-                                  item.product.id.toString(),
-                                  parseInt(e.target.value) || 0
-                                )}
-                                fullWidth
-                                size="small"
-                                InputProps={{
-                                  endAdornment: <Typography variant="caption">kg</Typography>
-                                }}
-                              />
-                              <IconButton 
-                                size="small" 
-                                color="error"
-                                onClick={() => {
-                                  setSelectedProducts(prev => 
-                                    prev.filter(p => p.id !== item.product.id)
-                                  );
-                                  setOrderItems(prev =>
-                                    prev.filter(i => i.product.id !== item.product.id)
-                                  );
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <TextField
+                                  type="number"
+                                  label="Quantity (kg)"
+                                  value={item.quantity || ''}
+                                  onChange={(e) => handleQuantityChange(
+                                    item.product.id.toString(),
+                                    parseInt(e.target.value) || 0
+                                  )}
+                                  fullWidth
+                                  size="small"
+                                  InputProps={{
+                                    endAdornment: <Typography variant="caption">kg</Typography>
+                                  }}
+                                />
+                                <IconButton 
+                                  size="small" 
+                                  color="error"
+                                  onClick={() => {
+                                    setSelectedProducts(prev => 
+                                      prev.filter(p => p.id !== item.product.id)
+                                    );
+                                    setOrderItems(prev =>
+                                      prev.filter(i => i.product.id !== item.product.id)
+                                    );
+                                  }}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Box>
+                              <Typography 
+                                variant="caption" 
+                                sx={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center',
+                                  color: 'text.secondary'
                                 }}
                               >
-                                <DeleteIcon />
-                              </IconButton>
+                                Current Stock: 
+                                <Chip
+                                  label={`${inventoryLevels.get(item.product.id) || 0} kgs`}
+                                  color={inventoryLevels.get(item.product.id) ? 'primary' : 'default'}
+                                  size="small"
+                                  sx={{ ml: 1 }}
+                                />
+                              </Typography>
                             </Box>
                           </Grid>
                         </Grid>
