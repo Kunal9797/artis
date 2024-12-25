@@ -19,8 +19,10 @@ router.post('/transaction', auth, createTransaction);
 router.get('/transactions/:productId', auth, getProductTransactions);
 router.get('/transactions', auth, inventoryController.getRecentTransactions);
 // Bulk upload route
-router.post('/bulk', auth, upload.single('file'), bulkUploadInventory);
+router.post('/bulk-upload', auth, upload.single('file'), bulkUploadInventory);
 
 router.delete('/', auth, clearInventory);
+
+router.get('/product/:id', auth, inventoryController.getProductInventory);
 
 export default router; 

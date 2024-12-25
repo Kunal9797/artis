@@ -88,6 +88,8 @@ export const createTransaction = async (req: Request, res: Response) => {
 export const getProductTransactions = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
+    console.log('Getting transactions for productId:', productId);
+    
     const transactions = await InventoryTransaction.findAll({
       where: { productId },
       include: [{
@@ -97,10 +99,20 @@ export const getProductTransactions = async (req: Request, res: Response) => {
       }],
       order: [['date', 'DESC']]
     });
+
+    console.log('Found transactions:', {
+      count: transactions.length,
+      firstTransaction: transactions[0]?.toJSON()
+    });
+
     res.json(transactions);
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-    res.status(500).json({ error: 'Error fetching transactions' });
+    console.error('Error fetching transactions:', {
+      error,
+      productId: req.params.productId,
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+    res.status(500).json({ error: 'Failed to fetch transactions' });
   }
 };
 
@@ -116,21 +128,61 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(worksheet);
+    
+    // Get all data including headers
+    const rawData = XLSX.utils.sheet_to_json(worksheet, { 
+      header: 1,  // Get as array of arrays
+      blankrows: false
+    }) as Array<Array<string | number>>;
 
-    // Process each row
+    // Extract headers from first two rows
+    const [firstRow, secondRow] = rawData;
+    
+    // Create header mapping using first and second row
+    const headers = (firstRow as Array<string>).map((header: string, index: number) => {
+      if (header === 'SNO') return 'SNO';
+      if (header === 'OUR CODE') return 'OUR CODE';
+      if (header === 'IN') return 'IN';
+      // For OUT columns, use the date from second row
+      return secondRow[index];
+    });
+
+    // Convert dates to consumption date format
+    const consumptionDates = headers
+      .map((header: string | number, index: number) => {
+        if (typeof header === 'string' && header.includes('/')) {
+          return {
+            date: new Date(header.split('/').reverse().join('-')),
+            column: header
+          };
+        }
+        return null;
+      })
+      .filter((date): date is { date: Date; column: string } => date !== null)
+      .filter(({ column }) => column !== '1/8/24'); // Exclude initial stock date
+
+    // Process remaining rows
+    const data = rawData.slice(2).map((row: Array<string | number>) => {
+      return headers.reduce<Record<string, string | number>>((obj, header, index) => {
+        obj[header.toString()] = row[index];
+        return obj;
+      }, {});
+    });
+
     await Promise.all(data.map(async (row: any) => {
-      const artisCode = row['DESIGN CODE']?.toString();
-      const supplierCode = row['SUPPLIER CODE']?.toString();
+      const artisCode = row['OUR CODE']?.toString();
+      console.log('Processing row:', { artisCode, row });
 
-      // Find product
+      if (!artisCode) {
+        skippedRows.push({
+          artisCode: 'unknown',
+          reason: 'Missing OUR CODE'
+        });
+        return;
+      }
+
       const product = await Product.findOne({
-        where: {
-          [Op.or]: [
-            { artisCode },
-            { supplierCode }
-          ]
-        },
+        where: { artisCode },
         transaction: t
       });
 
@@ -142,58 +194,65 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
         return;
       }
 
-      // Process monthly data
-      const months = ['OCT', 'NOV', 'DEC'];
-      let currentStock = parseFloat(row[`OCT_OPENING`]) || 0;
+      try {
+        // Record initial stock (IN transaction)
+        const initialStock = parseFloat(row['IN']) || 0;
+        const initialDate = new Date('2024-08-01');
 
-      for (const month of months) {
-        const opening = parseFloat(row[`${month}_OPENING`]) || 0;
-        const consumption = parseFloat(row[`${month}_CONS`]) || 0;
-        const date = new Date(`2023-${month === 'OCT' ? '10' : month === 'NOV' ? '11' : '12'}-01`);
-
-        // Create/Update inventory record
-        await Inventory.upsert({
+        await InventoryTransaction.create({
           productId: product.id,
-          currentStock: opening,
-          lastUpdated: date
+          type: TransactionType.IN,
+          quantity: initialStock,
+          date: initialDate,
+          notes: 'Initial Stock'
         }, { transaction: t });
 
-        // Create consumption transaction
-        if (consumption > 0) {
-          await InventoryTransaction.create({
-            productId: product.id,
-            type: TransactionType.OUT,
-            quantity: consumption,
-            date,
-            notes: `${month} Consumption`
-          }, { transaction: t });
+        // Record consumption transactions (OUT)
+        for (const { date, column } of consumptionDates) {
+          const consumption = parseFloat(row[column]) || 0;
+          if (consumption > 0) {
+            await InventoryTransaction.create({
+              productId: product.id,
+              type: TransactionType.OUT,
+              quantity: consumption,
+              date,
+              notes: 'Monthly Consumption'
+            }, { transaction: t });
+          }
         }
 
-        currentStock = opening - consumption;
-      }
+        // Update current stock
+        const totalConsumption = consumptionDates.reduce((sum, { column }) => 
+          sum + (parseFloat(row[column]) || 0), 0);
+        
+        await Inventory.upsert({
+          productId: product.id,
+          currentStock: initialStock - totalConsumption,
+          lastUpdated: new Date()
+        }, { transaction: t });
 
-      processedProducts.push(artisCode);
+        processedProducts.push(artisCode);
+      } catch (error: unknown) {
+        skippedRows.push({
+          artisCode,
+          reason: `Error processing: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+      }
     }));
 
     await t.commit();
-
-    res.status(200).json({
-      message: 'Import completed',
-      processed: {
-        count: processedProducts.length,
-        products: processedProducts
-      },
-      skipped: {
-        count: skippedRows.length,
-        rows: skippedRows
-      }
+    
+    res.json({
+      message: 'Inventory updated successfully',
+      processed: processedProducts,
+      skipped: skippedRows
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error('Bulk upload error:', error);
     await t.rollback();
-    console.error('Error importing inventory:', error);
     res.status(500).json({
-      error: 'Error importing inventory',
+      error: 'Failed to process inventory upload',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
@@ -286,5 +345,24 @@ export const getRecentTransactions = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching recent transactions:', error);
     res.status(500).json({ error: 'Error fetching recent transactions' });
+  }
+}; 
+
+// Get inventory details for a specific product
+export const getProductInventory = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const inventory = await Inventory.findOne({
+      where: { productId: id },
+      include: [{
+        model: Product,
+        as: 'product',
+        attributes: ['artisCode', 'name']
+      }]
+    });
+    res.json(inventory);
+  } catch (error) {
+    console.error('Error fetching inventory:', error);
+    res.status(500).json({ error: 'Failed to fetch inventory' });
   }
 }; 

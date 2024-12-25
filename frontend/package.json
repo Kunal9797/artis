@@ -23,6 +23,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.1",
     "react-scripts": "5.0.1",
+    "recharts": "^2.15.0",
     "stylis": "^4.3.4",
     "stylis-plugin-rtl": "^2.1.1",
     "typescript": "^4.9.5",
@@ -34,7 +35,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "vercel-build": "CI=false npm run build",
-    "create-templates": "ts-node --project scripts/tsconfig.json scripts/create-excel-template.ts"
+    "create-templates": "ts-node --project scripts/tsconfig.json",
+    "create-inventory-template": "ts-node scripts/create-inventory-template.ts"
   },
   "eslintConfig": {
     "extends": [

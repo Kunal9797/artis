@@ -38,15 +38,17 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
     formData.append('file', file);
 
     try {
-      await api.post('/inventory/bulk-upload', formData, {
+      const response = await api.post('/inventory/bulk-upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
+      console.log('Upload response:', response.data);
       onSuccess();
       onClose();
-    } catch (error) {
-      setError('Failed to upload file');
+    } catch (error: any) {
+      console.error('Upload error:', error.response?.data || error);
+      setError(error.response?.data?.error || 'Failed to upload file');
     }
   };
 

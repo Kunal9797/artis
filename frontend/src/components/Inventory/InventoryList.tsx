@@ -22,7 +22,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import UploadIcon from '@mui/icons-material/Upload';
 import { getAllInventory, api } from '../../services/api';
 import TransactionDialog from './TransactionDialog';
-import HistoryDialog from './HistoryDialog';
+import ProductDetailsDialog from './ProductDetailsDialog';
 import BulkUploadDialog from './BulkUploadDialog';
 import GridViewIcon from '@mui/icons-material/GridView';
 import ListIcon from '@mui/icons-material/List';
@@ -119,7 +119,7 @@ const InventoryList: React.FC = () => {
   const [error, setError] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [transactionOpen, setTransactionOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -189,10 +189,10 @@ const InventoryList: React.FC = () => {
                 sx={{ mt: 2 }}
                 onClick={() => {
                   setSelectedProduct(item.productId);
-                  setHistoryOpen(true);
+                  setDetailsOpen(true);
                 }}
               >
-                View History
+                View Details
               </Button>
             </CardContent>
           </Card>
@@ -303,10 +303,10 @@ const InventoryList: React.FC = () => {
                       variant="outlined" 
                       onClick={() => {
                         setSelectedProduct(item.productId);
-                        setHistoryOpen(true);
+                        setDetailsOpen(true);
                       }}
                     >
-                      View History
+                      View Details
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -325,9 +325,9 @@ const InventoryList: React.FC = () => {
         onSuccess={fetchInventory}
       />
 
-      <HistoryDialog
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
+      <ProductDetailsDialog
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
         productId={selectedProduct!}
       />
 

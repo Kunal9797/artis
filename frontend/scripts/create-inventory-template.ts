@@ -4,18 +4,13 @@ import fs from 'fs';
 
 const inventoryTemplate = {
   headers: [
-    'ARTIS CODE',
-    'DESIGN NAME',
-    'SUPPLIER',
-    'OPENING STOCK',
-    'TRANSACTION TYPE',
-    'QUANTITY',
-    'DATE',
-    'NOTES'
+    ['SNO', 'OUR CODE', 'OUT', 'OUT', 'OUT', 'IN'],
+    ['', '', '30/10/2024', '30/9/2024', '30/8/2024', '1/8/24']
   ],
   sampleData: [
-    ['901', 'Sample Design', 'MATCH GRAPHICS', '100', 'IN', '50', '2024-03-20', 'Initial stock'],
-    ['901', 'Sample Design', 'MATCH GRAPHICS', '150', 'OUT', '30', '2024-03-21', 'Sales deduction']
+    ['1', '901', '21', '37', '64', '295'],
+    ['2', '902', '28', '25', '46', '268'],
+    ['3', '903', '16', '45', '41', '248']
   ]
 };
 
@@ -32,11 +27,19 @@ if (!fs.existsSync(templatesDir)) {
 
 const workbook = XLSX.utils.book_new();
 const worksheet = XLSX.utils.aoa_to_sheet([
-  inventoryTemplate.headers,
+  ...inventoryTemplate.headers,
   ...inventoryTemplate.sampleData
 ]);
 
-worksheet['!cols'] = inventoryTemplate.headers.map(() => ({ width: 15 }));
+// Set column widths
+worksheet['!cols'] = [
+  { width: 8 },   // SNO
+  { width: 15 },  // DESIGN CODE
+  { width: 12 },  // OUT (October)
+  { width: 12 },  // OUT (September)
+  { width: 12 },  // OUT (August)
+  { width: 12 }   // IN (Initial Stock)
+];
 
 XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
 
