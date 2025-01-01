@@ -37,7 +37,11 @@ InventoryTransaction.init(
     },
     quantity: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false
+      allowNull: false,
+      get() {
+        const value = this.getDataValue('quantity');
+        return value ? Number(value) : 0;
+      }
     },
     date: {
       type: DataTypes.DATE,

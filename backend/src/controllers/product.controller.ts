@@ -176,4 +176,22 @@ export const bulkCreateProducts = async (req: Request, res: Response) => {
       debugInfo: process.env.NODE_ENV === 'development' ? error : undefined
     });
   }
+};
+
+export const getProductByArtisCode = async (req: Request, res: Response) => {
+  try {
+    const { artisCode } = req.params;
+    const product = await Product.findOne({
+      where: { artisCode }
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error('Error finding product:', error);
+    res.status(500).json({ error: 'Failed to find product' });
+  }
 }; 

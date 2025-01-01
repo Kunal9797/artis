@@ -18,6 +18,8 @@ import {
   InputAdornment,
   useMediaQuery,
   useTheme,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -30,6 +32,8 @@ import BulkImportDialog from './BulkImportDialog';
 import CatalogTags from './CatalogTags';
 import ProductFilters from './ProductFilters';
 import SearchIcon from '@mui/icons-material/Search';
+import * as XLSX from 'xlsx';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const supplierNormalization: { [key: string]: string } = {
   'MATCH ': 'MATCH GRAPHICS',
@@ -86,6 +90,8 @@ const ProductCatalog: React.FC = () => {
 
   // Add state for catalog filter mode
   const [catalogFilterMode, setCatalogFilterMode] = useState<'AND' | 'OR'>('OR');
+
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
 
   useEffect(() => {
     let filtered = [...products];
@@ -227,6 +233,136 @@ const ProductCatalog: React.FC = () => {
     setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
+  const handleExport = (type: 'all' | 'filtered' | 'match') => {
+    let dataToExport = [...products];
+
+    // Apply filters based on type
+    if (type === 'match') {
+      dataToExport = dataToExport.filter(p => 
+        p.supplier === 'MATCH GRAPHICS' || p.supplier === 'MATCH '
+      );
+    } else if (type === 'filtered') {
+      // Apply all current filters
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        dataToExport = dataToExport.filter(p => 
+          (p.artisCode?.toLowerCase() || '').includes(query) ||
+          (p.name?.toLowerCase() || '').includes(query) ||
+          (p.supplierCode?.toLowerCase() || '').includes(query) ||
+          (p.supplier?.toLowerCase() || '').includes(query) ||
+          (p.category?.toLowerCase() || '').includes(query)
+        );
+      }
+
+      if (selectedSuppliers.length > 0) {
+        dataToExport = dataToExport.filter(p => {
+          if (!p.supplier) return false;
+          const normalizedSupplier = supplierNormalization[p.supplier] || p.supplier;
+          return selectedSuppliers.includes(normalizedSupplier);
+        });
+      }
+
+      if (selectedCategories.length > 0) {
+        dataToExport = dataToExport.filter(p => 
+          p.category ? selectedCategories.includes(p.category) : false
+        );
+      }
+
+      if (selectedCatalogs.length > 0) {
+        dataToExport = dataToExport.filter(p => {
+          if (!p.catalogs) return false;
+          if (catalogFilterMode === 'AND') {
+            return selectedCatalogs.every(selectedCatalog => 
+              p.catalogs?.includes(selectedCatalog)
+            );
+          } else {
+            return selectedCatalogs.some(catalog => 
+              p.catalogs?.includes(catalog)
+            );
+          }
+        });
+      }
+    }
+
+    // Apply grouping if enabled
+    if (groupByAltCode) {
+      const preGrouped = new Map();
+      
+      dataToExport.forEach(p => {
+        const normalizedSupplierCode = p.supplierCode ? normalizeSupplierCode(p.supplierCode) : '';
+        const groupKey = `${normalizedSupplierCode}_${p.supplier || ''}`;
+        
+        if (normalizedSupplierCode && p.supplier) {
+          if (!preGrouped.has(groupKey)) {
+            preGrouped.set(groupKey, {
+              ...p,
+              artisCode: p.artisCode,
+              supplierCode: p.supplierCode,
+              name: p.name || null,
+              category: p.category || null,
+              gsm: p.gsm || null,
+              _catalogSet: new Set(p.catalogs || [])
+            });
+          } else {
+            const existing = preGrouped.get(groupKey);
+            if (existing.supplier === p.supplier) {
+              existing.artisCode = `${existing.artisCode} / ${p.artisCode}`;
+              existing.name = existing.name || p.name;
+              existing.category = existing.category || p.category;
+              existing.gsm = existing.gsm || p.gsm;
+              
+              if (p.catalogs) {
+                p.catalogs.forEach(catalog => existing._catalogSet.add(catalog));
+              }
+            }
+          }
+        }
+      });
+
+      dataToExport = Array.from(preGrouped.values()).map(product => {
+        const { _catalogSet, ...rest } = product;
+        return {
+          ...rest,
+          catalogs: Array.from(_catalogSet)
+        };
+      });
+    }
+
+    // Format and export
+    const excelData = dataToExport.map((product, index) => ({
+      'SNO': index + 1,
+      'OUR CODE': product.artisCode,
+      'NAME': product.name || '',
+      'CATEGORY': product.category || '',
+      'DESIGN CODE': product.supplierCode || '',
+      'SUPPLIER': product.supplier || '',
+      'GSM': product.gsm || '',
+      'CATALOGS': (product.catalogs || []).join(', ')
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    ws['!cols'] = [
+      { width: 5 },   // SNO
+      { width: 15 },  // OUR CODE
+      { width: 30 },  // NAME
+      { width: 15 },  // CATEGORY
+      { width: 15 },  // DESIGN CODE
+      { width: 15 },  // SUPPLIER
+      { width: 8 },   // GSM
+      { width: 20 },  // CATALOGS
+    ];
+
+    const fileName = type === 'match' ? 'match-graphics-designs.xlsx' : 
+                    type === 'filtered' ? 'filtered-designs.xlsx' : 
+                    'all-designs.xlsx';
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Designs');
+    XLSX.writeFile(wb, fileName);
+    setExportAnchorEl(null);
+  };
+
   return (
     <Box sx={{ 
       height: '100vh', 
@@ -248,6 +384,14 @@ const ProductCatalog: React.FC = () => {
             spacing={2}
             width={{ xs: '100%', sm: 'auto' }}
           >
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadIcon />}
+              onClick={(e) => setExportAnchorEl(e.currentTarget)}
+              fullWidth={isMobile}
+            >
+              Export Designs
+            </Button>
             <Button
               variant="contained"
               startIcon={<UploadIcon />}
@@ -379,6 +523,22 @@ const ProductCatalog: React.FC = () => {
           onSuccess={fetchProducts}
         />
       </Box>
+
+      <Menu
+        anchorEl={exportAnchorEl}
+        open={Boolean(exportAnchorEl)}
+        onClose={() => setExportAnchorEl(null)}
+      >
+        <MenuItem onClick={() => handleExport('all')}>
+          Export All Designs
+        </MenuItem>
+        <MenuItem onClick={() => handleExport('filtered')}>
+          Export with Current Filters
+        </MenuItem>
+        <MenuItem onClick={() => handleExport('match')}>
+          Export Match Graphics Only
+        </MenuItem>
+      </Menu>
     </Box>
   );
 };

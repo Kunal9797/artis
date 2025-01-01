@@ -6,7 +6,7 @@ import {
   updateProduct,
   deleteProduct
 } from '../controllers/base.controller';
-import { createProduct, bulkCreateProducts } from '../controllers/product.controller';
+import { createProduct, bulkCreateProducts, getProductByArtisCode } from '../controllers/product.controller';
 
 const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
@@ -19,5 +19,7 @@ router.delete('/:id', auth, deleteProduct);
 
 // Bulk import
 router.post('/bulk', auth, upload.single('file'), bulkCreateProducts);
+
+router.get('/by-artis-code/:artisCode', getProductByArtisCode);
 
 export default router; 

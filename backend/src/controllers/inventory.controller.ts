@@ -5,6 +5,13 @@ import { Op } from 'sequelize';
 import sequelize from '../config/database';
 import * as XLSX from 'xlsx';
 
+interface PurchaseOrderRow {
+  'Artis Code': string;
+  'Date': string;
+  'Amount (Kgs)': string | number;
+  'Notes'?: string;
+}
+
 // Get all inventory items with their associated products
 export const getAllInventory = async (req: Request, res: Response) => {
   try {
@@ -31,7 +38,6 @@ export const createTransaction = async (req: Request, res: Response) => {
   
   try {
     const { productId, type, quantity, notes, date } = req.body;
-    console.log('Creating transaction:', { productId, type, quantity, notes, date });
     
     let inventory = await Inventory.findOne({ 
       where: { productId },
@@ -39,17 +45,8 @@ export const createTransaction = async (req: Request, res: Response) => {
       lock: true
     });
 
-    const currentStock = inventory ? Number(inventory.currentStock) : 0;
     const stockChange = type === TransactionType.IN ? Number(quantity) : -Number(quantity);
     
-    if (type === TransactionType.OUT && currentStock + stockChange < 0) {
-      await t.rollback();
-      return res.status(400).json({
-        error: 'Insufficient stock',
-        message: `Cannot remove ${quantity} units. Current stock is ${currentStock}.`
-      });
-    }
-
     const transaction = await InventoryTransaction.create({
       productId,
       type,
@@ -66,7 +63,7 @@ export const createTransaction = async (req: Request, res: Response) => {
       }, { transaction: t });
     } else {
       await inventory.update({
-        currentStock: currentStock + stockChange,
+        currentStock: Number(inventory.currentStock) + stockChange,
         lastUpdated: new Date()
       }, { transaction: t });
     }
@@ -84,35 +81,76 @@ export const createTransaction = async (req: Request, res: Response) => {
   }
 };
 
-// Get transaction history for a product
+// Get transaction history and current stock for a product
 export const getProductTransactions = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
-    console.log('Getting transactions for productId:', productId);
+    console.log('Fetching transactions for productId:', productId);
     
+    // First verify the product exists
+    const mainProduct = await Product.findByPk(productId);
+    if (!mainProduct) {
+      throw new Error('Product not found');
+    }
+
+    // Find all related products (including the main product)
+    const relatedProducts = await Product.findAll({
+      where: {
+        supplierCode: mainProduct.supplierCode,
+        supplier: mainProduct.supplier
+      }
+    });
+
+    const relatedProductIds = relatedProducts.map(p => p.id);
+    console.log('Found related product IDs:', relatedProductIds);
+
+    // Get transactions for all related products
     const transactions = await InventoryTransaction.findAll({
-      where: { productId },
+      where: {
+        productId: {
+          [Op.in]: relatedProductIds
+        }
+      },
       include: [{
         model: Product,
         as: 'product',
-        attributes: ['artisCode', 'name']
+        attributes: ['artisCode', 'name', 'supplierCode', 'supplier', 'category']
       }],
-      order: [['date', 'DESC']]
+      order: [['date', 'ASC']]
     });
 
     console.log('Found transactions:', {
+      relatedProductIds,
       count: transactions.length,
-      firstTransaction: transactions[0]?.toJSON()
+      firstTransaction: transactions[0]?.toJSON(),
+      lastTransaction: transactions[transactions.length - 1]?.toJSON()
     });
 
-    res.json(transactions);
-  } catch (error) {
-    console.error('Error fetching transactions:', {
-      error,
-      productId: req.params.productId,
-      message: error instanceof Error ? error.message : 'Unknown error'
+    let currentStock = 0;
+    const transactionsWithBalance = transactions.map(t => {
+      const quantity = Number(t.quantity);
+      if (t.type === TransactionType.IN) {
+        currentStock += quantity;
+      } else {
+        currentStock -= quantity;
+      }
+      
+      return {
+        ...t.toJSON(),
+        balance: Number(currentStock.toFixed(2))
+      };
     });
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+
+    res.json({
+      currentStock: Number(currentStock.toFixed(2)),
+      transactions: transactionsWithBalance.reverse()
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch transactions',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 
@@ -131,7 +169,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
     
     // Get all data including headers
     const rawData = XLSX.utils.sheet_to_json(worksheet, { 
-      header: 1,  // Get as array of arrays
+      header: 1,
       blankrows: false
     }) as Array<Array<string | number>>;
 
@@ -151,14 +189,16 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
     const consumptionDates = headers
       .map((header: string | number, index: number) => {
         if (typeof header === 'string' && header.includes('/')) {
+          const [day, month, year] = header.split('/');
           return {
-            date: new Date(header.split('/').reverse().join('-')),
-            column: header
+            date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day)),
+            column: header,
+            index
           };
         }
         return null;
       })
-      .filter((date): date is { date: Date; column: string } => date !== null)
+      .filter((date): date is { date: Date; column: string; index: number } => date !== null)
       .filter(({ column }) => column !== '1/8/24'); // Exclude initial stock date
 
     // Process remaining rows
@@ -171,7 +211,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
 
     await Promise.all(data.map(async (row: any) => {
       const artisCode = row['OUR CODE']?.toString();
-      console.log('Processing row:', { artisCode, row });
+      const initialStock = parseFloat(row['IN']) || 0;
 
       if (!artisCode) {
         skippedRows.push({
@@ -196,14 +236,11 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
 
       try {
         // Record initial stock (IN transaction)
-        const initialStock = parseFloat(row['IN']) || 0;
-        const initialDate = new Date('2024-08-01');
-
         await InventoryTransaction.create({
           productId: product.id,
           type: TransactionType.IN,
           quantity: initialStock,
-          date: initialDate,
+          date: new Date('2024-08-01'), // Initial stock date
           notes: 'Initial Stock'
         }, { transaction: t });
 
@@ -216,18 +253,21 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
               type: TransactionType.OUT,
               quantity: consumption,
               date,
-              notes: 'Monthly Consumption'
+              notes: `Monthly Consumption - ${date.toLocaleDateString()}`
             }, { transaction: t });
           }
         }
 
-        // Update current stock
-        const totalConsumption = consumptionDates.reduce((sum, { column }) => 
-          sum + (parseFloat(row[column]) || 0), 0);
-        
+        // Calculate current stock (Initial - Total Consumption)
+        const totalConsumption = consumptionDates.reduce((sum, { column }) => {
+          const consumption = parseFloat(row[column]) || 0;
+          return sum + consumption;
+        }, 0);
+
+        // Update inventory record with precise decimal calculations
         await Inventory.upsert({
           productId: product.id,
-          currentStock: initialStock - totalConsumption,
+          currentStock: Number((initialStock - totalConsumption).toFixed(2)), // Fix decimal precision
           lastUpdated: new Date()
         }, { transaction: t });
 
@@ -364,5 +404,185 @@ export const getProductInventory = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching inventory:', error);
     res.status(500).json({ error: 'Failed to fetch inventory' });
+  }
+}; 
+
+export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const t = await sequelize.transaction();
+  const skippedRows: { artisCode: string; reason: string }[] = [];
+  const processedOrders: string[] = [];
+  const aggregatedAmounts = new Map<string, { 
+    totalAmount: number, 
+    transactions: Array<{ date: Date, amount: number, notes: string }> 
+  }>();
+
+  try {
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(worksheet) as PurchaseOrderRow[];
+
+    // First pass: aggregate amounts and collect transactions
+    for (const row of data) {
+      const artisCode = row['Artis Code']?.toString();
+      const rawDate = row['Date']?.toString();
+      const amount = parseFloat(row['Amount (Kgs)'].toString());
+      const notes = row['Notes']?.toString() || '';
+
+      if (!artisCode || !rawDate || isNaN(amount)) {
+        skippedRows.push({
+          artisCode: artisCode || 'unknown',
+          reason: `Missing or invalid fields`
+        });
+        continue;
+      }
+
+      // Parse date
+      const [month, day, year] = rawDate.split('/');
+      const fullYear = parseInt('20' + year);
+      const parsedDate = new Date(fullYear, parseInt(month) - 1, parseInt(day));
+
+      if (isNaN(parsedDate.getTime())) {
+        skippedRows.push({
+          artisCode: artisCode || 'unknown',
+          reason: 'Invalid date'
+        });
+        continue;
+      }
+
+      // Aggregate amounts and store transaction details
+      if (!aggregatedAmounts.has(artisCode)) {
+        aggregatedAmounts.set(artisCode, { 
+          totalAmount: amount,
+          transactions: [{ date: parsedDate, amount, notes }]
+        });
+      } else {
+        const current = aggregatedAmounts.get(artisCode)!;
+        current.totalAmount += amount;
+        current.transactions.push({ date: parsedDate, amount, notes });
+      }
+    }
+
+    // Second pass: process aggregated data
+    for (const [artisCode, data] of aggregatedAmounts) {
+      const product = await Product.findOne({
+        where: { artisCode },
+        transaction: t
+      });
+
+      if (!product) {
+        skippedRows.push({
+          artisCode,
+          reason: 'Product not found in database'
+        });
+        continue;
+      }
+
+      try {
+        // Create individual transactions
+        for (const trans of data.transactions) {
+          await InventoryTransaction.create({
+            productId: product.id,
+            type: TransactionType.IN,
+            quantity: trans.amount,
+            date: trans.date,
+            notes: trans.notes
+          }, { transaction: t });
+        }
+
+        // Update inventory with total amount
+        const inventory = await Inventory.findOne({
+          where: { productId: product.id },
+          transaction: t,
+          lock: true
+        });
+
+        if (inventory) {
+          const newStock = Number(inventory.currentStock) + Number(data.totalAmount);
+          await inventory.update({
+            currentStock: Number(newStock.toFixed(2)), // Fix decimal precision
+            lastUpdated: new Date()
+          }, { transaction: t });
+        } else {
+          await Inventory.create({
+            productId: product.id,
+            currentStock: Number(data.totalAmount.toFixed(2)), // Fix decimal precision
+            lastUpdated: new Date()
+          }, { transaction: t });
+        }
+
+        processedOrders.push(artisCode);
+      } catch (error) {
+        skippedRows.push({
+          artisCode,
+          reason: `Error processing: ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+      }
+    }
+
+    await t.commit();
+    res.json({
+      message: 'Purchase orders processed successfully',
+      processed: processedOrders,
+      skipped: skippedRows
+    });
+
+  } catch (error) {
+    await t.rollback();
+    res.status(500).json({
+      error: 'Failed to process purchase order upload',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}; 
+
+export const getInventoryReport = async (req: Request, res: Response) => {
+  console.log('Received request for inventory report');
+  try {
+    console.log('Fetching inventory data...');
+    const inventoryData = await Inventory.findAll({
+      include: [{
+        model: Product,
+        as: 'product',
+        required: true,
+        attributes: ['artisCode', 'supplierCode']
+      }],
+      attributes: ['currentStock']
+    }) as (Inventory & { product: Product })[];
+
+    console.log('Raw inventory data:', JSON.stringify(inventoryData, null, 2));
+
+    const artisCodes: string[] = [];
+    const supplierCodes: string[] = [];
+    const currentStocks: number[] = [];
+
+    inventoryData.forEach(item => {
+      console.log('Processing item:', item);
+      artisCodes.push(item.product.artisCode);
+      supplierCodes.push(item.product.supplierCode || '');
+      currentStocks.push(Number(item.currentStock) || 0);
+    });
+
+    const response = {
+      artisCodes,
+      supplierCodes,
+      currentStocks
+    };
+
+    console.log('Sending response:', response);
+    res.json(response);
+  } catch (error) {
+    console.error('Error generating inventory report:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({ 
+      error: 'Failed to generate inventory report',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }; 

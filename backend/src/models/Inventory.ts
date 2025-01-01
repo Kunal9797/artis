@@ -28,7 +28,14 @@ Inventory.init(
     currentStock: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
-      defaultValue: 0
+      defaultValue: 0,
+      get() {
+        const value = this.getDataValue('currentStock');
+        return value ? Number(parseFloat(value).toFixed(2)) : 0;
+      },
+      set(value: number) {
+        this.setDataValue('currentStock', Number(parseFloat(value.toString()).toFixed(2)));
+      }
     },
     lastUpdated: {
       type: DataTypes.DATE,

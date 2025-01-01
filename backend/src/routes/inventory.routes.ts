@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import { auth } from '../middleware/auth';
 import multer from 'multer';
-import * as inventoryController from '../controllers/inventory.controller';
 import {
   getAllInventory,
   createTransaction,
   getProductTransactions,
   bulkUploadInventory,
-  clearInventory
+  bulkUploadPurchaseOrder,
+  clearInventory,
+  getInventoryReport,
+  getRecentTransactions,
+  getInventoryByProduct
 } from '../controllers/inventory.controller';
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -17,12 +20,11 @@ const router = Router();
 router.get('/', auth, getAllInventory);
 router.post('/transaction', auth, createTransaction);
 router.get('/transactions/:productId', auth, getProductTransactions);
-router.get('/transactions', auth, inventoryController.getRecentTransactions);
-// Bulk upload route
+router.get('/transactions', auth, getRecentTransactions);
+router.get('/report', auth, getInventoryReport);
 router.post('/bulk-upload', auth, upload.single('file'), bulkUploadInventory);
-
+router.post('/purchase-order', auth, upload.single('file'), bulkUploadPurchaseOrder);
 router.delete('/', auth, clearInventory);
-
-router.get('/product/:id', auth, inventoryController.getProductInventory);
+router.get('/product/:productId', auth, getInventoryByProduct);
 
 export default router; 

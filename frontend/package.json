@@ -35,7 +35,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "vercel-build": "CI=false npm run build",
-    "create-templates": "ts-node --project scripts/tsconfig.json",
+    "create-templates": "ts-node scripts/create-inventory-template.ts && ts-node scripts/create-excel-template.ts && ts-node scripts/create-purchase-template.ts",
     "create-inventory-template": "ts-node scripts/create-inventory-template.ts"
   },
   "eslintConfig": {
