@@ -4,7 +4,10 @@
       {
         "src": "frontend/package.json",
         "use": "@vercel/static-build",
-        "config": { "distDir": "build" }
+        "config": { 
+          "distDir": "frontend/build",
+          "buildCommand": "cd frontend && npm install && npm run build"
+        }
       },
       {
         "src": "backend/src/server.ts",
@@ -20,14 +23,8 @@
         "handle": "filesystem"
       },
       {
-        "src": "/static/(.*)",
-        "dest": "frontend/build/static/$1",
-        "headers": { "cache-control": "public, max-age=31536000, immutable" }
-      },
-      {
         "src": "/(.*)",
-        "dest": "frontend/build/index.html",
-        "headers": { "cache-control": "public, max-age=0, must-revalidate" }
+        "dest": "/frontend/build/index.html"
       }
     ]
   }
