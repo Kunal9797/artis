@@ -23,6 +23,17 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Initialize database connection for each request
+app.use(async (req, res, next) => {
+  try {
+    await sequelize.authenticate();
+    next();
+  } catch (error) {
+    console.error('Unable to connect to database:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -34,50 +45,13 @@ app.get('/api/test', (req: Request, res: Response) => {
 });
 
 // Add this after your routes
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Initialize database and start server
-const initializeDatabase = async () => {
+app.get('/api/health', async (req: Request, res: Response) => {
   try {
     await sequelize.authenticate();
-    console.log('Database connection established successfully.');
-    
-    // Sync all models
-    await sequelize.sync({ force: false });
-    console.log('Database models synchronized.');
-
-    const createInitialUser = async () => {
-      const userCount = await User.count();
-      if (userCount === 0) {
-        await User.create({
-          username: 'admin',
-          email: 'admin@artis.com',
-          password: 'admin123',
-          role: 'admin'
-        });
-        console.log('Initial admin user created');
-      }
-    };
-
-    await createInitialUser();
-
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
   } catch (error) {
-    console.error('Unable to initialize database:', error);
-    process.exit(1);
+    res.status(500).json({ error: 'Database connection failed' });
   }
-};
-
-// Add after initializeDatabase() but before export default app
-const PORT = process.env.PORT || 8099;
-
-if (process.env.NODE_ENV !== 'test') {
-  initializeDatabase().then(() => {
-    app.listen(PORT, () => {
-      console.log(`✓ Server running on http://localhost:${PORT}`);
-    });
-  });
-}
+});
 
 export default app;
