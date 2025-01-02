@@ -8,17 +8,29 @@ import Dashboard from './components/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const App: React.FC = () => {
+  console.log('App component rendering');
+  
+  React.useEffect(() => {
+    console.log('Current route:', window.location.pathname);
+  }, []);
+
   return (
     <AuthProvider>
       <CustomThemeProvider>
         <BrowserRouter>
           <CssBaseline />
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={
+              <>
+                <Login />
+              </>
+            } />
             <Route path="/*" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
+              <>
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              </>
             } />
           </Routes>
         </BrowserRouter>

@@ -4,6 +4,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: any;
   token: string | null;
+  loading: boolean;
   login: (token: string, user: any) => void;
   logout: () => void;
 }
@@ -14,6 +15,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -23,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
+    setLoading(false);
   }, []);
 
   const login = (token: string, user: any) => {
@@ -42,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
