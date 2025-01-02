@@ -1,6 +1,13 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8099/api';
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://artis-backend.onrender.com/api';
+  }
+  return 'http://localhost:8099/api';
+};
+
+const API_URL = process.env.REACT_APP_API_URL || getApiUrl();
 
 export const api = axios.create({
   baseURL: API_URL,

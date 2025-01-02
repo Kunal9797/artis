@@ -15,7 +15,12 @@ export const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://artis-rust.vercel.app', 'http://localhost:3000'],
+  origin: [
+    'https://artis-rust.vercel.app',
+    'https://artis-backend.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:8099'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -53,5 +58,12 @@ app.get('/api/health', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
+
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 8099;
+  app.listen(PORT, () => {
+    console.log(`Development server running on http://localhost:${PORT}`);
+  });
+}
 
 export default app;
