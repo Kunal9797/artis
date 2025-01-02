@@ -59,11 +59,14 @@ app.get('/api/health', async (req: Request, res: Response) => {
   }
 });
 
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 8099;
-  app.listen(PORT, () => {
-    console.log(`Development server running on http://localhost:${PORT}`);
-  });
-}
+const PORT = parseInt(process.env.PORT || '8099', 10);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log('Database connection status: Checking...');
+  sequelize.authenticate()
+    .then(() => console.log('✓ Database connected'))
+    .catch(err => console.error('✕ Database connection failed:', err));
+});
 
 export default app;
+
