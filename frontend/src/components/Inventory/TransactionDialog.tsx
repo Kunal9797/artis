@@ -12,6 +12,7 @@ import {
   Typography
 } from '@mui/material';
 import { createTransaction, getAllProducts, api } from '../../services/api';
+import { TransactionData } from '../../types/transaction';
 
 interface Product {
   id: string;
@@ -20,14 +21,6 @@ interface Product {
   supplierCode?: string;
   supplier?: string;
   displayName?: string;
-}
-
-interface TransactionData {
-  productId: string;
-  type: 'IN' | 'OUT';
-  quantity: number;
-  notes?: string;
-  date?: string;
 }
 
 interface TransactionDialogProps {

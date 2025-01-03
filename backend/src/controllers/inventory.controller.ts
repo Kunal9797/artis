@@ -167,31 +167,36 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     
-    // Get all data including headers
     const rawData = XLSX.utils.sheet_to_json(worksheet, { 
       header: 1,
       blankrows: false
     }) as Array<Array<string | number>>;
 
-    // Extract headers from first two rows
     const [firstRow, secondRow] = rawData;
     
-    // Create header mapping using first and second row
-    const headers = (firstRow as Array<string>).map((header: string, index: number) => {
+    // Map your Excel columns to the expected format
+    const columnMap: Record<string, string> = {
+      'DESIGN CODE': 'OUR CODE',
+      'OPEN': 'IN'
+    };
+
+    // Create header mapping
+    const headers = firstRow.map((header: string | number, index: number) => {
       if (header === 'SNO') return 'SNO';
-      if (header === 'OUR CODE') return 'OUR CODE';
-      if (header === 'IN') return 'IN';
-      // For OUT columns, use the date from second row
-      return secondRow[index];
+      if (typeof header === 'string' && columnMap[header]) {
+        return columnMap[header];
+      }
+      // Use the date from second row for consumption columns
+      return secondRow[index]?.toString() || header.toString();
     });
 
     // Convert dates to consumption date format
     const consumptionDates = headers
-      .map((header: string | number, index: number) => {
+      .map((header: string, index: number) => {
         if (typeof header === 'string' && header.includes('/')) {
           const [day, month, year] = header.split('/');
           return {
-            date: new Date(parseInt(year), parseInt(month) - 1, parseInt(day)),
+            date: new Date(parseInt('20' + year), parseInt(month) - 1, parseInt(day)),
             column: header,
             index
           };
@@ -199,9 +204,9 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
         return null;
       })
       .filter((date): date is { date: Date; column: string; index: number } => date !== null)
-      .filter(({ column }) => column !== '1/8/24'); // Exclude initial stock date
+      .filter(({ column }) => !column.includes('09/01/24')); // Exclude initial stock date
 
-    // Process remaining rows
+    // Process data rows
     const data = rawData.slice(2).map((row: Array<string | number>) => {
       return headers.reduce<Record<string, string | number>>((obj, header, index) => {
         obj[header.toString()] = row[index];
@@ -209,6 +214,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
       }, {});
     });
 
+    // Process each row
     await Promise.all(data.map(async (row: any) => {
       const artisCode = row['OUR CODE']?.toString();
       const initialStock = parseFloat(row['IN']) || 0;
@@ -216,7 +222,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
       if (!artisCode) {
         skippedRows.push({
           artisCode: 'unknown',
-          reason: 'Missing OUR CODE'
+          reason: 'Missing DESIGN CODE'
         });
         return;
       }
@@ -240,22 +246,21 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
           productId: product.id,
           type: TransactionType.IN,
           quantity: initialStock,
-          date: new Date('2024-08-01'), // Initial stock date
+          date: new Date('2024-01-09'), // Initial stock date for 09/01/24
           notes: 'Initial Stock'
         }, { transaction: t });
 
         // Record consumption transactions (OUT)
         for (const { date, column } of consumptionDates) {
           const consumption = parseFloat(row[column]) || 0;
-          if (consumption > 0) {
-            await InventoryTransaction.create({
-              productId: product.id,
-              type: TransactionType.OUT,
-              quantity: consumption,
-              date,
-              notes: `Monthly Consumption - ${date.toLocaleDateString()}`
-            }, { transaction: t });
-          }
+          // Create transaction even for zero consumption
+          await InventoryTransaction.create({
+            productId: product.id,
+            type: TransactionType.OUT,
+            quantity: consumption,
+            date,
+            notes: `Monthly Consumption - ${date.toLocaleDateString()}`
+          }, { transaction: t });
         }
 
         // Calculate current stock (Initial - Total Consumption)
@@ -281,15 +286,13 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
     }));
 
     await t.commit();
-    
     res.json({
-      message: 'Inventory updated successfully',
+      success: true,
       processed: processedProducts,
       skipped: skippedRows
     });
 
-  } catch (error: unknown) {
-    console.error('Bulk upload error:', error);
+  } catch (error) {
     await t.rollback();
     res.status(500).json({
       error: 'Failed to process inventory upload',
@@ -584,5 +587,30 @@ export const getInventoryReport = async (req: Request, res: Response) => {
       error: 'Failed to generate inventory report',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+}; 
+
+export const getInventoryDetails = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const inventory = await Inventory.findByPk(id);
+    if (!inventory) {
+      return res.status(404).json({ error: 'Inventory not found' });
+    }
+
+    const transactions = await InventoryTransaction.findAll({
+      where: { productId: inventory.productId },
+      order: [['date', 'DESC']],
+      raw: true
+    });
+
+    res.json({
+      transactions,
+      currentStock: inventory.currentStock
+    });
+  } catch (error) {
+    console.error('Error fetching inventory details:', error);
+    res.status(500).json({ error: 'Failed to fetch inventory details' });
   }
 }; 

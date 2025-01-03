@@ -10,7 +10,8 @@ import {
   clearInventory,
   getInventoryReport,
   getRecentTransactions,
-  getInventoryByProduct
+  getInventoryByProduct,
+  getInventoryDetails
 } from '../controllers/inventory.controller';
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -26,5 +27,6 @@ router.post('/bulk-upload', auth, upload.single('file'), bulkUploadInventory);
 router.post('/purchase-order', auth, upload.single('file'), bulkUploadPurchaseOrder);
 router.delete('/', auth, clearInventory);
 router.get('/product/:productId', auth, getInventoryByProduct);
+router.get('/:id/details', getInventoryDetails);
 
 export default router; 

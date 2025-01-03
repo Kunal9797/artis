@@ -4,13 +4,13 @@ import fs from 'fs';
 
 const inventoryTemplate = {
   headers: [
-    ['SNO', 'OUR CODE', 'OUT', 'OUT', 'OUT', 'IN'],
-    ['', '', '30/10/2024', '30/9/2024', '30/8/2024', '1/8/24']
+    ['SNO', 'DESIGN CODE', 'DEC CONS.', 'NOV CONS.', 'OCT CONS.', 'SEP CONS.', 'OPEN'],
+    ['', '', '31/12/24', '30/11/24', '31/10/24', '30/09/24', '01/09/24']
   ],
   sampleData: [
-    ['1', '901', '21', '37', '64', '295'],
-    ['2', '902', '28', '25', '46', '268'],
-    ['3', '903', '16', '45', '41', '248']
+    ['1', '901', '34', '21', '21', '37', '231'],
+    ['2', '902', '57', '0', '28', '25', '222'],
+    ['3', '903', '33', '0', '16', '45', '207']
   ]
 };
 
@@ -35,10 +35,11 @@ const worksheet = XLSX.utils.aoa_to_sheet([
 worksheet['!cols'] = [
   { width: 8 },   // SNO
   { width: 15 },  // DESIGN CODE
-  { width: 12 },  // OUT (October)
-  { width: 12 },  // OUT (September)
-  { width: 12 },  // OUT (August)
-  { width: 12 }   // IN (Initial Stock)
+  { width: 12 },  // DEC CONS
+  { width: 12 },  // NOV CONS
+  { width: 12 },  // OCT CONS
+  { width: 12 },  // SEP CONS
+  { width: 15 }   // 09/01/24 OPEN
 ];
 
 XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');

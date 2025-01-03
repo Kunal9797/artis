@@ -25,6 +25,11 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { useTheme } from '../context/ThemeContext';
 import { getAllInventory, api } from '../services/api';
+import TopPerformersCard from './TopPerformerCard';
+import MonthlyConsumptionCard from './MonthlyConsumptionCard';
+import { TopPerformerItem } from './TopPerformerCard';
+import { ConsumptionData } from './MonthlyConsumptionCard';
+import { aggregateMonthlyConsumption } from '../utils/consumption';
 
 interface Activity {
   id: string;
@@ -33,23 +38,69 @@ interface Activity {
   timestamp: Date;
 }
 
+interface DashboardStats {
+  totalProducts: number;
+  totalInventory: number;
+  lowStockItems: number;
+  topPerformers: TopPerformerItem[];
+  monthlyConsumption: ConsumptionData[];
+  suppliers: string[];
+  categories: string[];
+}
+
+interface Transaction {
+  id: string;
+  type: 'IN' | 'OUT';
+  quantity: number;
+  date: string;
+  createdAt?: string;
+  product?: {
+    artisCode: string;
+  };
+}
+
 const normalizeSupplierCode = (supplierCode: string): string => {
   return supplierCode.replace(/\s+/g, '').toUpperCase();
 };
 
+const calculateMonthlyConsumption = (inventoryData: any[]): ConsumptionData[] => {
+  const monthlyData: { [key: string]: number } = {};
+  
+  inventoryData.forEach(item => {
+    if (item.transactions) {
+      item.transactions.forEach((transaction: any) => {
+        if (transaction.type === 'OUT') {
+          const month = new Date(transaction.date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short' 
+          });
+          monthlyData[month] = (monthlyData[month] || 0) + Number(transaction.quantity);
+        }
+      });
+    }
+  });
+
+  return Object.entries(monthlyData)
+    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+    .map(([month, total]) => ({ month, total }));
+};
+
 const DashboardHome: React.FC<{ setCurrentPage: (page: string) => void }> = ({ setCurrentPage }) => {
   const { isDarkMode } = useTheme();
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     totalInventory: 0,
-    lowStockItems: 0
+    lowStockItems: 0,
+    topPerformers: [],
+    monthlyConsumption: [],
+    suppliers: [],
+    categories: []
   });
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch both inventory and products data
         const [inventoryResponse, productsResponse] = await Promise.all([
           getAllInventory(),
           api.get('/products')
@@ -57,10 +108,64 @@ const DashboardHome: React.FC<{ setCurrentPage: (page: string) => void }> = ({ s
         
         const inventoryData = Array.isArray(inventoryResponse?.data) ? inventoryResponse.data : [];
         const productsData = Array.isArray(productsResponse?.data) ? productsResponse.data : [];
+
+        // Group by artisCode first
+        const groupedInventory = new Map();
         
-        console.log('Products Data:', productsData);
-        
-        // Get unique designs from products catalog
+        for (const item of inventoryData) {
+          const artisCode = item.product?.artisCode;
+          if (!artisCode) continue;
+
+          if (!groupedInventory.has(artisCode)) {
+            groupedInventory.set(artisCode, {
+              ...item,
+              avgConsumption: 0,
+              transactions: []
+            });
+          }
+          
+          const existing = groupedInventory.get(artisCode);
+          existing.currentStock = Number(existing.currentStock || 0) + Number(item.currentStock || 0);
+          existing.transactions = [...(existing.transactions || []), ...(item.transactions || [])];
+        }
+
+        // Calculate consumption for grouped items
+        const inventoryWithConsumption = await Promise.all(
+          Array.from(groupedInventory.values()).map(async (item) => {
+            try {
+              const details = await api.get(`/inventory/${item.id}/details`);
+              const transactions = [...(item.transactions || []), ...(details.data.transactions || [])];
+              const monthlyData = aggregateMonthlyConsumption(transactions);
+              const avgConsumption = monthlyData.length > 0 ? monthlyData[0].average : 0;
+              
+              return {
+                ...item,
+                avgConsumption: Number(avgConsumption) * 2 // Multiply by 2 since consumption is recorded twice
+              };
+            } catch (error) {
+              console.error(`Error fetching details for ${item.id}:`, error);
+              return item;
+            }
+          })
+        );
+
+        const topPerformers = inventoryWithConsumption
+          .filter(item => Number(item.avgConsumption || 0) > 0)
+          .sort((a, b) => Number(b.avgConsumption || 0) - Number(a.avgConsumption || 0))
+          .slice(0, 10)
+          .map(item => ({
+            id: item.id,
+            product: {
+              id: item.product?.id || item.productId,
+              artisCode: item.product?.artisCode || '',
+              supplier: item.product?.supplier || ''
+            },
+            avgConsumption: Number(item.avgConsumption || 0),
+            currentStock: Number(item.currentStock || 0)
+          }));
+
+        console.log('Top performers after consumption calculation:', topPerformers);
+
         const uniqueDesigns = new Set(
           productsData
             .filter(p => p.supplierCode && p.supplier)
@@ -69,10 +174,7 @@ const DashboardHome: React.FC<{ setCurrentPage: (page: string) => void }> = ({ s
               return `${normalizedCode}_${p.supplier}`;
             })
         );
-        
-        console.log('Final unique designs set:', Array.from(uniqueDesigns));
 
-        // Calculate inventory stats
         const total = inventoryData.reduce((sum, item) => {
           const stockValue = parseFloat(item.currentStock) || 0;
           return sum + stockValue;
@@ -83,10 +185,18 @@ const DashboardHome: React.FC<{ setCurrentPage: (page: string) => void }> = ({ s
           return stockValue < 100;
         }).length;
 
+        const suppliers = Array.from(new Set(productsData.map(p => p.supplier).filter(Boolean)));
+        const categories = Array.from(new Set(productsData.map(p => p.category).filter(Boolean)));
+        const monthlyConsumption = calculateMonthlyConsumption(inventoryData);
+
         setStats({
           totalProducts: uniqueDesigns.size,
           totalInventory: Math.round(total * 100) / 100,
-          lowStockItems: lowStock
+          lowStockItems: lowStock,
+          topPerformers,
+          monthlyConsumption,
+          suppliers,
+          categories
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -324,78 +434,16 @@ const DashboardHome: React.FC<{ setCurrentPage: (page: string) => void }> = ({ s
           </Paper>
         </Grid>
 
-        {/* Recent Activity */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, height: '100%' }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                mb: 2,
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                fontFamily: '"Poppins", sans-serif'
-              }}
-            >
-              Recent Activity
-            </Typography>
-            <List>
-              {recentActivity.length > 0 ? (
-                recentActivity.map((activity, index) => (
-                  <React.Fragment key={activity.id}>
-                    <ListItem>
-                      <ListItemIcon>
-                        {activity.type === 'INVENTORY_IN' && (
-                          <TrendingUpIcon sx={{ color: 'success.main' }} />
-                        )}
-                        {activity.type === 'INVENTORY_OUT' && (
-                          <TrendingDownIcon sx={{ color: 'error.main' }} />
-                        )}
-                        {activity.type === 'PRODUCT_ADDED' && (
-                          <AddCircleIcon sx={{ color: 'info.main' }} />
-                        )}
-                        {activity.type === 'ORDER_CREATED' && (
-                          <ShoppingBagIcon sx={{ color: 'warning.main' }} />
-                        )}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={activity.description}
-                        secondary={new Date(activity.timestamp).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                        primaryTypographyProps={{
-                          sx: { 
-                            fontWeight: 500,
-                            color: isDarkMode ? 'white' : 'text.primary'
-                          }
-                        }}
-                        secondaryTypographyProps={{
-                          sx: { 
-                            color: isDarkMode ? 'grey.400' : 'text.secondary',
-                            fontSize: '0.75rem'
-                          }
-                        }}
-                      />
-                    </ListItem>
-                    {index < recentActivity.length - 1 && (
-                      <Divider variant="inset" component="li" />
-                    )}
-                  </React.Fragment>
-                ))
-              ) : (
-                <ListItem>
-                  <ListItemText
-                    primary="No recent activity"
-                    secondary="New activities will appear here"
-                    sx={{ textAlign: 'center' }}
-                  />
-                </ListItem>
-              )}
-            </List>
-          </Paper>
+        <Grid item xs={12} md={8}>
+          <TopPerformersCard data={stats.topPerformers} />
+        </Grid>
+
+        <Grid item xs={12}>
+          <MonthlyConsumptionCard 
+            data={stats.monthlyConsumption}
+            suppliers={stats.suppliers}
+            categories={stats.categories}
+          />
         </Grid>
       </Grid>
     </Box>

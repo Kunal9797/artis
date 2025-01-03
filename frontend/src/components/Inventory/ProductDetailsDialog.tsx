@@ -21,25 +21,9 @@ import { api } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, BarChart, Bar, Legend 
+  ResponsiveContainer, BarChart, Bar, Legend, ComposedChart, ReferenceLine 
 } from 'recharts';
-
-interface Transaction {
-  id: string;
-  type: 'IN' | 'OUT';
-  quantity: number;
-  date: string;
-  notes: string;
-  balance: number;
-}
-
-interface ProductDetails {
-  supplierCode: string;
-  supplier: string;
-  artisCodes: string;
-  currentStock: number;
-  transactions: Transaction[];
-}
+import { Transaction, ProductDetails } from '../../types/transaction';
 
 interface Product {
   id: string;
@@ -63,8 +47,8 @@ interface ChartData {
   notes?: string;
 }
 
-const aggregateMonthlyConsumption = (transactions: any[]) => {
-  const monthlyData = transactions.reduce((acc: any, t: any) => {
+const aggregateMonthlyConsumption = (transactions: Transaction[]) => {
+  const monthlyData = transactions.reduce((acc: Record<string, number>, t: Transaction) => {
     if (t.type === 'OUT') {
       const month = new Date(t.date).toLocaleDateString('en-US', { 
         year: 'numeric', 
@@ -75,10 +59,27 @@ const aggregateMonthlyConsumption = (transactions: any[]) => {
     return acc;
   }, {});
 
-  return Object.entries(monthlyData).map(([month, amount]) => ({
-    month,
-    amount
-  }));
+  const sortedEntries = Object.entries(monthlyData)
+    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+  
+  const monthlyValues = Object.values(monthlyData);
+  const averageConsumption = monthlyValues.length > 0 
+    ? monthlyValues.reduce((a, b) => a + b, 0) / monthlyValues.length 
+    : 0;
+
+  return sortedEntries.map(([month, amount], index, array) => {
+    const prevAmount = index > 0 ? Number(array[index - 1][1]) : Number(amount);
+    const percentChange = prevAmount !== 0 
+      ? ((Number(amount) - prevAmount) / prevAmount * 100).toFixed(1)
+      : '0';
+
+    return {
+      month,
+      amount: Number(amount),
+      average: Number(averageConsumption.toFixed(2)),
+      percentChange: Number(percentChange)
+    };
+  });
 };
 
 const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => {
@@ -242,63 +243,75 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
                     </Typography>
                     <Box sx={{ height: 200, width: '100%' }}>
                       <ResponsiveContainer>
-                        <BarChart
+                        <ComposedChart
                           data={aggregateMonthlyConsumption(details?.transactions || [])}
-                          margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+                          margin={{ top: 40, right: 120, left: 20, bottom: 5 }}
+                          height={300}
                         >
-                          <defs>
-                            <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor={isDarkMode ? '#90CAF9' : '#1976d2'} stopOpacity={0.8} />
-                              <stop offset="95%" stopColor={isDarkMode ? '#90CAF9' : '#1976d2'} stopOpacity={0.2} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
+                          <CartesianGrid 
+                            strokeDasharray="3 3" 
+                            stroke={isDarkMode ? '#444' : '#eee'} 
+                            vertical={false}
+                          />
                           <XAxis 
                             dataKey="month" 
-                            axisLine={false}
-                            tickLine={false}
                             tick={{ fill: isDarkMode ? '#fff' : '#666' }}
+                            axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
+                            tickLine={false}
                           />
                           <YAxis 
-                            axisLine={false}
-                            tickLine={false}
                             tick={{ fill: isDarkMode ? '#fff' : '#666' }}
+                            axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
+                            tickLine={false}
                           />
                           <Bar 
                             dataKey="amount" 
-                            fill="url(#colorGradient)"
+                            fill={isDarkMode ? '#B39DDB' : '#9575CD'} 
+                            name="Monthly Consumption"
+                            barSize={60}
                             radius={[4, 4, 0, 0]}
-                            maxBarSize={50}
+                            opacity={0.8}
                             label={{
                               position: 'top',
-                              fill: isDarkMode ? '#fff' : '#1976d2',
-                              fontSize: 14,
-                              fontWeight: 600,
-                              dy: -6,
-                              formatter: (value: number) => `${value.toFixed(1)} kgs`
-                            }}
-                            onMouseEnter={(data, index) => {
-                              const bars = document.querySelectorAll('.recharts-bar-rectangle');
-                              const labels = document.querySelectorAll('.recharts-bar-label');
-                              if (bars[index] && labels[index]) {
-                                bars[index].setAttribute('fill-opacity', '0.8');
-                                labels[index].setAttribute('font-size', '16');
-                                labels[index].setAttribute('font-weight', 'bold');
-                                labels[index].setAttribute('fill', isDarkMode ? '#90CAF9' : '#1976d2');
-                              }
-                            }}
-                            onMouseLeave={(data, index) => {
-                              const bars = document.querySelectorAll('.recharts-bar-rectangle');
-                              const labels = document.querySelectorAll('.recharts-bar-label');
-                              if (bars[index] && labels[index]) {
-                                bars[index].setAttribute('fill-opacity', '1');
-                                labels[index].setAttribute('font-size', '12');
-                                labels[index].setAttribute('font-weight', '500');
-                                labels[index].setAttribute('fill', isDarkMode ? '#fff' : '#666');
+                              content: (props: any) => {
+                                const { value, x, y } = props;
+                                return (
+                                  <g transform={`translate(${x},${y})`}>
+                                    <text
+                                      x={30}
+                                      y={-10}
+                                      fill={isDarkMode ? '#fff' : '#333'}
+                                      textAnchor="middle"
+                                      fontSize={14}
+                                      fontWeight="600"
+                                    >
+                                      {`${value} kgs`}
+                                    </text>
+                                  </g>
+                                );
                               }
                             }}
                           />
-                        </BarChart>
+                          <ReferenceLine
+                            y={aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
+                            stroke="#FF7043"
+                            strokeDasharray="5 5"
+                            label={{
+                              value: `Avg: ${aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0} kgs`,
+                              position: 'right',
+                              fill: '#FF7043',
+                              fontSize: 14
+                            }}
+                          />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={36}
+                            iconType="circle"
+                            formatter={(value) => {
+                              return <span style={{ color: isDarkMode ? '#fff' : '#666', fontSize: '14px' }}>{value}</span>;
+                            }}
+                          />
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </Box>
                   </CardContent>
