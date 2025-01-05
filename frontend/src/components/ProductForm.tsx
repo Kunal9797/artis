@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,7 +9,7 @@ import {
   Box,
 } from '@mui/material';
 import { Product } from '../types/product';
-import api from '../services/api';
+import { productApi } from '../services/api';
 
 interface ProductFormProps {
   open: boolean;
@@ -18,31 +18,52 @@ interface ProductFormProps {
   onSubmit: () => void;
 }
 
+interface FormData {
+  artisCode: string;
+  name?: string;
+  category?: string;
+  supplierCode: string;
+  supplier: string;
+  gsm?: string;
+  catalogs?: string[];
+}
+
 const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, onSubmit }) => {
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+  const [formData, setFormData] = useState<FormData>({
+    artisCode: product?.artisCodes?.[0] || '',
+    name: product?.name || '',
+    category: product?.category || '',
+    supplierCode: product?.supplierCode || '',
+    supplier: product?.supplier || '',
+    gsm: product?.gsm || '',
+    catalogs: product?.catalogs || []
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    const productData = {
-      artisCode: formData.get('artisCode'),
-      name: formData.get('name'),
-      category: formData.get('category'),
-      supplierCode: formData.get('supplierCode'),
-      supplier: formData.get('supplier'),
-      gsm: formData.get('gsm'),
-      catalogs: formData.get('catalogs')?.toString().split(',').map(s => s.trim()),
-    };
+    if (!formData.artisCode || !formData.supplierCode || !formData.supplier) {
+      alert('Please fill in all required fields: Artis Code, Supplier Code, and Supplier');
+      return;
+    }
 
     try {
       if (product) {
-        await api.put(`/products/${product.id}`, productData);
+        await productApi.updateProduct(product.id, {
+          ...formData,
+          artisCodes: [...product.artisCodes, formData.artisCode]
+        });
       } else {
-        await api.post('/products', productData);
+        await productApi.createProduct({
+          ...formData,
+          artisCodes: [formData.artisCode]
+        });
       }
       onSubmit();
       onClose();
     } catch (error) {
       console.error('Error saving product:', error);
+      alert('Error saving product');
     }
   };
 
@@ -56,40 +77,51 @@ const ProductForm: React.FC<ProductFormProps> = ({ open, onClose, product, onSub
               required
               name="artisCode"
               label="Artis Code"
-              defaultValue={product?.artisCode}
+              value={formData.artisCode}
+              onChange={(e) => setFormData(prev => ({ ...prev, artisCode: e.target.value }))}
+              helperText="Enter a single Artis Code"
             />
             <TextField
-              required
               name="name"
               label="Name"
               defaultValue={product?.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             />
             <TextField
-              required
               name="category"
               label="Category"
               defaultValue={product?.category}
+              onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
             />
             <TextField
+              required
               name="supplierCode"
               label="Supplier Code"
               defaultValue={product?.supplierCode}
+              onChange={(e) => setFormData(prev => ({ ...prev, supplierCode: e.target.value }))}
             />
             <TextField
+              required
               name="supplier"
               label="Supplier"
               defaultValue={product?.supplier}
+              onChange={(e) => setFormData(prev => ({ ...prev, supplier: e.target.value }))}
             />
             <TextField
               name="gsm"
               label="GSM"
               defaultValue={product?.gsm}
+              onChange={(e) => setFormData(prev => ({ ...prev, gsm: e.target.value }))}
             />
             <TextField
               name="catalogs"
               label="Catalogs (comma-separated)"
               defaultValue={product?.catalogs?.join(', ')}
               helperText="Enter catalogs separated by commas"
+              onChange={(e) => {
+                const catalogs = e.target.value.split(',').map(cat => cat.trim());
+                setFormData(prev => ({ ...prev, catalogs }));
+              }}
             />
           </Box>
         </DialogContent>

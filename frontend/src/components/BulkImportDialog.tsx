@@ -10,7 +10,7 @@ import {
   Box,
   Link
 } from '@mui/material';
-import api from '../services/api';
+import { productApi } from '../services/api';
 
 interface Props {
   open: boolean;
@@ -27,19 +27,8 @@ const BulkImportDialog: React.FC<Props> = ({ open, onClose, onSuccess }) => {
     e.preventDefault();
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const response = await api.post(
-        `/products/bulk?mode=${updateMode ? 'update' : 'create'}`, 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const response = await productApi.bulkCreate(file, updateMode);
       console.log('Import response:', response.data);
       onSuccess();
       onClose();
@@ -49,6 +38,7 @@ const BulkImportDialog: React.FC<Props> = ({ open, onClose, onSuccess }) => {
         status: error.response?.status,
         error: error
       });
+      setErrorMessage(error.response?.data?.error || 'Failed to import products');
     }
   };
 

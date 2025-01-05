@@ -13,15 +13,8 @@ import {
   IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { getProductTransactions } from '../../services/api';
-
-interface Transaction {
-  id: string;
-  type: 'IN' | 'OUT';
-  quantity: number;
-  notes?: string;
-  date: string;
-}
+import { inventoryApi } from '../../services/api';
+import { Transaction } from '../../types/transaction';
 
 interface HistoryDialogProps {
   open: boolean;
@@ -42,8 +35,8 @@ const HistoryDialog: React.FC<HistoryDialogProps> = ({ open, onClose, productId 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const data = await getProductTransactions(productId);
-      setTransactions(data);
+      const response = await inventoryApi.getProductTransactions(productId);
+      setTransactions(response.data.transactions);
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
     } finally {
@@ -67,6 +60,7 @@ const HistoryDialog: React.FC<HistoryDialogProps> = ({ open, onClose, productId 
                 <TableCell>Date</TableCell>
                 <TableCell>Type</TableCell>
                 <TableCell align="right">Quantity</TableCell>
+                <TableCell align="right">Balance</TableCell>
                 <TableCell>Notes</TableCell>
               </TableRow>
             </TableHead>
@@ -76,6 +70,7 @@ const HistoryDialog: React.FC<HistoryDialogProps> = ({ open, onClose, productId 
                   <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
                   <TableCell>{transaction.type}</TableCell>
                   <TableCell align="right">{transaction.quantity}</TableCell>
+                  <TableCell align="right">{transaction.balance}</TableCell>
                   <TableCell>{transaction.notes || '-'}</TableCell>
                 </TableRow>
               ))}

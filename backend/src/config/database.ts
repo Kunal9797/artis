@@ -1,6 +1,8 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 import path from 'path';
+import Product from '../models/Product';
+import Transaction from '../models/Transaction';
 
 // Load environment variables from the correct path
 dotenv.config({ path: path.join(__dirname, '../../.env') });
@@ -39,5 +41,17 @@ sequelize
   .catch(err => {
     console.error('Unable to connect to the database:', err);
   });
+
+// Sync all models
+async function syncDatabase() {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log('Database synced successfully');
+  } catch (error) {
+    console.error('Error syncing database:', error);
+  }
+}
+
+syncDatabase();
 
 export default sequelize; 

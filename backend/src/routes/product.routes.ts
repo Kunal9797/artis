@@ -1,25 +1,32 @@
 import { Router } from 'express';
-import { auth } from '../middleware/auth';
-import multer from 'multer';
+import { upload } from '../middleware/upload';
 import {
   getAllProducts,
+  getProduct,
+  createProduct,
   updateProduct,
-  deleteProduct
-} from '../controllers/base.controller';
-import { createProduct, bulkCreateProducts, getProductByArtisCode } from '../controllers/product.controller';
+  deleteProduct,
+  bulkCreateProducts,
+  searchProducts,
+  deleteAllProducts
+} from '../controllers/product.controller';
 
-const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
-// Base routes
-router.get('/', auth, getAllProducts);
-router.post('/', auth, createProduct);
-router.put('/:id', auth, updateProduct);
-router.delete('/:id', auth, deleteProduct);
+// Basic CRUD routes
+router.get('/', getAllProducts);
+router.get('/:id', getProduct);
+router.post('/', createProduct);
+router.put('/:id', updateProduct);
+router.delete('/:id', deleteProduct);
 
-// Bulk import
-router.post('/bulk', auth, upload.single('file'), bulkCreateProducts);
+// Bulk operations
+router.post('/bulk', upload.single('file'), bulkCreateProducts);
 
-router.get('/by-artis-code/:artisCode', getProductByArtisCode);
+// Search
+router.get('/search/:query', searchProducts);
+
+// Delete all products
+router.delete('/all', deleteAllProducts);
 
 export default router; 

@@ -2,21 +2,27 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
 import Product from './Product';
 
-export enum TransactionType {
-  IN = 'IN',
-  OUT = 'OUT'
+interface TransactionAttributes {
+  id: string;
+  productId: string;
+  type: 'IN' | 'OUT';
+  quantity: number;
+  date: Date;
+  notes?: string;
+  includeInAvg: boolean;
 }
 
-class InventoryTransaction extends Model {
+class Transaction extends Model {
   public id!: string;
   public productId!: string;
-  public type!: TransactionType;
+  public type!: 'IN' | 'OUT';
   public quantity!: number;
   public date!: Date;
   public notes?: string;
+  public includeInAvg!: boolean;
 }
 
-InventoryTransaction.init(
+Transaction.init(
   {
     id: {
       type: DataTypes.UUID,
@@ -32,37 +38,44 @@ InventoryTransaction.init(
       }
     },
     type: {
-      type: DataTypes.ENUM(...Object.values(TransactionType)),
-      allowNull: false
+      type: DataTypes.ENUM('IN', 'OUT'),
+      allowNull: false,
     },
     quantity: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       get() {
         const value = this.getDataValue('quantity');
-        return value ? Number(value) : 0;
+        return value ? Number(parseFloat(value).toFixed(2)) : 0;
+      },
+      set(value: number) {
+        this.setDataValue('quantity', Number(parseFloat(value.toString()).toFixed(2)));
       }
     },
     date: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.NOW
     },
     notes: {
       type: DataTypes.STRING,
-      allowNull: true
+      allowNull: true,
+    },
+    includeInAvg: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   },
   {
     sequelize,
-    modelName: 'InventoryTransaction',
-    tableName: 'InventoryTransactions'
+    modelName: 'Transaction',
+    tableName: 'Transactions',
+    timestamps: true
   }
 );
 
-InventoryTransaction.belongsTo(Product, {
+Transaction.belongsTo(Product, {
   foreignKey: 'productId',
-  as: 'product'
+  onDelete: 'CASCADE'
 });
 
-export default InventoryTransaction; 
+export default Transaction; 

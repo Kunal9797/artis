@@ -1,11 +1,9 @@
 import User from './User';
 import Product from './Product';
-import Inventory from './Inventory';
-import InventoryTransaction from './InventoryTransaction';
+import Transaction from './Transaction';
 
 export {
   User,
   Product,
-  Inventory,
-  InventoryTransaction
+  Transaction
 }; 

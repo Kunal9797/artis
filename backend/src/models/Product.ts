@@ -1,90 +1,88 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
+import Transaction from './Transaction';
 
 class Product extends Model {
   public id!: string;
-  public artisCode!: string;
-  public supplierCode?: string;
-  public name!: string;
+  public artisCodes!: string[];
+  public name?: string;
+  public supplier!: string;
   public category?: string;
-  public supplier?: string;
-  public texture?: string;
-  public thickness?: string;
-  public designPaperId?: string;
-  public designPaper?: Product;
+  public supplierCode!: string;
+  public currentStock!: number;
+  public avgConsumption!: number;
+  public lastUpdated!: Date;
+  public minStockLevel?: number;
   public gsm?: string;
   public catalogs?: string[];
-  public altCode?: string;
+  public texture?: string;
+  public thickness?: string;
+
 }
 
-Product.init(
-  {
-    id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
-      primaryKey: true,
-    },
-    artisCode: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-    supplierCode: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    category: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    supplier: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    texture: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    thickness: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    designPaperId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'Products',
-        key: 'id'
-      }
-    },
-    gsm: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    catalogs: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true
-    },
-    altCode: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      comment: 'Groups related products across catalogs'
-    }
+Product.init({
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
   },
-  {
-    sequelize,
-    modelName: 'Product',
-    tableName: 'Products'
+  artisCodes: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: false
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  supplier: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  category: DataTypes.STRING,
+  supplierCode: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  currentStock: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  avgConsumption: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  lastUpdated: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  minStockLevel: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  gsm: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  catalogs: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    allowNull: false,
+    defaultValue: []
+  },
+  texture: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  thickness: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
-);
-
-Product.belongsTo(Product, {
-  as: 'designPaper',
-  foreignKey: 'designPaperId'
+}, {
+  sequelize,
+  modelName: 'Product',
+  tableName: 'Products'
 });
 
 export default Product; 

@@ -1,9 +1,16 @@
 import { Request, Response } from 'express';
-import { Product, Inventory, InventoryTransaction } from '../models';
-import { TransactionType } from '../models/InventoryTransaction';
+import Product from '../models/Product';
+import Transaction from '../models/Transaction';
 import { Op } from 'sequelize';
 import sequelize from '../config/database';
 import * as XLSX from 'xlsx';
+import { updateProductAverageConsumption } from './product.controller';
+
+// Define TransactionType enum since we removed InventoryTransaction model
+enum TransactionType {
+  IN = 'IN',
+  OUT = 'OUT'
+}
 
 interface PurchaseOrderRow {
   'Artis Code': string;
@@ -15,17 +22,24 @@ interface PurchaseOrderRow {
 // Get all inventory items with their associated products
 export const getAllInventory = async (req: Request, res: Response) => {
   try {
-    console.log('Fetching all inventory...');
-    const inventory = await Inventory.findAll({
-      include: [{
-        model: Product,
-        as: 'product',
-        attributes: ['id', 'artisCode', 'name', 'supplier', 'category', 'supplierCode']
-      }]
+    console.log('Fetching all products with inventory...');
+    const products = await Product.findAll({
+      attributes: [
+        'id', 'artisCodes', 'name', 'supplier', 'category', 'supplierCode',
+        'currentStock', 'lastUpdated', 'minStockLevel', 'avgConsumption'
+      ],
+      order: [['lastUpdated', 'DESC']]
     });
-    console.log('Found inventory items:', inventory.length);
-    console.log('First item:', inventory[0]?.toJSON());
-    res.json(inventory);
+    
+    // Log a few products to verify avgConsumption
+    products.slice(0, 3).forEach(product => {
+      console.log('Product details:', {
+        artisCode: product.artisCodes[0],
+        avgConsumption: product.avgConsumption
+      });
+    });
+
+    res.json(products);
   } catch (error) {
     console.error('Error fetching inventory:', error);
     res.status(500).json({ error: 'Error fetching inventory' });
@@ -35,37 +49,41 @@ export const getAllInventory = async (req: Request, res: Response) => {
 // Record a new inventory transaction and update current stock
 export const createTransaction = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
-  
   try {
-    const { productId, type, quantity, notes, date } = req.body;
+    const { productId, type, quantity, notes, date, includeInAvg } = req.body;
     
-    let inventory = await Inventory.findOne({ 
-      where: { productId },
+    const product = await Product.findByPk(productId, {
       transaction: t,
       lock: true
     });
 
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    // Calculate new stock
     const stockChange = type === TransactionType.IN ? Number(quantity) : -Number(quantity);
+    const newStock = Number(product.currentStock) + stockChange;
     
-    const transaction = await InventoryTransaction.create({
+    // Create transaction
+    const transaction = await Transaction.create({
       productId,
       type,
       quantity: Number(quantity),
       notes,
-      date: date || new Date()
+      date: date || new Date(),
+      includeInAvg: type === TransactionType.OUT ? (includeInAvg || false) : false
     }, { transaction: t });
 
-    if (!inventory) {
-      inventory = await Inventory.create({
-        productId,
-        currentStock: stockChange,
-        lastUpdated: new Date()
-      }, { transaction: t });
-    } else {
-      await inventory.update({
-        currentStock: Number(inventory.currentStock) + stockChange,
-        lastUpdated: new Date()
-      }, { transaction: t });
+    // Update product stock
+    await product.update({
+      currentStock: Number(newStock.toFixed(2)),
+      lastUpdated: new Date()
+    }, { transaction: t });
+
+    // Update average consumption if it's an OUT transaction with includeInAvg
+    if (type === TransactionType.OUT && includeInAvg) {
+      await updateProductAverageConsumption(product.id, t);
     }
 
     await t.commit();
@@ -74,7 +92,7 @@ export const createTransaction = async (req: Request, res: Response) => {
   } catch (error) {
     await t.rollback();
     console.error('Transaction error:', error);
-    res.status(500).json({
+    res.status(400).json({
       error: 'Error creating transaction',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
@@ -85,45 +103,19 @@ export const createTransaction = async (req: Request, res: Response) => {
 export const getProductTransactions = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
-    console.log('Fetching transactions for productId:', productId);
     
-    // First verify the product exists
-    const mainProduct = await Product.findByPk(productId);
-    if (!mainProduct) {
+    const product = await Product.findByPk(productId);
+    if (!product) {
       throw new Error('Product not found');
     }
 
-    // Find all related products (including the main product)
-    const relatedProducts = await Product.findAll({
-      where: {
-        supplierCode: mainProduct.supplierCode,
-        supplier: mainProduct.supplier
-      }
-    });
-
-    const relatedProductIds = relatedProducts.map(p => p.id);
-    console.log('Found related product IDs:', relatedProductIds);
-
-    // Get transactions for all related products
-    const transactions = await InventoryTransaction.findAll({
-      where: {
-        productId: {
-          [Op.in]: relatedProductIds
-        }
-      },
+    const transactions = await Transaction.findAll({
+      where: { productId },
       include: [{
         model: Product,
-        as: 'product',
-        attributes: ['artisCode', 'name', 'supplierCode', 'supplier', 'category']
+        attributes: ['artisCodes', 'name', 'supplierCode', 'supplier', 'category']
       }],
       order: [['date', 'ASC']]
-    });
-
-    console.log('Found transactions:', {
-      relatedProductIds,
-      count: transactions.length,
-      firstTransaction: transactions[0]?.toJSON(),
-      lastTransaction: transactions[transactions.length - 1]?.toJSON()
     });
 
     let currentStock = 0;
@@ -227,57 +219,96 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
         return;
       }
 
-      const product = await Product.findOne({
-        where: { artisCode },
-        transaction: t
-      });
-
-      if (!product) {
-        skippedRows.push({
-          artisCode,
-          reason: 'Product not found'
-        });
-        return;
-      }
-
       try {
+        const product = await Product.findOne({
+          where: {
+            artisCodes: {
+              [Op.contains]: [artisCode]
+            }
+          },
+          transaction: t,
+          lock: true
+        });
+
+        if (!product) {
+          skippedRows.push({
+            artisCode,
+            reason: 'Product not found'
+          });
+          return;
+        }
+
         // Record initial stock (IN transaction)
-        await InventoryTransaction.create({
+        await Transaction.create({
           productId: product.id,
           type: TransactionType.IN,
           quantity: initialStock,
-          date: new Date('2024-01-09'), // Initial stock date for 09/01/24
-          notes: 'Initial Stock'
+          date: new Date('2024-01-09'),
+          notes: 'Initial Stock',
+          includeInAvg: false
         }, { transaction: t });
 
         // Record consumption transactions (OUT)
         for (const { date, column } of consumptionDates) {
           const consumption = parseFloat(row[column]) || 0;
-          // Create transaction even for zero consumption
-          await InventoryTransaction.create({
+          await Transaction.create({
             productId: product.id,
             type: TransactionType.OUT,
             quantity: consumption,
             date,
-            notes: `Monthly Consumption - ${date.toLocaleDateString()}`
+            notes: `Monthly Consumption - ${date.toLocaleDateString()}`,
+            includeInAvg: true
           }, { transaction: t });
         }
 
-        // Calculate current stock (Initial - Total Consumption)
+        // Calculate total consumption for current stock
         const totalConsumption = consumptionDates.reduce((sum, { column }) => {
           const consumption = parseFloat(row[column]) || 0;
+          console.log(`Consumption for ${column}: ${consumption}`);
           return sum + consumption;
         }, 0);
 
-        // Update inventory record with precise decimal calculations
-        await Inventory.upsert({
-          productId: product.id,
-          currentStock: Number((initialStock - totalConsumption).toFixed(2)), // Fix decimal precision
+        // Reset current stock before calculating new value
+        await product.update({
+          currentStock: 0,
           lastUpdated: new Date()
         }, { transaction: t });
 
+        // Calculate new stock considering all transactions
+        let newStock = initialStock;
+
+        // Add existing IN transactions
+        const existingTransactions = await Transaction.findAll({
+          where: { 
+            productId: product.id,
+            date: {
+              [Op.gt]: new Date('2024-01-09') // After initial stock date
+            }
+          },
+          transaction: t
+        });
+
+        existingTransactions.forEach(transaction => {
+          if (transaction.type === TransactionType.IN) {
+            newStock += Number(transaction.quantity);
+          }
+        });
+
+        newStock = Number((newStock - totalConsumption).toFixed(2));
+        console.log(`Initial stock: ${initialStock}, Total consumption: ${totalConsumption}, Final stock: ${newStock}`);
+
+        // Update product's current stock
+        await product.update({
+          currentStock: newStock,
+          lastUpdated: new Date()
+        }, { transaction: t });
+        
+        // Always update average consumption for bulk imports
+        await updateProductAverageConsumption(product.id, t);
+        
         processedProducts.push(artisCode);
-      } catch (error: unknown) {
+      } catch (error) {
+        console.error(`Error processing ${artisCode}:`, error);
         skippedRows.push({
           artisCode,
           reason: `Error processing: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -304,66 +335,41 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
 export const getInventory = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
-    const inventory = await Inventory.findOne({
-      where: { productId },
-      include: [{
-        model: Product,
-        as: 'product',
-        attributes: ['artisCode', 'name']
-      }]
+    const product = await Product.findByPk(productId, {
+      attributes: ['id', 'artisCodes', 'name', 'currentStock', 'lastUpdated', 'minStockLevel']
     });
-    res.json(inventory);
+    res.json(product);
   } catch (error) {
     console.error('Error fetching inventory:', error);
     res.status(500).json({ error: 'Error fetching inventory' });
   }
 }; 
 
-export const getInventoryByProduct = async (req: Request, res: Response) => {
-  try {
-    const { productId } = req.params;
-    const inventory = await Inventory.findOne({
-      where: { productId }
-    });
-    
-    if (!inventory) {
-      return res.status(404).json({ error: 'Inventory not found' });
-    }
-    
-    res.json(inventory);
-  } catch (error) {
-    console.error('Error fetching inventory:', error);
-    res.status(500).json({ error: 'Error fetching inventory' });
-  }
-}; 
 
 export const clearInventory = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
-  
   try {
-    // First delete all transactions
-    await InventoryTransaction.destroy({ 
+    // Delete all transactions
+    await Transaction.destroy({
       where: {},
-      transaction: t 
+      transaction: t
     });
 
-    // Then delete all inventory records
-    await Inventory.destroy({
+    // Reset all products' current stock and avgConsumption to 0
+    await Product.update({
+      currentStock: 0,
+      avgConsumption: 0,
+      lastUpdated: new Date()
+    }, {
       where: {},
       transaction: t
     });
 
     await t.commit();
-    res.json({ message: 'Inventory cleared successfully' });
+    res.json({ message: 'All inventory data cleared successfully' });
   } catch (error) {
     await t.rollback();
-    console.error('Error clearing inventory:', {
-      error: error instanceof Error ? {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      } : error
-    });
+    console.error('Error clearing inventory:', error);
     res.status(500).json({ 
       error: 'Failed to clear inventory',
       details: error instanceof Error ? error.message : 'Unknown error'
@@ -373,17 +379,15 @@ export const clearInventory = async (req: Request, res: Response) => {
 
 export const getRecentTransactions = async (req: Request, res: Response) => {
   try {
-    const transactions = await InventoryTransaction.findAll({
+    const transactions = await Transaction.findAll({
       limit: 5,
       order: [['createdAt', 'DESC']],
       include: [{
         model: Product,
-        as: 'product',
-        attributes: ['artisCode', 'name']
+        attributes: ['artisCodes', 'name']
       }]
     });
     
-    console.log('Recent transactions:', transactions); // Debug log
     res.json(transactions);
   } catch (error) {
     console.error('Error fetching recent transactions:', error);
@@ -392,24 +396,6 @@ export const getRecentTransactions = async (req: Request, res: Response) => {
 }; 
 
 // Get inventory details for a specific product
-export const getProductInventory = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const inventory = await Inventory.findOne({
-      where: { productId: id },
-      include: [{
-        model: Product,
-        as: 'product',
-        attributes: ['artisCode', 'name']
-      }]
-    });
-    res.json(inventory);
-  } catch (error) {
-    console.error('Error fetching inventory:', error);
-    res.status(500).json({ error: 'Failed to fetch inventory' });
-  }
-}; 
-
 export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
@@ -418,17 +404,12 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedOrders: string[] = [];
-  const aggregatedAmounts = new Map<string, { 
-    totalAmount: number, 
-    transactions: Array<{ date: Date, amount: number, notes: string }> 
-  }>();
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(worksheet) as PurchaseOrderRow[];
 
-    // First pass: aggregate amounts and collect transactions
     for (const row of data) {
       const artisCode = row['Artis Code']?.toString();
       const rawDate = row['Date']?.toString();
@@ -438,7 +419,7 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
       if (!artisCode || !rawDate || isNaN(amount)) {
         skippedRows.push({
           artisCode: artisCode || 'unknown',
-          reason: `Missing or invalid fields`
+          reason: 'Missing or invalid fields'
         });
         continue;
       }
@@ -456,66 +437,42 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
         continue;
       }
 
-      // Aggregate amounts and store transaction details
-      if (!aggregatedAmounts.has(artisCode)) {
-        aggregatedAmounts.set(artisCode, { 
-          totalAmount: amount,
-          transactions: [{ date: parsedDate, amount, notes }]
-        });
-      } else {
-        const current = aggregatedAmounts.get(artisCode)!;
-        current.totalAmount += amount;
-        current.transactions.push({ date: parsedDate, amount, notes });
-      }
-    }
-
-    // Second pass: process aggregated data
-    for (const [artisCode, data] of aggregatedAmounts) {
       const product = await Product.findOne({
-        where: { artisCode },
-        transaction: t
+        where: {
+          artisCodes: {
+            [Op.contains]: [artisCode]
+          }
+        },
+        transaction: t,
+        lock: true
       });
 
       if (!product) {
         skippedRows.push({
           artisCode,
-          reason: 'Product not found in database'
+          reason: 'Product not found'
         });
         continue;
       }
 
       try {
-        // Create individual transactions
-        for (const trans of data.transactions) {
-          await InventoryTransaction.create({
-            productId: product.id,
-            type: TransactionType.IN,
-            quantity: trans.amount,
-            date: trans.date,
-            notes: trans.notes
-          }, { transaction: t });
-        }
+        // Create transaction
+        await Transaction.create({
+          productId: product.id,
+          type: TransactionType.IN,
+          quantity: amount,
+          date: parsedDate,
+          notes
+        }, { transaction: t });
 
-        // Update inventory with total amount
-        const inventory = await Inventory.findOne({
-          where: { productId: product.id },
-          transaction: t,
-          lock: true
-        });
+        // Update product stock and lastUpdated
+        await product.update({
+          currentStock: Number((Number(product.currentStock) + amount).toFixed(2)),
+          lastUpdated: new Date()
+        }, { transaction: t });
 
-        if (inventory) {
-          const newStock = Number(inventory.currentStock) + Number(data.totalAmount);
-          await inventory.update({
-            currentStock: Number(newStock.toFixed(2)), // Fix decimal precision
-            lastUpdated: new Date()
-          }, { transaction: t });
-        } else {
-          await Inventory.create({
-            productId: product.id,
-            currentStock: Number(data.totalAmount.toFixed(2)), // Fix decimal precision
-            lastUpdated: new Date()
-          }, { transaction: t });
-        }
+        // Recalculate average consumption
+        await updateProductAverageConsumption(product.id, t);
 
         processedOrders.push(artisCode);
       } catch (error) {
@@ -542,72 +499,47 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
   }
 }; 
 
-export const getInventoryReport = async (req: Request, res: Response) => {
-  console.log('Received request for inventory report');
-  try {
-    console.log('Fetching inventory data...');
-    const inventoryData = await Inventory.findAll({
-      include: [{
-        model: Product,
-        as: 'product',
-        required: true,
-        attributes: ['artisCode', 'supplierCode']
-      }],
-      attributes: ['currentStock']
-    }) as (Inventory & { product: Product })[];
-
-    console.log('Raw inventory data:', JSON.stringify(inventoryData, null, 2));
-
-    const artisCodes: string[] = [];
-    const supplierCodes: string[] = [];
-    const currentStocks: number[] = [];
-
-    inventoryData.forEach(item => {
-      console.log('Processing item:', item);
-      artisCodes.push(item.product.artisCode);
-      supplierCodes.push(item.product.supplierCode || '');
-      currentStocks.push(Number(item.currentStock) || 0);
-    });
-
-    const response = {
-      artisCodes,
-      supplierCodes,
-      currentStocks
-    };
-
-    console.log('Sending response:', response);
-    res.json(response);
-  } catch (error) {
-    console.error('Error generating inventory report:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    res.status(500).json({ 
-      error: 'Failed to generate inventory report',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-}; 
 
 export const getInventoryDetails = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    const inventory = await Inventory.findByPk(id);
-    if (!inventory) {
-      return res.status(404).json({ error: 'Inventory not found' });
+    const product = await Product.findByPk(id);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
     }
 
-    const transactions = await InventoryTransaction.findAll({
-      where: { productId: inventory.productId },
+    const transactions = await Transaction.findAll({
+      where: { productId: id },
       order: [['date', 'DESC']],
-      raw: true
+      include: [{
+        model: Product,
+        attributes: ['artisCodes', 'name', 'supplierCode', 'supplier']
+      }]
     });
 
+    // Calculate running balance for each transaction
+    let balance = product.currentStock;
+    const transactionsWithBalance = transactions.map(t => {
+      const transaction = t.toJSON();
+      balance = balance + (t.type === 'OUT' ? t.quantity : -t.quantity);
+      return {
+        ...transaction,
+        balance: Number(balance.toFixed(2))
+      };
+    }).reverse(); // Reverse to show oldest first
+
     res.json({
-      transactions,
-      currentStock: inventory.currentStock
+      product: {
+        id: product.id,
+        artisCodes: product.artisCodes,
+        name: product.name,
+        supplierCode: product.supplierCode,
+        supplier: product.supplier,
+        currentStock: product.currentStock,
+        lastUpdated: product.lastUpdated
+      },
+      transactions: transactionsWithBalance
     });
   } catch (error) {
     console.error('Error fetching inventory details:', error);

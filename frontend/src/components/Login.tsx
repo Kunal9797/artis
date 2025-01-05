@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import Logo from '../assets/artislogo.png';
 import ArtisLogoText from '../assets/artislaminatestext.png';
 import { useNavigate } from 'react-router-dom';
+import { authApi } from '../services/api';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -25,10 +26,8 @@ const Login: React.FC = () => {
     setError('');
     
     try {
-      const { login: apiLogin } = require('../services/api');
-      const result = await apiLogin(username, password);
-      
-      await login(result.token, result.user);
+      const result = await authApi.login(username, password);
+      await login(result.data.token, result.data.user);
       navigate('/dashboard');
     } catch (err) {
       console.error('Login error:', err);

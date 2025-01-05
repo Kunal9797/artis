@@ -17,7 +17,7 @@ import {
   CardContent,
   Grid,
 } from '@mui/material';
-import { api } from '../../services/api';
+import { productApi, inventoryApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -27,10 +27,12 @@ import { Transaction, ProductDetails } from '../../types/transaction';
 
 interface Product {
   id: string;
-  artisCode: string;
+  artisCodes: string[];
   name: string;
   supplierCode?: string;
   supplier?: string;
+  avgConsumption: number;
+  currentStock: number;
 }
 
 interface Props {
@@ -110,60 +112,22 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
   };
 
   const fetchProductDetails = async () => {
-    setLoading(true);
     try {
-      // Get all products first
-      const allProductsRes = await api.get('/products');
-      const products: Product[] = allProductsRes.data;
+      setLoading(true);
+      const [productResponse, transactionsResponse] = await Promise.all([
+        productApi.getProduct(productId),
+        inventoryApi.getProductTransactions(productId)
+      ]);
       
-      console.log('ProductDetails Debug:', {
-        searchingForId: productId,
-        totalProducts: products.length,
-        firstFewProducts: products.slice(0, 3).map(p => ({
-          id: p.id,
-          artisCode: p.artisCode,
-          supplierCode: p.supplierCode
-        }))
-      });
-      
-      // Find main product and related products
-      const mainProduct = products.find((p: Product) => p.id === productId);
-      
-      if (!mainProduct) {
-        console.error('Product not found:', {
-          searchId: productId,
-          availableIds: products.map(p => p.id).slice(0, 5)
-        });
-        throw new Error('Product not found');
-      }
-
-      const relatedProducts = products.filter((p: Product) => 
-        p.supplierCode === mainProduct.supplierCode && 
-        p.supplier === mainProduct.supplier
-      );
-      console.log('ProductDetails - Related Products:', relatedProducts);
-
-      // Get transactions
-      const transactionsRes = await api.get(`/inventory/transactions/${mainProduct.id}`);
-      console.log('ProductDetails - Transaction Response:', transactionsRes.data);
-
-      // Calculate current stock from transactions
-      const calculatedStock = calculateStockFromTransactions(transactionsRes.data.transactions || []);
-      console.log('ProductDetails - Calculated Stock:', calculatedStock);
-
       setDetails({
-        supplierCode: mainProduct.supplierCode || '',
-        supplier: mainProduct.supplier || '',
-        artisCodes: relatedProducts.map(p => p.artisCode).sort().join(' / '),
-        currentStock: calculatedStock,
-        transactions: transactionsRes.data.transactions || []
+        supplierCode: productResponse.data.supplierCode || '',
+        supplier: productResponse.data.supplier || '',
+        artisCodes: productResponse.data.artisCodes.join(' / '),
+        currentStock: productResponse.data.currentStock,
+        transactions: transactionsResponse.data.transactions || []
       });
     } catch (error) {
-      console.error('Error fetching product details:', {
-        error,
-        productId,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
-      });
+      console.error('Error fetching product details:', error);
       setDetails(null);
     } finally {
       setLoading(false);

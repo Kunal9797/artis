@@ -9,14 +9,16 @@ import {
   MenuItem,
   Box,
   Autocomplete,
-  Typography
+  Typography,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
-import { createTransaction, getAllProducts, api } from '../../services/api';
+import { inventoryApi, productApi } from '../../services/api';
 import { TransactionData } from '../../types/transaction';
 
 interface Product {
   id: string;
-  artisCode: string;
+  artisCodes: string[];
   name: string;
   supplierCode?: string;
   supplier?: string;
@@ -45,6 +47,7 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [includeInAvg, setIncludeInAvg] = useState(false);
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -53,10 +56,10 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await getAllProducts();
-        setProducts(data);
+        const response = await productApi.getAllProducts();
+        setProducts(response.data);
         if (productId) {
-          const product = data.find((p: Product) => p.id === productId);
+          const product = response.data.find((p: Product) => p.id === productId);
           setSelectedProduct(product || null);
         }
       } catch (error) {
@@ -68,24 +71,54 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedProduct) return;
+    setError('');
+    setLoading(true);
+    console.log('Starting transaction creation:', {
+      type,
+      quantity,
+      productId: selectedProduct.id,
+      date
+    });
+
     try {
-      setError('');
-      setLoading(true);
-      const response = await createTransaction({
-        productId: selectedProduct?.id || '',
+      const parsedQuantity = Number(quantity);
+      if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+        setError('Quantity must be a positive number');
+        return;
+      }
+
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) {
+        setError('Invalid date');
+        return;
+      }
+
+      console.log('Sending transaction request:', {
+        productId: selectedProduct.id,
         type,
-        quantity: Number(quantity),
+        quantity: parsedQuantity,
         notes,
-        date
+        date: parsedDate
       });
-      
-      onSuccess?.();
+
+      const response = await inventoryApi.createTransaction({
+        productId: selectedProduct.id,
+        type,
+        quantity: parsedQuantity,
+        notes,
+        date: parsedDate
+      });
+      console.log('Transaction response:', response);
+      onSuccess();
       onClose();
     } catch (error: any) {
-      console.error('Transaction error:', error);
-      const errorMessage = error.response?.data?.message || 
-                          'Failed to create transaction';
-      setError(errorMessage);
+      console.error('Detailed transaction error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      setError(error.response?.data?.details || 'Failed to create transaction');
     } finally {
       setLoading(false);
     }
@@ -102,13 +135,13 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
         if (!preGrouped.has(groupKey)) {
           preGrouped.set(groupKey, {
             ...p,
-            artisCode: p.artisCode,
-            _artisCodeSet: new Set([p.artisCode])
+            artisCodes: p.artisCodes,
+            _artisCodeSet: new Set(p.artisCodes)
           });
         } else {
           const existing = preGrouped.get(groupKey);
           if (existing.supplier === p.supplier) {
-            existing._artisCodeSet.add(p.artisCode);
+            p.artisCodes.forEach(code => existing._artisCodeSet.add(code));
           }
         }
       } else {
@@ -121,12 +154,21 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
         const { _artisCodeSet, ...rest } = product;
         return {
           ...rest,
-          artisCode: Array.from(_artisCodeSet).sort().join('/')
+          artisCodes: Array.from(_artisCodeSet).sort()
         };
       }
       return product;
     });
   }, [products]);
+
+  const fetchProducts = async (searchTerm: string) => {
+    try {
+      const response = await productApi.searchProducts(searchTerm);
+      setProducts(response.data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -136,13 +178,13 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Autocomplete
               options={groupedProducts}
-              getOptionLabel={(option) => `${option.supplierCode || ''} (${option.artisCode})`}
+              getOptionLabel={(option) => `${option.supplierCode || ''} (${option.artisCodes.join('/')})`}
               value={selectedProduct}
               onChange={(_, newValue) => setSelectedProduct(newValue)}
               filterOptions={(options, { inputValue }) => {
                 const searchTerm = inputValue.toLowerCase();
                 return options.filter(option => 
-                  option.artisCode.toLowerCase().includes(searchTerm) ||
+                  option.artisCodes.some((code: string) => code.toLowerCase().includes(searchTerm)) ||
                   (option.supplierCode?.toLowerCase() || '').includes(searchTerm)
                 );
               }}
@@ -155,7 +197,7 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
                     component="span" 
                     sx={{ color: 'text.secondary' }}
                   >
-                    ({option.artisCode})
+                    ({option.artisCodes.join('/')})
                   </Box>
                 </Box>
               )}
@@ -230,6 +272,17 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
               onChange={(e) => setNotes(e.target.value)}
               fullWidth
             />
+            {type === 'OUT' && (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={includeInAvg}
+                    onChange={(e) => setIncludeInAvg(e.target.checked)}
+                  />
+                }
+                label="Include in Average Consumption Calculation"
+              />
+            )}
             {error && (
               <Typography color="error" sx={{ mt: 2 }}>
                 {error}

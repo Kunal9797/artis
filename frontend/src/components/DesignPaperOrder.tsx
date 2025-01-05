@@ -49,8 +49,8 @@ const DesignPaperOrder: React.FC = () => {
     const fetchData = async () => {
       try {
         const [productsResponse, inventoryResponse] = await Promise.all([
-          api.get('/products'),
-          api.get('/inventory')
+          api.get('/api/products'),
+          api.get('/api/inventory')
         ]);
         
         setProducts(productsResponse.data);
@@ -97,7 +97,7 @@ const DesignPaperOrder: React.FC = () => {
     setOrderItems(newSelectedProducts.map(p => ({
       product: {
         ...p,
-        artisCode: p.artisCode,
+        artisCodes: p.artisCodes,
         catalogs: p.catalogs
       },
       quantity: 0
@@ -155,16 +155,15 @@ const DesignPaperOrder: React.FC = () => {
         if (!preGrouped.has(groupKey)) {
           preGrouped.set(groupKey, {
             ...p,
-            artisCode: p.artisCode,
+            artisCodes: p.artisCodes,
             supplierCode: p.supplierCode,
             name: p.name || null,
-            _catalogSet: new Set(p.catalogs || []),
-            _artisCodeSet: new Set([p.artisCode])
+            _catalogSet: new Set(p.catalogs || [])
           });
         } else {
           const existing = preGrouped.get(groupKey);
           if (existing.supplier === p.supplier) {
-            existing._artisCodeSet.add(p.artisCode);
+            existing.artisCodes = [...existing.artisCodes, ...p.artisCodes];
             existing.name = existing.name || p.name;
             
             if (p.catalogs) {
@@ -176,10 +175,9 @@ const DesignPaperOrder: React.FC = () => {
     });
 
     return Array.from(preGrouped.values()).map(product => {
-      const { _catalogSet, _artisCodeSet, ...rest } = product;
+      const { _catalogSet, ...rest } = product;
       return {
         ...rest,
-        artisCode: Array.from(_artisCodeSet).join(' / '),
         catalogs: Array.from(_catalogSet)
       };
     });
@@ -256,11 +254,11 @@ const DesignPaperOrder: React.FC = () => {
                     const query = searchQuery.toLowerCase();
                     const supplierCode = (product.supplierCode || '').toString().toLowerCase();
                     const name = (product.name || '').toString().toLowerCase();
-                    const artisCode = (product.artisCode || '').toString().toLowerCase();
+                    const artisCodes = product.artisCodes.join(' ').toLowerCase();
                     
                     return supplierCode.includes(query) || 
                            name.includes(query) || 
-                           artisCode.includes(query);
+                           artisCodes.includes(query);
                   })
                   .map((product) => (
                     <MenuItem key={product.id} value={product.id}>
@@ -276,7 +274,7 @@ const DesignPaperOrder: React.FC = () => {
                             {product.supplierCode} - {product.name}
                           </Typography>
                           <Typography variant="caption" color="textSecondary">
-                            Artis Code: {product.artisCode}
+                            Artis Codes: {product.artisCodes.join(' / ')}
                           </Typography>
                           <Box sx={{ mt: 0.5 }}>
                             <CatalogTags catalogs={product.catalogs ?? []} />
@@ -313,7 +311,7 @@ const DesignPaperOrder: React.FC = () => {
                               {item.product.supplierCode} - {item.product.name}
                             </Typography>
                             <Typography variant="caption" color="textSecondary" display="block">
-                              Artis Code: {item.product.artisCode}
+                              Artis Codes: {item.product.artisCodes.join(' / ')}
                             </Typography>
                             <Box sx={{ mt: 1 }}>
                               <CatalogTags catalogs={item.product.catalogs ?? []} />

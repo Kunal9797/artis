@@ -22,7 +22,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useTheme } from '../../context/ThemeContext';
 import * as XLSX from 'xlsx';
-import { api } from '../../services/api';
+import { inventoryApi } from '../../services/api';
 
 interface BulkUploadDialogProps {
   open: boolean;
@@ -90,21 +90,9 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
       const formData = new FormData();
       formData.append('file', file);
 
-      const endpoint = template === 'inventory' 
-        ? '/inventory/bulk-upload'
-        : '/inventory/purchase-order';
-
-      console.log('Attempting upload to endpoint:', endpoint);
-      console.log('Template type:', template);
-      console.log('File:', file.name);
-
-      const response = await api.post(endpoint, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('Upload response:', response.data);
+      const response = template === 'inventory' 
+        ? await inventoryApi.uploadInventory(file)
+        : await inventoryApi.uploadPurchaseOrder(file);
 
       if (response.data.processed?.length > 0) {
         onSuccess();
@@ -128,7 +116,7 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
     try {
       console.log('Starting inventory report download...');
       
-      const response = await api.get('/inventory/report');
+      const response = await inventoryApi.getAllInventory();
       const { artisCodes, supplierCodes, currentStocks } = response.data;
       
       // Create workbook with data arranged in rows instead of columns

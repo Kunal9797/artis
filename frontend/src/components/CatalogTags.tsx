@@ -9,13 +9,16 @@ const catalogColors: { [key: string]: string } = {
 };
 
 interface Props {
-  catalogs?: string[];
+  catalogs?: string[] | null;
 }
 
-const CatalogTags: React.FC<Props> = ({ catalogs = [] }) => {
+const CatalogTags: React.FC<Props> = ({ catalogs }) => {
+  // Ensure we always have an array
+  const catalogArray = Array.isArray(catalogs) ? catalogs : [];
+
   return (
     <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
-      {catalogs.map((catalog) => (
+      {catalogArray.map((catalog) => (
         <Chip
           key={catalog}
           label={catalog}

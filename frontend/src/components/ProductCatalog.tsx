@@ -20,6 +20,10 @@ import {
   useTheme,
   Menu,
   MenuItem,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -34,6 +38,8 @@ import ProductFilters from './ProductFilters';
 import SearchIcon from '@mui/icons-material/Search';
 import * as XLSX from 'xlsx';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { productApi } from '../services/api';
+import { useSnackbar } from 'notistack';
 
 const supplierNormalization: { [key: string]: string } = {
   'MATCH ': 'MATCH GRAPHICS',
@@ -93,6 +99,11 @@ const ProductCatalog: React.FC = () => {
 
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { enqueueSnackbar } = useSnackbar();
+
   useEffect(() => {
     let filtered = [...products];
     
@@ -100,61 +111,11 @@ const ProductCatalog: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(p => 
-        (p.artisCode?.toLowerCase() || '').includes(query) ||
+        p.artisCodes.some(code => code.toLowerCase().includes(query)) ||
         (p.name?.toLowerCase() || '').includes(query) ||
         (p.supplierCode?.toLowerCase() || '').includes(query) ||
-        (p.supplier?.toLowerCase() || '').includes(query) ||
-        (p.category?.toLowerCase() || '').includes(query)
+        (p.supplier?.toLowerCase() || '').includes(query)
       );
-    }
-
-    // Group by supplier code if enabled
-    if (groupByAltCode) {
-      const preGrouped = new Map();
-      
-      filtered.forEach(p => {
-        const normalizedSupplierCode = p.supplierCode ? normalizeSupplierCode(p.supplierCode) : '';
-        const groupKey = `${normalizedSupplierCode}_${p.supplier || ''}`;
-        
-        if (normalizedSupplierCode && p.supplier) {
-          if (!preGrouped.has(groupKey)) {
-            preGrouped.set(groupKey, {
-              ...p,
-              artisCode: p.artisCode,
-              supplierCode: p.supplierCode,
-              name: p.name || null,
-              category: p.category || null,
-              gsm: p.gsm || null,
-              _catalogSet: new Set(p.catalogs || [])
-            });
-          } else {
-            const existing = preGrouped.get(groupKey);
-            if (existing.supplier === p.supplier) {
-              existing.artisCode = `${existing.artisCode} / ${p.artisCode}`;
-              existing.name = existing.name || p.name;
-              existing.category = existing.category || p.category;
-              existing.gsm = existing.gsm || p.gsm;
-              
-              if (p.catalogs) {
-                p.catalogs.forEach(catalog => existing._catalogSet.add(catalog));
-              }
-            }
-          }
-        } else {
-          preGrouped.set(p.artisCode, {
-            ...p,
-            _catalogSet: new Set(p.catalogs || [])
-          });
-        }
-      });
-
-      filtered = Array.from(preGrouped.values()).map(product => {
-        const { _catalogSet, ...rest } = product;
-        return {
-          ...rest,
-          catalogs: Array.from(_catalogSet)
-        };
-      });
     }
 
     // Apply catalog filter AFTER grouping
@@ -192,8 +153,8 @@ const ProductCatalog: React.FC = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
-      const aCode = parseInt(a.artisCode.replace(/\D/g, '')) || 0;
-      const bCode = parseInt(b.artisCode.replace(/\D/g, '')) || 0;
+      const aCode = parseInt(a.artisCodes[0]?.replace(/\D/g, '') || '0');
+      const bCode = parseInt(b.artisCodes[0]?.replace(/\D/g, '') || '0');
       return sortDirection === 'asc' ? aCode - bCode : bCode - aCode;
     });
     
@@ -202,7 +163,7 @@ const ProductCatalog: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products');
+      const response = await productApi.getAllProducts();
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -221,7 +182,7 @@ const ProductCatalog: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await api.delete(`/products/${id}`);
+        await productApi.deleteProduct(id);
         fetchProducts();
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -246,11 +207,10 @@ const ProductCatalog: React.FC = () => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         dataToExport = dataToExport.filter(p => 
-          (p.artisCode?.toLowerCase() || '').includes(query) ||
+          p.artisCodes.some(code => code.toLowerCase().includes(query)) ||
           (p.name?.toLowerCase() || '').includes(query) ||
           (p.supplierCode?.toLowerCase() || '').includes(query) ||
-          (p.supplier?.toLowerCase() || '').includes(query) ||
-          (p.category?.toLowerCase() || '').includes(query)
+          (p.supplier?.toLowerCase() || '').includes(query)
         );
       }
 
@@ -284,54 +244,10 @@ const ProductCatalog: React.FC = () => {
       }
     }
 
-    // Apply grouping if enabled
-    if (groupByAltCode) {
-      const preGrouped = new Map();
-      
-      dataToExport.forEach(p => {
-        const normalizedSupplierCode = p.supplierCode ? normalizeSupplierCode(p.supplierCode) : '';
-        const groupKey = `${normalizedSupplierCode}_${p.supplier || ''}`;
-        
-        if (normalizedSupplierCode && p.supplier) {
-          if (!preGrouped.has(groupKey)) {
-            preGrouped.set(groupKey, {
-              ...p,
-              artisCode: p.artisCode,
-              supplierCode: p.supplierCode,
-              name: p.name || null,
-              category: p.category || null,
-              gsm: p.gsm || null,
-              _catalogSet: new Set(p.catalogs || [])
-            });
-          } else {
-            const existing = preGrouped.get(groupKey);
-            if (existing.supplier === p.supplier) {
-              existing.artisCode = `${existing.artisCode} / ${p.artisCode}`;
-              existing.name = existing.name || p.name;
-              existing.category = existing.category || p.category;
-              existing.gsm = existing.gsm || p.gsm;
-              
-              if (p.catalogs) {
-                p.catalogs.forEach(catalog => existing._catalogSet.add(catalog));
-              }
-            }
-          }
-        }
-      });
-
-      dataToExport = Array.from(preGrouped.values()).map(product => {
-        const { _catalogSet, ...rest } = product;
-        return {
-          ...rest,
-          catalogs: Array.from(_catalogSet)
-        };
-      });
-    }
-
     // Format and export
     const excelData = dataToExport.map((product, index) => ({
       'SNO': index + 1,
-      'OUR CODE': product.artisCode,
+      'OUR CODE': product.artisCodes.join(' / '),
       'NAME': product.name || '',
       'CATEGORY': product.category || '',
       'DESIGN CODE': product.supplierCode || '',
@@ -361,6 +277,21 @@ const ProductCatalog: React.FC = () => {
     XLSX.utils.book_append_sheet(wb, ws, 'Designs');
     XLSX.writeFile(wb, fileName);
     setExportAnchorEl(null);
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      setIsDeleting(true);
+      await productApi.deleteAllProducts();
+      fetchProducts();
+      setDeleteDialogOpen(false);
+      enqueueSnackbar('All products deleted successfully', { variant: 'success' });
+    } catch (error) {
+      console.error('Error deleting products:', error);
+      enqueueSnackbar('Failed to delete products', { variant: 'error' });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -454,9 +385,7 @@ const ProductCatalog: React.FC = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  #
-                </TableCell>
+                <TableCell>#</TableCell>
                 <TableCell onClick={handleSortToggle} sx={{ cursor: 'pointer' }}>
                   Artis Code
                   <Box component="span" sx={{ opacity: 0.5, fontSize: '0.8rem', ml: 1 }}>
@@ -465,8 +394,7 @@ const ProductCatalog: React.FC = () => {
                 </TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Category</TableCell>
-                <TableCell>Supplier Code</TableCell>
-                <TableCell>Supplier</TableCell>
+                <TableCell>Supplier Info</TableCell>
                 <TableCell>GSM</TableCell>
                 <TableCell>Catalogs</TableCell>
                 <TableCell>Actions</TableCell>
@@ -474,16 +402,17 @@ const ProductCatalog: React.FC = () => {
             </TableHead>
             <TableBody>
               {filteredProducts.map((product, index) => (
-                <TableRow 
-                  key={product.id}
-                  
-                >
+                <TableRow key={product.id}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{product.artisCode}</TableCell>
+                  <TableCell>{product.artisCodes.join(' / ')}</TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.category}</TableCell>
-                  <TableCell>{product.supplierCode}</TableCell>
-                  <TableCell>{product.supplier}</TableCell>
+                  <TableCell>
+                    <Typography variant="body1">{product.supplierCode}</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {product.supplier}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{product.gsm}</TableCell>
                   <TableCell>
                     <CatalogTags catalogs={product.catalogs} />
@@ -539,6 +468,40 @@ const ProductCatalog: React.FC = () => {
           Export Match Graphics Only
         </MenuItem>
       </Menu>
+
+      <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+        <Button 
+          variant="contained" 
+          color="error" 
+          onClick={() => setDeleteDialogOpen(true)}
+          sx={{ mb: 2 }}
+        >
+          Delete All Products
+        </Button>
+
+        <Dialog open={deleteDialogOpen} onClose={() => !isDeleting && setDeleteDialogOpen(false)}>
+          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogContent>
+            Are you sure you want to delete all products? This action cannot be undone.
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => setDeleteDialogOpen(false)} 
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeleteAll} 
+              color="error" 
+              variant="contained"
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete All'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
     </Box>
   );
 };

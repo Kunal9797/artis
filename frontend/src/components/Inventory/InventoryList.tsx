@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, memo } from 'react';
+import React, { useEffect, useState, memo, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -15,7 +15,6 @@ import {
   CircularProgress,
   Grid,
   Card,
-  CardContent,
   FormControl,
   InputLabel,
   Select,
@@ -29,7 +28,7 @@ import UploadIcon from '@mui/icons-material/Upload';
 import GridViewIcon from '@mui/icons-material/GridView';
 import ListIcon from '@mui/icons-material/List';
 import InfoIcon from '@mui/icons-material/Info';
-import { getAllInventory, api } from '../../services/api';
+import { inventoryApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import TransactionDialog from './TransactionDialog';
 import ProductDetailsDialog from './ProductDetailsDialog';
@@ -37,19 +36,20 @@ import BulkUploadDialog from './BulkUploadDialog';
 import SearchIcon from '@mui/icons-material/Search';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-interface InventoryItem {
+export interface InventoryItem {
   id: string;
-  productId: string;
+  artisCodes: string[];
+  name: string;
+  supplier?: string;
+  category?: string;
+  supplierCode?: string;
   currentStock: number;
-  avgConsumption?: number;
-  product: {
-    artisCode: string;
-    name: string;
-    supplier?: string;
-    category?: string;
-    supplierCode?: string;
-  };
+  lastUpdated: Date;
+  minStockLevel?: number;
+  avgConsumption: number;
 }
 
 interface FilterState {
@@ -58,69 +58,14 @@ interface FilterState {
   category: string;
 }
 
-interface CatalogProduct {
-  id: string;
-  artisCode: string;
-  name?: string;
-  supplier?: string;
-  category?: string;
-  supplierCode?: string;
-  catalogs?: string[];
-}
-
 interface TransactionData {
+  id: string;
   type: 'IN' | 'OUT';
   quantity: number;
   date: string;
-}
-
-interface ProductWithTracking {
-  id: string;
-  artisCode: string;
-  name: string;
-  supplier?: string;
-  category?: string;
-  supplierCode?: string;
-  catalogs?: string[];
-  _artisCodeSet: Set<string>;
-  _processedCodes?: Set<string>;
-}
-
-interface GroupedInventoryItem {
-  id: string;
+  notes?: string;
   productId: string;
-  currentStock: number;
-  avgConsumption: number;
-  product: ProductWithTracking;
 }
-
-const normalizeSupplierCode = (supplierCode: string): string => {
-  return supplierCode.replace(/\s+/g, '').toUpperCase();
-};
-
-const calculateAverageConsumption = (transactions: TransactionData[]) => {
-  console.log('Calculating average consumption for transactions:', transactions);
-  
-  // Get all OUT transactions including zeros
-  const outTransactions = transactions.filter(t => t.type === 'OUT');
-  console.log('All OUT transactions:', outTransactions);
-  
-  if (outTransactions.length === 0) {
-    console.log('No OUT transactions found');
-    return 0;
-  }
-  
-  const totalConsumption = outTransactions.reduce((sum: number, t: TransactionData) => {
-    const quantity = Number(t.quantity) || 0; // Convert to number, use 0 if NaN
-    console.log('Adding transaction quantity:', quantity, 'to sum:', sum);
-    return sum + quantity;
-  }, 0);
-  
-  // Always divide by total number of OUT transactions
-  const average = totalConsumption / outTransactions.length;
-  console.log('Final average consumption:', average, 'from', outTransactions.length, 'transactions');
-  return Number(average.toFixed(2));
-};
 
 const InventoryList: React.FC = () => {
   const { isDarkMode } = useTheme();
@@ -129,196 +74,79 @@ const InventoryList: React.FC = () => {
   const [error, setError] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [filters, setFilters] = useState<FilterState>({
-    search: '',
-    supplier: '',
-    category: ''
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [sortField, setSortField] = useState<'currentStock' | 'avgConsumption'>('currentStock');
+  const [sortField, setSortField] = useState<keyof InventoryItem>('currentStock');
   const [dialogState, setDialogState] = useState({
     transaction: false,
     details: false,
     bulkUpload: false
   });
-  const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([]);
-  const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([]);
 
-  const groupInventoryBySupplierCode = async (inventory: InventoryItem[]): Promise<InventoryItem[]> => {
-    const preGrouped = new Map<string, GroupedInventoryItem>();
+  const filteredItems = useMemo(() => {
+    let filtered = [...inventory];
     
-    try {
-      const response = await api.get('/products');
-      const catalogProducts: CatalogProduct[] = response.data;
-      
-      catalogProducts.forEach(p => {
-        if (p.supplierCode && p.supplier) {
-          const normalizedSupplierCode = normalizeSupplierCode(p.supplierCode);
-          const groupKey = `${normalizedSupplierCode}_${p.supplier}`;
-          
-          if (!preGrouped.has(groupKey)) {
-            preGrouped.set(groupKey, {
-              id: groupKey,
-              productId: '',
-              currentStock: 0,
-              avgConsumption: 0,
-              product: {
-                id: p.id,
-                artisCode: p.artisCode,
-                name: p.name || '',
-                supplier: p.supplier,
-                supplierCode: p.supplierCode,
-                category: p.category,
-                _artisCodeSet: new Set([p.artisCode]),
-                _processedCodes: new Set()
-              }
-            });
-          } else {
-            const existing = preGrouped.get(groupKey);
-            if (existing) {
-              existing.product._artisCodeSet.add(p.artisCode);
-            }
-          }
-        }
-      });
-
-      for (const item of inventory) {
-        const normalizedSupplierCode = item.product.supplierCode ? normalizeSupplierCode(item.product.supplierCode) : '';
-        const groupKey = `${normalizedSupplierCode}_${item.product.supplier || ''}`;
-        
-        try {
-          const details = await api.get(`/inventory/${item.id}/details`);
-          const itemAvgConsumption = calculateAverageConsumption(details.data.transactions || []);
-
-          if (preGrouped.has(groupKey)) {
-            const existing = preGrouped.get(groupKey);
-            if (existing) {
-              existing.currentStock += Number(parseFloat(item.currentStock.toString()).toFixed(2));
-              
-              if (!existing.product._processedCodes?.has(item.product.artisCode)) {
-                existing.avgConsumption = (existing.avgConsumption || 0) + itemAvgConsumption;
-                existing.product._processedCodes?.add(item.product.artisCode);
-              }
-              
-              existing.productId = existing.productId || item.productId;
-              existing.product.name = existing.product.name || item.product.name || '';
-              existing.product.category = existing.product.category || item.product.category;
-              existing.product._artisCodeSet.add(item.product.artisCode);
-            }
-          } else {
-            const newItem: GroupedInventoryItem = {
-              ...item,
-              avgConsumption: itemAvgConsumption,
-              product: {
-                ...item.product,
-                id: item.productId,
-                _artisCodeSet: new Set([item.product.artisCode]),
-                _processedCodes: new Set([item.product.artisCode])
-              }
-            };
-            preGrouped.set(item.id, newItem);
-          }
-        } catch (error) {
-          console.error(`Failed to fetch details for item ${item.id}:`, error);
-        }
-      }
-
-      return Array.from(preGrouped.values()).map(item => {
-        const artisCodesArray = Array.from(item.product._artisCodeSet).sort((a, b) => Number(a) - Number(b));
-        const { _artisCodeSet, _processedCodes, ...productRest } = item.product;
-        
-        return {
-          ...item,
-          product: {
-            ...productRest,
-            name: productRest.name || '',
-            artisCode: artisCodesArray.join(' / ')
-          }
-        } as InventoryItem;
-      });
-    } catch (error) {
-      console.error('Error in groupInventoryBySupplierCode:', error);
-      return inventory;
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.artisCodes.some(code => code.toLowerCase().includes(query)) ||
+        (item.supplierCode?.toLowerCase() || '').includes(query) ||
+        (item.supplier?.toLowerCase() || '').includes(query)
+      );
     }
-  };
 
-  useEffect(() => {
-    const filterInventory = async () => {
-      try {
-        // First group by supplier code
-        let result = await groupInventoryBySupplierCode(inventory);
+    // Apply supplier filter
+    if (supplierFilter) {
+      filtered = filtered.filter(item => item.supplier === supplierFilter);
+    }
 
-        // Apply filters
-        if (filters.search) {
-          const query = filters.search.toLowerCase().trim();
-          result = result.filter((item: InventoryItem) => 
-            (item.product.artisCode?.toLowerCase() || '').includes(query) ||
-            (item.product.supplierCode?.toLowerCase() || '').includes(query) ||
-            (item.product.supplier?.toLowerCase() || '').includes(query)
-          );
-        }
+    // Apply category filter
+    if (categoryFilter) {
+      filtered = filtered.filter(item => item.category === categoryFilter);
+    }
 
-        if (filters.supplier) {
-          result = result.filter((item: InventoryItem) => item.product.supplier === filters.supplier);
-        }
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
 
-        if (filters.category) {
-          result = result.filter((item: InventoryItem) => item.product.category === filters.category);
-        }
-
-        // Apply sorting
-        result.sort((a: InventoryItem, b: InventoryItem) => {
-          const aValue = sortField === 'currentStock' ? a.currentStock : (a.avgConsumption || 0);
-          const bValue = sortField === 'currentStock' ? b.currentStock : (b.avgConsumption || 0);
-          return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-        });
-
-        setFilteredItems(result);
-      } catch (error) {
-        console.error('Error in filterInventory:', error);
+      // Handle array fields (like artisCodes)
+      if (sortField === 'artisCodes') {
+        aValue = a[sortField][0];
+        bValue = b[sortField][0];
       }
-    };
 
-    filterInventory();
-  }, [inventory, filters, sortField, sortOrder]);
+      // Convert string numbers to actual numbers for proper numeric sorting
+      if (sortField === 'currentStock' || sortField === 'avgConsumption') {
+        aValue = Number(aValue) || 0;
+        bValue = Number(bValue) || 0;
+      }
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+
+      // Fall back to string comparison for non-numeric values
+      return sortOrder === 'asc'
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    });
+
+    return filtered;
+  }, [inventory, searchQuery, supplierFilter, categoryFilter, sortField, sortOrder]);
 
   // Simplified fetch function for debugging
   const fetchInventory = async () => {
     try {
       setLoading(true);
-      setError('');
-      console.log('Fetching inventory...');
-      
-      // Check for auth token
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('No auth token found');
-        setError('Please log in to view inventory');
-        return;
-      }
-
-      const response = await getAllInventory();
-      console.log('Inventory response:', response);
-      
-      if (!response?.data) {
-        throw new Error('No data received from server');
-      }
-
+      const response = await inventoryApi.getAllInventory();
       setInventory(response.data);
-    } catch (error: any) {
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response,
-        status: error.response?.status
-      });
-      
-      if (error.response?.status === 401) {
-        setError('Session expired. Please log in again.');
-        // Optionally redirect to login
-        // window.location.href = '/login';
-      } else {
-        setError(error.response?.data?.message || 'Failed to fetch inventory');
-      }
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+      setError('Failed to load inventory');
     } finally {
       setLoading(false);
     }
@@ -358,35 +186,35 @@ const InventoryList: React.FC = () => {
     });
   };
 
-  const FilterControls = memo(() => (
-    <Box>
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <TextField
-          placeholder="Search by code or supplier..."
-          value={filters.search}
-          onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-            sx: { height: '40px' }
-          }}
-          sx={{ flexGrow: 1 }}
-          size="small"
-        />
+  const FilterControls = () => {
+    return (
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ flexGrow: 1, maxWidth: 300 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search inventory..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              )
+            }}
+          />
+        </Box>
+
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Supplier</InputLabel>
           <Select
-            value={filters.supplier}
-            onChange={(e: SelectChangeEvent) => 
-              setFilters(prev => ({ ...prev, supplier: e.target.value }))
-            }
+            value={supplierFilter}
+            onChange={(e) => setSupplierFilter(e.target.value)}
             label="Supplier"
           >
             <MenuItem value="">All</MenuItem>
-            {Array.from(new Set(inventory.map(item => item.product.supplier)))
+            {Array.from(new Set(inventory.map(item => item.supplier)))
               .filter(Boolean)
               .sort()
               .map(supplier => (
@@ -395,17 +223,16 @@ const InventoryList: React.FC = () => {
             }
           </Select>
         </FormControl>
+
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Category</InputLabel>
           <Select
-            value={filters.category}
-            onChange={(e: SelectChangeEvent) => 
-              setFilters(prev => ({ ...prev, category: e.target.value }))
-            }
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
             label="Category"
           >
             <MenuItem value="">All</MenuItem>
-            {Array.from(new Set(inventory.map(item => item.product.category)))
+            {Array.from(new Set(inventory.map(item => item.category)))
               .filter(Boolean)
               .sort()
               .map(category => (
@@ -414,14 +241,17 @@ const InventoryList: React.FC = () => {
             }
           </Select>
         </FormControl>
+
         <Tooltip title={`Switch to ${viewMode === 'list' ? 'grid' : 'list'} view`}>
           <IconButton onClick={handleViewModeToggle} size="small">
             {viewMode === 'list' ? <GridViewIcon /> : <ListIcon />}
           </IconButton>
         </Tooltip>
+
         <IconButton onClick={fetchInventory} size="small">
           <RefreshIcon />
         </IconButton>
+
         <Button
           startIcon={<AddIcon />}
           variant="contained"
@@ -430,6 +260,7 @@ const InventoryList: React.FC = () => {
         >
           Add Transaction
         </Button>
+
         <Button
           startIcon={<UploadIcon />}
           variant="outlined"
@@ -439,8 +270,47 @@ const InventoryList: React.FC = () => {
           Bulk Upload
         </Button>
       </Box>
+    );
+  };
+
+  const handleClearInventory = async () => {
+    if (window.confirm('Are you sure you want to clear all inventory?')) {
+      try {
+        await inventoryApi.clearInventory();
+        fetchInventory();
+      } catch (error) {
+        setError('Failed to clear inventory');
+      }
+    }
+  };
+
+  const handleOpenDetails = (id: string) => {
+    setSelectedProduct(id);
+    setDialogState(prev => ({ ...prev, details: true }));
+  };
+
+  const renderProductCodes = (artisCodes: string[]) => (
+    <Box>
+      {artisCodes.map((code, index) => (
+        <Chip
+          key={code}
+          label={code}
+          size="small"
+          sx={{ mr: 0.5, mb: 0.5 }}
+        />
+      ))}
     </Box>
-  ));
+  );
+
+  // Add click handler for sorting
+  const handleSort = (field: keyof InventoryItem) => {
+    if (sortField === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+  };
 
   return (
     <Box sx={{ 
@@ -460,6 +330,24 @@ const InventoryList: React.FC = () => {
 
       <FilterControls />
 
+      <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Sort By</InputLabel>
+          <Select
+            value={sortField}
+            onChange={(e) => setSortField(e.target.value as keyof InventoryItem)}
+            label="Sort By"
+          >
+            <MenuItem value="artisCodes">Artis Codes</MenuItem>
+            <MenuItem value="currentStock">Current Stock</MenuItem>
+            <MenuItem value="avgConsumption">Avg. Consumption</MenuItem>
+          </Select>
+        </FormControl>
+        <IconButton onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+          {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+        </IconButton>
+      </Box>
+
       {viewMode === 'list' ? (
         <TableContainer component={Paper} sx={{ 
           maxHeight: 'calc(100vh - 250px)', 
@@ -471,33 +359,52 @@ const InventoryList: React.FC = () => {
           bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
           border: theme => theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
         }}>
-          <Table stickyHeader size="small">
+          <Table 
+            stickyHeader 
+            size="small" 
+            sx={{
+              '& .MuiTableCell-root': {
+                py: 1  // Reduce vertical padding
+              }
+            }}
+          >
             <TableHead>
               <TableRow sx={{ 
                 '& th': {
                   backgroundColor: theme => theme.palette.mode === 'dark' ? '#22272e' : '#f8fafc',
                   borderBottom: theme => `2px solid ${theme.palette.mode === 'dark' ? '#444d56' : '#e2e8f0'}`,
                   fontWeight: 700,
-                  fontSize: '0.95rem',
+                  fontSize: '1rem',
                   color: theme => theme.palette.mode === 'dark' ? '#e6edf3' : 'inherit'
                 }
               }}>
                 <TableCell align="center" sx={{ fontWeight: 'bold', width: '50px' }}>#</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', minWidth: '150px' }}>Design Code</TableCell>
+                <TableCell 
+                  align="center" 
+                  sx={{ fontWeight: 'bold', minWidth: '200px', cursor: 'pointer' }}
+                  onClick={() => handleSort('artisCodes')}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                    Artis Codes
+                    {sortField === 'artisCodes' && (
+                      <span style={{ 
+                        fontSize: '1.6rem', 
+                        color: '#1976d2',
+                        fontWeight: 900,
+                        lineHeight: 0.7,
+                        WebkitTextStroke: '2px currentColor'
+                      }}>
+                        {sortOrder === 'desc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </Box>
+                </TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', minWidth: '200px' }}>Supplier Info</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', minWidth: '120px' }}>Category</TableCell>
                 <TableCell 
-                  onClick={() => {
-                    setSortField('currentStock');
-                    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-                  }}
-                  align="right"
-                  sx={{ 
-                    cursor: 'pointer', 
-                    fontWeight: 'bold',
-                    minWidth: '120px',
-                    userSelect: 'none'
-                  }}
+                  align="right" 
+                  sx={{ fontWeight: 'bold', minWidth: '150px', cursor: 'pointer' }}
+                  onClick={() => handleSort('currentStock')}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
                     Current Stock
@@ -515,32 +422,24 @@ const InventoryList: React.FC = () => {
                   </Box>
                 </TableCell>
                 <TableCell 
-                  onClick={() => {
-                    setSortField('avgConsumption');
-                    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-                  }}
-                  align="center"
-                  sx={{ 
-                    cursor: 'pointer', 
-                    fontWeight: 'bold',
-                    minWidth: '120px',
-                    userSelect: 'none'
-                  }}
+                  align="right" 
+                  sx={{ fontWeight: 'bold', minWidth: '150px', cursor: 'pointer' }}
+                  onClick={() => handleSort('avgConsumption')}
                 >
-                  Avg. Consumption
-                  {sortField === 'avgConsumption' && (
-                    <span style={{ 
-                      fontSize: '1.6rem', 
-                      color: '#1976d2',
-                      fontWeight: 900,
-                      lineHeight: 0.7,
-                      WebkitTextStroke: '2px currentColor',
-                      verticalAlign: 'middle',
-                      marginLeft: '4px'
-                    }}>
-                      {sortOrder === 'desc' ? '↑' : '↓'}
-                    </span>
-                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                    Avg. Consumption
+                    {sortField === 'avgConsumption' && (
+                      <span style={{ 
+                        fontSize: '1.6rem', 
+                        color: '#1976d2',
+                        fontWeight: 900,
+                        lineHeight: 0.7,
+                        WebkitTextStroke: '2px currentColor'
+                      }}>
+                        {sortOrder === 'desc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </Box>
                 </TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold', width: '80px' }}>Details</TableCell>
               </TableRow>
@@ -570,140 +469,101 @@ const InventoryList: React.FC = () => {
                     }
                   }}
                 >
+                  <TableCell align="center">{index + 1}</TableCell>
                   <TableCell>
-                    <Typography sx={{ 
-                      color: theme => theme.palette.mode === 'dark' ? '#e6edf3' : '#1e293b'
-                    }}>
-                      {index + 1}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography sx={{ 
-                      fontWeight: '500',
-                      fontSize: '1.1rem',
-                      color: theme => theme.palette.mode === 'dark' ? '#58a6ff' : '#1e293b'
-                    }}>
-                      {item.product.artisCode}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ 
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateX(4px)'
-                      }
-                    }}>
-                      <Typography variant="body2" sx={{ 
-                        fontWeight: '500',
-                        fontSize: '0.95rem',
-                        color: theme => theme.palette.mode === 'dark' ? '#e6edf3' : '#0f172a'
-                      }}>
-                        {item.product.supplierCode || '-'}
-                      </Typography>
-                      <Typography variant="body2" sx={{
-                        color: theme => theme.palette.mode === 'dark' ? '#8b949e' : '#64748b',
-                        '&:hover': {
-                          color: theme => theme.palette.mode === 'dark' ? '#58a6ff' : '#1976d2'
-                        }
-                      }}>
-                        {item.product.supplier || '-'}
-                      </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {item.artisCodes.map((code) => (
+                          <Chip
+                            key={code}
+                            label={code}
+                            size="small"
+                            sx={{ 
+                              height: '24px',
+                              '& .MuiChip-label': {
+                                px: 1,
+                                fontSize: '0.85rem',
+                                fontWeight: 500
+                              }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                      {item.name && (
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                            fontSize: '0.85rem',
+                            fontStyle: 'italic'
+                          }}
+                        >
+                          {item.name}
+                        </Typography>
+                      )}
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={item.product.category || 'Plain Colours'}
-                      sx={{
-                        backgroundColor: theme => theme.palette.mode === 'dark' ? '#1f6feb' : '#e3f2fd',
-                        color: theme => theme.palette.mode === 'dark' ? '#fff' : '#1976d2',
-                        borderRadius: '16px',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        '&:hover': {
-                          backgroundColor: theme => theme.palette.mode === 'dark' ? '#388fe5' : '#bbdefb'
-                        }
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      gap: '4px'
-                    }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       <Typography sx={{ 
+                        fontSize: '0.9rem', 
+                        fontWeight: 500,
+                        lineHeight: 1.2
+                      }}>
+                        {item.supplier}
+                      </Typography>
+                      {item.supplierCode && (
+                        <Typography sx={{
+                          fontSize: '0.85rem',
+                          color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2',
+                          lineHeight: 1.2
+                        }}>
+                          {item.supplierCode}
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell>{item.category}</TableCell>
+                  <TableCell align="right">
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                      <Typography sx={{
                         fontSize: '1.1rem',
                         fontWeight: 600,
-                        color: theme => item.currentStock < 0 
-                          ? '#f44336' 
-                          : theme.palette.mode === 'dark' ? '#e6edf3' : '#0D47A1',
+                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
                       }}>
                         {item.currentStock}
                       </Typography>
-                      <Typography sx={{ 
-                        fontSize: '0.9rem',
-                        color: theme => theme.palette.mode === 'dark' ? '#8b949e' : 'rgba(0, 0, 0, 0.87)',
-                        fontWeight: 400
+                      <Typography sx={{
+                        fontSize: '0.75rem',
+                        ml: 0.5,
+                        color: theme => theme.palette.mode === 'dark' ? '#fff' : '#000',
                       }}>
                         kgs
                       </Typography>
                     </Box>
                   </TableCell>
                   <TableCell align="right">
-                    <Box sx={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      gap: '4px'
-                    }}>
-                      {item.avgConsumption && item.avgConsumption > 0 ? (
-                        <>
-                          <Typography sx={{ 
-                            fontSize: '1.1rem',
-                            fontWeight: 600,
-                            color: theme => theme.palette.mode === 'dark' ? '#58a6ff' : '#0D47A1'
-                          }}>
-                            {Number(item.avgConsumption).toFixed(2)}
-                          </Typography>
-                          <Typography sx={{ 
-                            fontSize: '0.9rem',
-                            color: theme => theme.palette.mode === 'dark' ? '#8b949e' : 'rgba(0, 0, 0, 0.87)',
-                            fontWeight: 400
-                          }}>
-                            kgs
-                          </Typography>
-                        </>
-                      ) : '-'}
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                      <Typography sx={{
+                        fontSize: '1.1rem',
+                        fontWeight: 600,
+                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
+                      }}>
+                        {Number(item.avgConsumption).toFixed(2)}
+                      </Typography>
+                      <Typography sx={{
+                        fontSize: '0.75rem',
+                        ml: 0.5,
+                        color: theme => theme.palette.mode === 'dark' ? '#fff' : '#000',
+                      }}>
+                        kgs
+                      </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell 
-                    sx={{ 
-                      borderRight: '1px solid rgba(224, 224, 224, 0.4)',
-                      '&:last-child': {
-                        borderRight: 'none'
-                      }
-                    }}
-                  >
-                    <Tooltip title="View Details">
-                      <IconButton 
-                        size="small"
-                        sx={{
-                          color: '#1976d2',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            backgroundColor: '#e3f2fd',
-                            transform: 'scale(1.1)'
-                          }
-                        }}
-                        onClick={() => {
-                          setSelectedProduct(item.productId);
-                          setDialogState(prev => ({ ...prev, details: true }));
-                        }}
-                      >
-                        <InfoIcon />
-                      </IconButton>
-                    </Tooltip>
+                  <TableCell>
+                    <IconButton onClick={() => handleOpenDetails(item.id)}>
+                      <InfoIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -712,7 +572,7 @@ const InventoryList: React.FC = () => {
         </TableContainer>
       ) : (
         <Grid container spacing={2}>
-          {filteredItems.map((item: InventoryItem, index: number) => (
+          {filteredItems.map((item: InventoryItem) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
               <Card sx={{
                 bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
@@ -727,7 +587,7 @@ const InventoryList: React.FC = () => {
               }}>
                 <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
                   <Chip
-                    label={item.product.category || 'Plain Colours'}
+                    label={item.category || 'Plain Colours'}
                     sx={{
                       backgroundColor: theme => theme.palette.mode === 'dark' ? '#1f6feb' : '#e3f2fd',
                       color: theme => theme.palette.mode === 'dark' ? '#fff' : '#1976d2',
@@ -740,48 +600,42 @@ const InventoryList: React.FC = () => {
                 </Box>
 
                 <Box sx={{ mb: 3 }}>
-                  <Typography sx={{ 
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                    color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1e293b',
-                    mb: 1
-                  }}>
-                    {item.product.artisCode}
-                  </Typography>
-                  <Typography sx={{
-                    color: theme => theme.palette.mode === 'dark' ? '#fff' : '#64748b',
-                    fontSize: '0.875rem'
-                  }}>
-                    {item.product.supplierCode}
-                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                    {renderProductCodes(item.artisCodes)}
+                  </Box>
                   <Typography sx={{
                     color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
                     fontSize: '1.1rem',
-                    fontWeight: 500
+                    fontWeight: 500,
+                    mb: 1
                   }}>
-                    {item.product.supplier}
+                    {item.supplier}
                   </Typography>
+                  {item.supplierCode && (
+                    <Typography sx={{
+                      color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2',
+                      fontSize: '0.95rem',
+                      fontWeight: 500
+                    }}>
+                      {item.supplierCode}
+                    </Typography>
+                  )}
                 </Box>
 
                 <Box sx={{ mt: 'auto' }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-start',
-                    mb: 2 
-                  }}>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography sx={{ 
-                        color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid item xs={6}>
+                      <Typography sx={{
                         fontSize: '0.875rem',
-                        mb: 0.5 
+                        color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                        mb: 0.5
                       }}>
                         Current Stock
                       </Typography>
                       <Typography sx={{
                         fontSize: '1.5rem',
                         fontWeight: 600,
-                        color: theme => theme.palette.mode === 'dark' ? '#fff' : '#1e293b'
+                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
                       }}>
                         {item.currentStock}
                         <Typography component="span" sx={{
@@ -792,20 +646,21 @@ const InventoryList: React.FC = () => {
                           kgs
                         </Typography>
                       </Typography>
-                    </Box>
-
-                    <Box sx={{ flex: 1, textAlign: 'right' }}>
-                      <Typography sx={{ 
-                        color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography sx={{
                         fontSize: '0.875rem',
-                        mb: 0.5 
+                        color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                        mb: 0.5,
+                        textAlign: 'right'
                       }}>
                         Avg. Consumption
                       </Typography>
                       <Typography sx={{
                         fontSize: '1.5rem',
                         fontWeight: 600,
-                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2'
+                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1',
+                        textAlign: 'right'
                       }}>
                         {Number(item.avgConsumption).toFixed(2)}
                         <Typography component="span" sx={{
@@ -816,22 +671,22 @@ const InventoryList: React.FC = () => {
                           kgs
                         </Typography>
                       </Typography>
-                    </Box>
-                  </Box>
+                    </Grid>
+                  </Grid>
 
                   <Button
                     fullWidth
                     variant="outlined"
                     startIcon={<InfoIcon />}
                     onClick={() => {
-                      setSelectedProduct(item.productId);
+                      setSelectedProduct(item.id);
                       setDialogState(prev => ({ ...prev, details: true }));
                     }}
                     sx={{
                       borderColor: theme => theme.palette.mode === 'dark' ? '#333' : '#e2e8f0',
                       color: theme => theme.palette.mode === 'dark' ? '#fff' : '#1e293b',
                       '&:hover': {
-                        borderColor: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2',
+                        borderColor: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1',
                         backgroundColor: 'transparent'
                       }
                     }}
@@ -875,16 +730,7 @@ const InventoryList: React.FC = () => {
         <Button
           variant="contained"
           color="error"
-          onClick={async () => {
-            if (window.confirm('Are you sure you want to clear all inventory?')) {
-              try {
-                await api.delete('/inventory');
-                fetchInventory();
-              } catch (error) {
-                setError('Failed to clear inventory');
-              }
-            }
-          }}
+          onClick={handleClearInventory}
           sx={{ 
             bgcolor: '#d32f2f',
             '&:hover': { 
