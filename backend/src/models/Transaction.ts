@@ -1,5 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import sequelize from '../config/sequelize';
+import bcrypt from 'bcrypt';
 
 interface TransactionAttributes {
   id: string;
