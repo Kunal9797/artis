@@ -85,4 +85,17 @@ Product.init({
   tableName: 'Products'
 });
 
+export const initializeAssociations = () => {
+  Product.hasMany(Transaction, {
+    foreignKey: 'productId',
+    as: 'transactions',
+    onDelete: 'CASCADE'
+  });
+
+  Transaction.belongsTo(Product, {
+    foreignKey: 'productId',
+    onDelete: 'CASCADE'
+  });
+};
+
 export default Product; 

@@ -9,6 +9,7 @@ import {
   FormControl,
   Button,
   IconButton,
+  Menu,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
@@ -22,105 +23,159 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useTheme } from '../context/ThemeContext';
 import DashboardHome from './DashboardHome';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const [currentPage, setCurrentPage] = useState('home');
+  const { logout } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
+  const [currentPage, setCurrentPage] = useState('home');
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
-  const renderPage = () => {
+  const handlePageClick = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+  };
+
+  const handlePageChange = (page: string) => {
+    setCurrentPage(page);
+    handleMenuClose();
+  };
+
+  const getCurrentPageTitle = () => {
     switch (currentPage) {
-      case 'info':
-        return <InfoPage />;
-      case 'orders':
-        return <OrdersPage />;
-      case 'inventory':
-        return <InventoryList />;
-      case 'catalog':
-        return <ProductCatalog />;
-      default:
-        return <DashboardHome setCurrentPage={setCurrentPage} />;
+      case 'home': return 'Dashboard';
+      case 'inventory': return 'Inventory Management';
+      case 'catalog': return 'Product Catalog';
+      case 'orders': return 'Paper Orders';
+      case 'info': return 'Information';
+      default: return 'Dashboard';
     }
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              mr: 4,
-              cursor: 'pointer' 
-            }}
-            onClick={() => setCurrentPage('home')}
-          >
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <AppBar position="static" sx={{ 
+        backgroundColor: '#282c34',
+        boxShadow: 'none',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        backdropFilter: 'blur(8px)'
+      }}>
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            '& img': {
+              transition: 'transform 0.3s ease',
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'scale(1.05)'
+              }
+            }
+          }}>
             <img 
               src={Logo} 
               alt="Artis Logo" 
-              style={{ 
-                height: '50px', 
-                marginRight: '10px',
-                width: 'auto'
-              }} 
+              style={{ height: '50px' }} 
+              onClick={() => handlePageChange('home')}
             />
             <img 
               src={ArtisLogoText} 
-              alt="Artis Laminate" 
+              alt="Artis Laminates" 
               style={{ 
                 height: '40px',
-                width: 'auto'
+                marginLeft: '15px',
               }} 
+              onClick={() => handlePageChange('home')}
             />
           </Box>
 
-          <FormControl size="small" sx={{ minWidth: 200, mr: 2 }}>
-            <Select
-              value={currentPage}
-              onChange={(e) => setCurrentPage(e.target.value)}
-              sx={{ 
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                color: 'white',
-                '.MuiSelect-icon': { color: 'white' },
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
-              }}
-            >
-              <MenuItem value="home">Dashboard</MenuItem>
-              <MenuItem value="catalog">Product Catalog</MenuItem>
-              <MenuItem value="orders">Orders</MenuItem>
-              <MenuItem value="info">Information</MenuItem>
-              <MenuItem value="inventory">Inventory Management</MenuItem>
-            </Select>
-          </FormControl>
-          
-          <Box sx={{ flexGrow: 1 }} />
-          
-          <Typography sx={{ color: '#ffffff', mr: 2 }}>
-            Welcome, {user?.name || 'Kunal'}
-          </Typography>
-
           <Button
-            color="inherit"
-            startIcon={<LogoutIcon />}
-            onClick={logout}
+            onClick={handlePageClick}
             sx={{
-              '&:hover': { 
-                backgroundColor: 'rgba(255,255,255,0.1)'
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: '#fff',
+              fontSize: '1.6rem',
+              fontWeight: 700,
+              fontFamily: '"Poppins", sans-serif',
+              textTransform: 'none',
+              letterSpacing: '1.2px',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              padding: '8px 16px',
+              background: 'linear-gradient(45deg, #fff 30%, #FFD700 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                transform: 'translateX(-50%) scale(1.02)',
+                letterSpacing: '1.8px',
+                textShadow: '0 0 20px rgba(255,215,0,0.4)',
+                background: 'linear-gradient(45deg, #fff 30%, #FFC107 90%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                '& .MuiSvgIcon-root': {
+                  opacity: 1,
+                  transform: 'translateY(0) rotate(180deg)',
+                }
+              },
+              '& .MuiSvgIcon-root': {
+                opacity: 0,
+                transform: 'translateY(-10px) rotate(0deg)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                marginLeft: 1,
+                fontSize: '1.2rem',
+                color: '#FFD700'
               }
             }}
           >
-            Logout
+            {getCurrentPageTitle()}
+            <ArrowDropDownIcon />
           </Button>
 
-          <IconButton sx={{ ml: 1 }} onClick={toggleTheme} color="inherit">
-            {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-          </IconButton>
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={handleMenuClose}
+            PaperProps={{
+              sx: {
+                mt: 1,
+                minWidth: 200,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+              }
+            }}
+          >
+            <MenuItem onClick={() => handlePageChange('home')}>Dashboard</MenuItem>
+            <MenuItem onClick={() => handlePageChange('inventory')}>Inventory Management</MenuItem>
+            <MenuItem onClick={() => handlePageChange('catalog')}>Product Catalog</MenuItem>
+            <MenuItem onClick={() => handlePageChange('orders')}>Purchase Orders</MenuItem>
+            <MenuItem onClick={() => handlePageChange('info')}>Information</MenuItem>
+          </Menu>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton onClick={toggleTheme} color="inherit">
+              {isDarkMode ? 
+                <Brightness7Icon sx={{ color: '#FFD700' }} /> : 
+                <Brightness4Icon sx={{ color: '#4169E1' }} />
+              }
+            </IconButton>
+            <IconButton onClick={logout} color="inherit">
+              <LogoutIcon sx={{ color: '#fff' }} />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 
-      <Box component="main" sx={{ flexGrow: 1, overflow: 'auto', width: '100%'  }}>
-        {renderPage()}
+      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+        {currentPage === 'home' && <DashboardHome setCurrentPage={setCurrentPage} />}
+        {currentPage === 'inventory' && <InventoryList />}
+        {currentPage === 'catalog' && <ProductCatalog />}
+        {currentPage === 'orders' && <OrdersPage />}
+        {currentPage === 'info' && <InfoPage />}
       </Box>
     </Box>
   );

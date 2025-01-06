@@ -92,8 +92,6 @@ const ProductCatalog: React.FC = () => {
     new Set(products.map(p => p.category))
   ).filter(Boolean) as string[];
 
-  const [groupByAltCode, setGroupByAltCode] = useState(false);
-
   // Add state for catalog filter mode
   const [catalogFilterMode, setCatalogFilterMode] = useState<'AND' | 'OR'>('OR');
 
@@ -159,7 +157,7 @@ const ProductCatalog: React.FC = () => {
     });
     
     setFilteredProducts(filtered);
-  }, [products, selectedCatalogs, selectedSuppliers, selectedCategories, sortDirection, groupByAltCode, searchQuery, catalogFilterMode]);
+  }, [products, selectedCatalogs, selectedSuppliers, selectedCategories, sortDirection, searchQuery, catalogFilterMode]);
 
   const fetchProducts = async () => {
     try {
@@ -304,61 +302,44 @@ const ProductCatalog: React.FC = () => {
       <Box>
         <Stack 
           direction={{ xs: 'column', sm: 'row' }} 
-          justifyContent="space-between" 
-          alignItems={{ xs: 'stretch', sm: 'center' }} 
-          mb={2}
           spacing={2}
+          mb={2}
+          alignItems="center"
         >
-          <Typography variant="h5">All Products</Typography>
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
-            spacing={2}
-            width={{ xs: '100%', sm: 'auto' }}
-          >
-            <Button
-              variant="outlined"
-              startIcon={<FileDownloadIcon />}
-              onClick={(e) => setExportAnchorEl(e.currentTarget)}
-              fullWidth={isMobile}
-            >
-              Export Designs
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<UploadIcon />}
-              onClick={() => setImportOpen(true)}
-              fullWidth={isMobile}
-            >
-              Bulk Import
-            </Button>
+          <ProductFilters
+            catalogs={uniqueCatalogs}
+            suppliers={uniqueSuppliers}
+            categories={uniqueCategories}
+            selectedCatalogs={selectedCatalogs}
+            selectedSuppliers={selectedSuppliers}
+            selectedCategories={selectedCategories}
+            catalogFilterMode={catalogFilterMode}
+            searchQuery={searchQuery}
+            onCatalogChange={setSelectedCatalogs}
+            onSupplierChange={setSelectedSuppliers}
+            onCategoryChange={setSelectedCategories}
+            onCatalogFilterModeChange={setCatalogFilterMode}
+            onSearchQueryChange={setSearchQuery}
+          />
+          <Stack direction="row" spacing={1}>
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setFormOpen(true)}
-              fullWidth={isMobile}
+              sx={{ minWidth: 'fit-content' }}
             >
               Add Product
             </Button>
+            <Button
+              variant="outlined"
+              startIcon={<UploadIcon />}
+              onClick={() => setImportOpen(true)}
+              sx={{ minWidth: 'fit-content' }}
+            >
+              Bulk Import
+            </Button>
           </Stack>
         </Stack>
-
-        <ProductFilters
-          catalogs={uniqueCatalogs}
-          suppliers={uniqueSuppliers}
-          categories={uniqueCategories}
-          selectedCatalogs={selectedCatalogs}
-          selectedSuppliers={selectedSuppliers}
-          selectedCategories={selectedCategories}
-          catalogFilterMode={catalogFilterMode}
-          searchQuery={searchQuery}
-          groupByAltCode={groupByAltCode}
-          onCatalogChange={setSelectedCatalogs}
-          onSupplierChange={setSelectedSuppliers}
-          onCategoryChange={setSelectedCategories}
-          onCatalogFilterModeChange={setCatalogFilterMode}
-          onSearchQueryChange={setSearchQuery}
-          onGroupByAltCodeChange={setGroupByAltCode}
-        />
 
         <TableContainer 
           component={Paper} 

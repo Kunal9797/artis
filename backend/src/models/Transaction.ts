@@ -1,6 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/database';
-import Product from './Product';
 
 interface TransactionAttributes {
   id: string;
@@ -72,10 +71,5 @@ Transaction.init(
     timestamps: true
   }
 );
-
-Transaction.belongsTo(Product, {
-  foreignKey: 'productId',
-  onDelete: 'CASCADE'
-});
 
 export default Transaction; 

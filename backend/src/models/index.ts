@@ -1,9 +1,8 @@
 import User from './User';
 import Product from './Product';
 import Transaction from './Transaction';
+import { initializeAssociations } from './Product';
 
-export {
-  User,
-  Product,
-  Transaction
-}; 
+initializeAssociations();
+
+export { Product, Transaction, User }; 

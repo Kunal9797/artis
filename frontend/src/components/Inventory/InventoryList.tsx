@@ -38,6 +38,7 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import { Transaction } from '../../types/transaction';
 
 export interface InventoryItem {
   id: string;
@@ -45,11 +46,13 @@ export interface InventoryItem {
   name: string;
   supplier?: string;
   category?: string;
+  catalogs?: string[];
   supplierCode?: string;
   currentStock: number;
   lastUpdated: Date;
   minStockLevel?: number;
   avgConsumption: number;
+  transactions?: Transaction[];
 }
 
 interface FilterState {
@@ -84,11 +87,19 @@ const InventoryList: React.FC = () => {
     details: false,
     bulkUpload: false
   });
+  const [catalogFilter, setCatalogFilter] = useState('');
+  const [showTransactionDialog, setShowTransactionDialog] = useState(false);
+  const [showBulkUploadDialog, setShowBulkUploadDialog] = useState(false);
+
+  const uniqueCatalogs = useMemo(() => 
+    Array.from(new Set(inventory.flatMap(item => item.catalogs || [])))
+      .filter(Boolean)
+      .sort()
+  , [inventory]);
 
   const filteredItems = useMemo(() => {
     let filtered = [...inventory];
     
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(item => 
@@ -98,51 +109,41 @@ const InventoryList: React.FC = () => {
       );
     }
 
-    // Apply supplier filter
     if (supplierFilter) {
       filtered = filtered.filter(item => item.supplier === supplierFilter);
     }
 
-    // Apply category filter
     if (categoryFilter) {
       filtered = filtered.filter(item => item.category === categoryFilter);
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue = a[sortField];
-      let bValue = b[sortField];
+    if (catalogFilter) {
+      filtered = filtered.filter(item => 
+        item.catalogs?.includes(catalogFilter)
+      );
+    }
 
-      // Handle array fields (like artisCodes)
-      if (sortField === 'artisCodes') {
-        aValue = a[sortField][0];
-        bValue = b[sortField][0];
-      }
-
-      // Convert string numbers to actual numbers for proper numeric sorting
+    return filtered.sort((a, b) => {
       if (sortField === 'currentStock' || sortField === 'avgConsumption') {
-        aValue = Number(aValue) || 0;
-        bValue = Number(bValue) || 0;
-      }
-
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        const aValue = Number(a[sortField]) || 0;
+        const bValue = Number(b[sortField]) || 0;
         return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
       }
-
-      // Fall back to string comparison for non-numeric values
-      return sortOrder === 'asc'
-        ? String(aValue).localeCompare(String(bValue))
-        : String(bValue).localeCompare(String(aValue));
+      
+      const aValue = String(a[sortField] || '');
+      const bValue = String(b[sortField] || '');
+      return sortOrder === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
     });
-
-    return filtered;
-  }, [inventory, searchQuery, supplierFilter, categoryFilter, sortField, sortOrder]);
+  }, [inventory, searchQuery, supplierFilter, categoryFilter, catalogFilter, sortField, sortOrder]);
 
   // Simplified fetch function for debugging
   const fetchInventory = async () => {
     try {
       setLoading(true);
       const response = await inventoryApi.getAllInventory();
+      console.log('Inventory response:', response.data);
       setInventory(response.data);
     } catch (error) {
       console.error('Error fetching inventory:', error);
@@ -186,12 +187,34 @@ const InventoryList: React.FC = () => {
     });
   };
 
+  const handleAddTransaction = () => {
+    setDialogState(prev => ({ ...prev, transaction: true }));
+  };
+
+  const handleBulkUpload = () => {
+    setDialogState(prev => ({ ...prev, bulkUpload: true }));
+  };
+
   const FilterControls = () => {
     return (
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-        <Box sx={{ flexGrow: 1, maxWidth: 300 }}>
+      <Box sx={{ 
+        mb: 3, 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2, 
+        flexWrap: 'wrap',
+        width: '100%',
+        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+        borderRadius: 1,
+        p: 2
+      }}>
+        <Box sx={{ 
+          display: 'flex',
+          gap: 2,
+          flexGrow: 1,
+          flexWrap: 'wrap'
+        }}>
           <TextField
-            fullWidth
             size="small"
             placeholder="Search inventory..."
             value={searchQuery}
@@ -203,72 +226,89 @@ const InventoryList: React.FC = () => {
                 </InputAdornment>
               )
             }}
+            sx={{ 
+              minWidth: { xs: '100%', sm: 250 },
+              flexGrow: { sm: 1 },
+              maxWidth: { sm: 400 }
+            }}
           />
+
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+            <InputLabel>Supplier</InputLabel>
+            <Select
+              value={supplierFilter}
+              onChange={(e) => setSupplierFilter(e.target.value)}
+              label="Supplier"
+            >
+              <MenuItem value="">All</MenuItem>
+              {Array.from(new Set(inventory.map(item => item.supplier)))
+                .filter(Boolean)
+                .sort()
+                .map(supplier => (
+                  <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
+                ))
+              }
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              label="Category"
+            >
+              <MenuItem value="">All</MenuItem>
+              {Array.from(new Set(inventory.map(item => item.category)))
+                .filter(Boolean)
+                .sort()
+                .map(category => (
+                  <MenuItem key={category} value={category}>{category}</MenuItem>
+                ))
+              }
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+            <InputLabel>Catalog</InputLabel>
+            <Select
+              value={catalogFilter}
+              onChange={(e) => setCatalogFilter(e.target.value)}
+              label="Catalog"
+            >
+              <MenuItem value="">All</MenuItem>
+              {uniqueCatalogs.map(catalog => (
+                <MenuItem key={catalog} value={catalog}>
+                  {catalog}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
 
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Supplier</InputLabel>
-          <Select
-            value={supplierFilter}
-            onChange={(e) => setSupplierFilter(e.target.value)}
-            label="Supplier"
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2,
+          flexWrap: 'wrap',
+          minWidth: { xs: '100%', sm: 'auto' }
+        }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddTransaction}
+            sx={{ flex: { xs: 1, sm: 'none' } }}
           >
-            <MenuItem value="">All</MenuItem>
-            {Array.from(new Set(inventory.map(item => item.supplier)))
-              .filter(Boolean)
-              .sort()
-              .map(supplier => (
-                <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
-              ))
-            }
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            label="Category"
+            Add Transaction
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<UploadIcon />}
+            onClick={handleBulkUpload}
+            sx={{ flex: { xs: 1, sm: 'none' } }}
           >
-            <MenuItem value="">All</MenuItem>
-            {Array.from(new Set(inventory.map(item => item.category)))
-              .filter(Boolean)
-              .sort()
-              .map(category => (
-                <MenuItem key={category} value={category}>{category}</MenuItem>
-              ))
-            }
-          </Select>
-        </FormControl>
-
-        <Tooltip title={`Switch to ${viewMode === 'list' ? 'grid' : 'list'} view`}>
-          <IconButton onClick={handleViewModeToggle} size="small">
-            {viewMode === 'list' ? <GridViewIcon /> : <ListIcon />}
-          </IconButton>
-        </Tooltip>
-
-        <IconButton onClick={fetchInventory} size="small">
-          <RefreshIcon />
-        </IconButton>
-
-        <Button
-          startIcon={<AddIcon />}
-          variant="contained"
-          onClick={() => setDialogState(prev => ({ ...prev, transaction: true }))}
-          size="small"
-        >
-          Add Transaction
-        </Button>
-
-        <Button
-          startIcon={<UploadIcon />}
-          variant="outlined"
-          onClick={() => setDialogState(prev => ({ ...prev, bulkUpload: true }))}
-          size="small"
-        >
-          Bulk Upload
-        </Button>
+            Bulk Upload
+          </Button>
+        </Box>
       </Box>
     );
   };
@@ -318,15 +358,6 @@ const InventoryList: React.FC = () => {
       minHeight: '100vh',
       p: 3
     }}>
-      <Box sx={{ mb: 3, mt: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5" component="h1" sx={{
-          fontWeight: 600,
-          color: theme => theme.palette.mode === 'dark' ? '#fff' : 'rgba(0, 0, 0, 0.87)',
-          mb: 3
-        }}>
-          Inventory Management
-        </Typography>
-      </Box>
 
       <FilterControls />
 

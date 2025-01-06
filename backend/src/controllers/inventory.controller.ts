@@ -26,23 +26,29 @@ export const getAllInventory = async (req: Request, res: Response) => {
     const products = await Product.findAll({
       attributes: [
         'id', 'artisCodes', 'name', 'supplier', 'category', 'supplierCode',
-        'currentStock', 'lastUpdated', 'minStockLevel', 'avgConsumption'
+        'currentStock', 'lastUpdated', 'minStockLevel', 'avgConsumption', 'catalogs'
       ],
+      include: [{
+        model: Transaction,
+        as: 'transactions',
+        attributes: ['id', 'type', 'quantity', 'date', 'notes'],
+        required: false
+      }],
       order: [['lastUpdated', 'DESC']]
     });
-    
-    // Log a few products to verify avgConsumption
-    products.slice(0, 3).forEach(product => {
-      console.log('Product details:', {
-        artisCode: product.artisCodes[0],
-        avgConsumption: product.avgConsumption
-      });
-    });
+
+    if (products.length > 0) {
+      console.log('Sample product:', JSON.stringify(products[0], null, 2));
+    }
 
     res.json(products);
   } catch (error) {
     console.error('Error fetching inventory:', error);
-    res.status(500).json({ error: 'Error fetching inventory' });
+    console.error('Detailed error:', JSON.stringify(error, null, 2));
+    res.status(500).json({ 
+      error: 'Error fetching inventory',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 

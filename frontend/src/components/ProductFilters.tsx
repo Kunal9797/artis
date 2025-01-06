@@ -25,13 +25,11 @@ interface Props {
   selectedCategories: string[];
   catalogFilterMode: 'AND' | 'OR';
   searchQuery: string;
-  groupByAltCode: boolean;
   onCatalogChange: (value: string[]) => void;
   onSupplierChange: (value: string[]) => void;
   onCategoryChange: (value: string[]) => void;
   onCatalogFilterModeChange: (mode: 'AND' | 'OR') => void;
   onSearchQueryChange: (value: string) => void;
-  onGroupByAltCodeChange: (value: boolean) => void;
 }
 
 const ProductFilters: React.FC<Props> = ({
@@ -43,13 +41,11 @@ const ProductFilters: React.FC<Props> = ({
   selectedCategories,
   catalogFilterMode,
   searchQuery,
-  groupByAltCode,
   onCatalogChange,
   onSupplierChange,
   onCategoryChange,
   onCatalogFilterModeChange,
   onSearchQueryChange,
-  onGroupByAltCodeChange,
 }) => {
   const handleClearFilters = () => {
     onCatalogChange([]);
@@ -154,18 +150,6 @@ const ProductFilters: React.FC<Props> = ({
               ))}
             </Select>
           </FormControl>
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={groupByAltCode}
-                onChange={(e) => onGroupByAltCodeChange(e.target.checked)}
-                size="small"
-              />
-            }
-            label="Group same designs"
-            sx={{ minWidth: 160 }}
-          />
 
           {hasActiveFilters && (
             <Button

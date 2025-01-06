@@ -5,7 +5,8 @@ export interface Transaction {
   type: 'IN' | 'OUT';
   quantity: number;
   date: string;
-  notes: string;
+  notes?: string;
+  productId: string;
   balance: number;
 }
 

@@ -11,6 +11,7 @@ import {
   Link
 } from '@mui/material';
 import { productApi } from '../services/api';
+import FileDownload from '@mui/icons-material/FileDownload';
 
 interface Props {
   open: boolean;
@@ -22,6 +23,7 @@ const BulkImportDialog: React.FC<Props> = ({ open, onClose, onSuccess }) => {
   const [file, setFile] = useState<File | null>(null);
   const [updateMode, setUpdateMode] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +81,13 @@ const BulkImportDialog: React.FC<Props> = ({ open, onClose, onSuccess }) => {
         </Box>
       )}
       <DialogActions>
+        <Button
+          variant="outlined"
+          startIcon={<FileDownload />}
+          onClick={(e) => setExportAnchorEl(e.currentTarget)}
+        >
+          Export Designs
+        </Button>
         <Button onClick={onClose}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained" disabled={!file}>
           Import

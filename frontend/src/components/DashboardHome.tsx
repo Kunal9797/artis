@@ -42,15 +42,29 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setCurrentPage }) => {
         variant="h4" 
         sx={{ 
           mb: 4,
-          fontWeight: 600,
+          fontWeight: 500,
           fontFamily: '"Poppins", sans-serif',
-          color: isDarkMode ? '#fff' : '#1A237E'
+          color: isDarkMode ? '#fff' : '#1A237E',
+          letterSpacing: '0.5px',
+          textAlign: 'center',
+          position: 'relative',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: -8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '60px',
+            height: '3px',
+            background: isDarkMode ? '#90CAF9' : '#1A237E',
+            borderRadius: '2px'
+          }
         }}
       >
         Welcome to Artis Inventory Management
       </Typography>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ mb: 6 }}>
         <Grid item xs={12} md={4}>
           <NavigationCard
             title="Inventory"
