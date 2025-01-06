@@ -36,7 +36,8 @@ module.exports = {
     // 5. Handle duplicate supplier codes before adding constraint
     await queryInterface.sequelize.query(`
       WITH duplicates AS (
-        SELECT "supplierCode", supplier, COUNT(*)
+        SELECT "supplierCode", supplier, COUNT(*),
+               array_agg(id ORDER BY "createdAt") as ids
         FROM "Products"
         GROUP BY "supplierCode", supplier
         HAVING COUNT(*) > 1
@@ -48,11 +49,7 @@ module.exports = {
         FROM duplicates d 
         WHERE d."supplierCode" = p."supplierCode" 
         AND d.supplier = p.supplier
-      )
-      AND id NOT IN (
-        SELECT MIN(id) 
-        FROM "Products" 
-        GROUP BY "supplierCode", supplier
+        AND p.id != (d.ids)[1]
       )
     `);
 
