@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8099'
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? 'https://artis-backend.onrender.com'
+    : 'http://localhost:8099'
 });
 
 // Auth API endpoints
