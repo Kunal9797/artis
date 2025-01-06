@@ -44,6 +44,4 @@ if (require.main === module) {
     console.error('Failed to sync database:', error);
     process.exit(1);
   });
-}
-
-export default sequelize; 
+} 
