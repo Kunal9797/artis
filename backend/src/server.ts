@@ -62,34 +62,29 @@ app.get('/api/health', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
-
 const PORT = parseInt(process.env.PORT || '8099', 10);
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  console.log('Database initialization starting...');
-  
   try {
-    // Check database connection
     await sequelize.authenticate();
     console.log('✓ Database connected');
-
-    // Run migrations
-    console.log('Running migrations...');
-    try {
-      const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate');
-      console.log('Migration output:', stdout);
-      if (stderr) console.error('Migration stderr:', stderr);
-      console.log('✓ Migrations completed');
-    } catch (migrationError) {
-      console.error('Migration error:', migrationError);
-      throw migrationError;
+    
+    // Only run migrations in production
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Running migrations...');
+      try {
+        const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate');
+        console.log('Migration output:', stdout);
+        if (stderr) console.error('Migration stderr:', stderr);
+        console.log('✓ Migrations completed');
+      } catch (migrationError) {
+        console.error('Migration error:', migrationError);
+        throw migrationError;
+      }
     }
 
-    // Sync models
     await sequelize.sync({ alter: true });
     console.log('✓ Models synced successfully');
-    
-    console.log('Database initialization completed');
   } catch (error) {
     console.error('Database initialization failed:', error);
     process.exit(1);

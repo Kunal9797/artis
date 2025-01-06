@@ -2,14 +2,11 @@ require('dotenv').config();
 
 module.exports = {
   development: {
-    url: process.env.DATABASE_URL,
+    host: process.env.DB_HOST || 'localhost',
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'artis_db',
     dialect: 'postgres',
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
-      }
-    },
     define: {
       timestamps: true,
       underscored: false
@@ -29,4 +26,4 @@ module.exports = {
       underscored: false
     }
   }
-}; 
+};

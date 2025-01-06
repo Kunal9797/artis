@@ -361,22 +361,42 @@ const InventoryList: React.FC = () => {
 
       <FilterControls />
 
-      <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Sort By</InputLabel>
-          <Select
-            value={sortField}
-            onChange={(e) => setSortField(e.target.value as keyof InventoryItem)}
-            label="Sort By"
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 2,
+        mb: 2 
+      }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Button
+            variant="outlined"
+            startIcon={viewMode === 'list' ? <GridViewIcon /> : <ListIcon />}
+            onClick={handleViewModeToggle}
+            size="small"
           >
-            <MenuItem value="artisCodes">Artis Codes</MenuItem>
-            <MenuItem value="currentStock">Current Stock</MenuItem>
-            <MenuItem value="avgConsumption">Avg. Consumption</MenuItem>
-          </Select>
-        </FormControl>
-        <IconButton onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
-          {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-        </IconButton>
+            {viewMode === 'list' ? 'Grid View' : 'List View'}
+          </Button>
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <FormControl size="small" sx={{ minWidth: { xs: 150, sm: 200 } }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value as keyof InventoryItem)}
+              label="Sort By"
+            >
+              <MenuItem value="artisCodes">Artis Codes</MenuItem>
+              <MenuItem value="currentStock">Current Stock</MenuItem>
+              <MenuItem value="avgConsumption">Avg. Consumption</MenuItem>
+            </Select>
+          </FormControl>
+          <IconButton onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+            {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+          </IconButton>
+        </Box>
       </Box>
 
       {viewMode === 'list' ? (
@@ -389,6 +409,22 @@ const InventoryList: React.FC = () => {
           borderRadius: '8px',
           bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
           border: theme => theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+          
+          // Mobile responsive styles
+          '& .MuiTable-root': {
+            minWidth: { xs: 650, sm: 750, md: 900 }, // Adjust minimum widths
+          },
+          '& .MuiTableCell-root': {
+            px: { xs: 1, sm: 2 }, // Reduce padding on mobile
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: {
+              xs: '100px',
+              sm: '150px',
+              md: '200px'
+            }
+          }
         }}>
           <Table 
             stickyHeader 
@@ -606,98 +642,103 @@ const InventoryList: React.FC = () => {
           {filteredItems.map((item: InventoryItem) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
               <Card sx={{
-                bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
-                border: '1px solid',
-                borderColor: theme => theme.palette.mode === 'dark' ? '#333' : '#e2e8f0',
-                borderRadius: '8px',
-                position: 'relative',
-                p: 2,
                 height: '100%',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+                borderRadius: '8px',
+                boxShadow: theme => theme.palette.mode === 'dark' 
+                  ? '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
+                  : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-2px)'
+                }
               }}>
-                <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                <Box sx={{ p: 2 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                      {item.artisCodes.map((code) => (
+                        <Chip
+                          key={code}
+                          label={code}
+                          size="small"
+                          sx={{ 
+                            height: '24px',
+                            '& .MuiChip-label': {
+                              px: 1,
+                              fontSize: '0.85rem'
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                    <Typography variant="body2" sx={{ 
+                      color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                      mt: 1
+                    }}>
+                      {item.name}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {item.supplier}
+                    </Typography>
+                    {item.supplierCode && (
+                      <Typography variant="body2" sx={{
+                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2'
+                      }}>
+                        {item.supplierCode}
+                      </Typography>
+                    )}
+                  </Box>
+
                   <Chip
-                    label={item.category || 'Plain Colours'}
+                    label={item.category}
+                    size="small"
                     sx={{
-                      backgroundColor: theme => theme.palette.mode === 'dark' ? '#1f6feb' : '#e3f2fd',
-                      color: theme => theme.palette.mode === 'dark' ? '#fff' : '#1976d2',
-                      fontSize: '0.9rem',
-                      fontWeight: 500,
-                      padding: '4px 8px',
-                      height: '32px'
+                      mb: 2,
+                      bgcolor: theme => theme.palette.mode === 'dark' ? '#1f6feb20' : '#e3f2fd',
+                      color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2'
                     }}
                   />
-                </Box>
 
-                <Box sx={{ mb: 3 }}>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                    {renderProductCodes(item.artisCodes)}
-                  </Box>
-                  <Typography sx={{
-                    color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                    fontSize: '1.1rem',
-                    fontWeight: 500,
-                    mb: 1
-                  }}>
-                    {item.supplier}
-                  </Typography>
-                  {item.supplierCode && (
-                    <Typography sx={{
-                      color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2',
-                      fontSize: '0.95rem',
-                      fontWeight: 500
-                    }}>
-                      {item.supplierCode}
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box sx={{ mt: 'auto' }}>
-                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid container spacing={2} sx={{ mt: 'auto' }}>
                     <Grid item xs={6}>
-                      <Typography sx={{
-                        fontSize: '0.875rem',
-                        color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                        mb: 0.5
-                      }}>
+                      <Typography variant="body2" color="textSecondary">
                         Current Stock
                       </Typography>
-                      <Typography sx={{
-                        fontSize: '1.5rem',
+                      <Typography sx={{ 
+                        fontSize: '1.2rem', 
                         fontWeight: 600,
                         color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
                       }}>
                         {item.currentStock}
                         <Typography component="span" sx={{
-                          fontSize: '0.875rem',
-                          color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                          ml: 1
+                          fontSize: '0.75rem',
+                          ml: 0.5,
+                          color: 'text.secondary'
                         }}>
                           kgs
                         </Typography>
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography sx={{
-                        fontSize: '0.875rem',
-                        color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                        mb: 0.5,
-                        textAlign: 'right'
-                      }}>
+                      <Typography variant="body2" color="textSecondary" align="right">
                         Avg. Consumption
                       </Typography>
-                      <Typography sx={{
-                        fontSize: '1.5rem',
+                      <Typography sx={{ 
+                        fontSize: '1.2rem', 
                         fontWeight: 600,
-                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1',
-                        textAlign: 'right'
+                        textAlign: 'right',
+                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
                       }}>
                         {Number(item.avgConsumption).toFixed(2)}
                         <Typography component="span" sx={{
-                          fontSize: '0.875rem',
-                          color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                          ml: 1
+                          fontSize: '0.75rem',
+                          ml: 0.5,
+                          color: 'text.secondary'
                         }}>
                           kgs
                         </Typography>
@@ -707,22 +748,11 @@ const InventoryList: React.FC = () => {
 
                   <Button
                     fullWidth
-                    variant="outlined"
                     startIcon={<InfoIcon />}
-                    onClick={() => {
-                      setSelectedProduct(item.id);
-                      setDialogState(prev => ({ ...prev, details: true }));
-                    }}
-                    sx={{
-                      borderColor: theme => theme.palette.mode === 'dark' ? '#333' : '#e2e8f0',
-                      color: theme => theme.palette.mode === 'dark' ? '#fff' : '#1e293b',
-                      '&:hover': {
-                        borderColor: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1',
-                        backgroundColor: 'transparent'
-                      }
-                    }}
+                    onClick={() => handleOpenDetails(item.id)}
+                    sx={{ mt: 2 }}
                   >
-                    DETAILS
+                    Details
                   </Button>
                 </Box>
               </Card>
