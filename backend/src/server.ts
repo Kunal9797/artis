@@ -6,6 +6,7 @@ import { User } from './models';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import inventoryRoutes from './routes/inventory.routes';
+import { syncDatabase } from './config/database';
 
 // Load environment variables
 dotenv.config();
@@ -60,12 +61,17 @@ app.get('/api/health', async (req: Request, res: Response) => {
 });
 
 const PORT = parseInt(process.env.PORT || '8099', 10);
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  console.log('Database connection status: Checking...');
-  sequelize.authenticate()
-    .then(() => console.log('✓ Database connected'))
-    .catch(err => console.error('✕ Database connection failed:', err));
+  console.log('Database initialization starting...');
+  
+  try {
+    await syncDatabase();
+    console.log('Database initialization completed');
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    process.exit(1);
+  }
 });
 
 export default app;
