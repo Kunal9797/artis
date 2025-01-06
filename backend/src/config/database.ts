@@ -14,6 +14,10 @@ const sequelize = new Sequelize(process.env.DATABASE_URL || '', {
       require: true,
       rejectUnauthorized: false
     }
+  },
+  define: {
+    timestamps: true,
+    underscored: false
   }
 });
 
