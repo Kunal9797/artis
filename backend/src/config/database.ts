@@ -7,15 +7,13 @@ import sequelize from './sequelize';
 const execAsync = promisify(exec);
 dotenv.config();
 
-export const syncDatabase = async () => {
+export async function syncDatabase() {
   try {
     console.log('Starting database sync and migrations...');
     
-    // First check connection
     await sequelize.authenticate();
     console.log('✓ Database connected');
 
-    // Run migrations
     console.log('Running migrations...');
     try {
       const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate');
@@ -27,7 +25,6 @@ export const syncDatabase = async () => {
       throw migrationError;
     }
 
-    // Sync models
     await sequelize.sync({ alter: true });
     console.log('✓ Models synced successfully');
     
@@ -36,9 +33,8 @@ export const syncDatabase = async () => {
     console.error('Database initialization error:', error);
     throw error;
   }
-};
+}
 
-// Call sync when this file is run directly
 if (require.main === module) {
   syncDatabase().catch(error => {
     console.error('Failed to sync database:', error);
