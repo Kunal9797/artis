@@ -31,14 +31,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false react-scripts build",
-    "test": "react-scripts test",
-    "test:coverage": "react-scripts test --coverage --watchAll=false",
-    "test:ci": "react-scripts test --watchAll=false --transformIgnorePatterns \"node_modules/(?!@mui)/\"",
-    "eject": "react-scripts eject",
+    "build": "CI=false ./node_modules/.bin/react-scripts build",
     "vercel-build": "npm install && npm run build",
-    "create-templates": "ts-node scripts/create-inventory-template.ts && ts-node scripts/create-excel-template.ts && ts-node scripts/create-purchase-template.ts",
-    "create-inventory-template": "ts-node scripts/create-inventory-template.ts"
+    "test": "react-scripts test"
   },
   "eslintConfig": {
     "extends": [
