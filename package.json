@@ -1,4 +1,9 @@
 {
+  "private": true,
+  "workspaces": ["frontend"],
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build"
+  },
   "dependencies": {
     "@types/node": "^22.10.2",
     "fs": "^0.0.1-security",

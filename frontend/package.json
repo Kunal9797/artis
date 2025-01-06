@@ -31,8 +31,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false ./node_modules/.bin/react-scripts build",
-    "vercel-build": "npm install && npm run build",
+    "build": "react-scripts build",
     "test": "react-scripts test"
   },
   "eslintConfig": {
