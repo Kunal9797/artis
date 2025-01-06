@@ -22,7 +22,6 @@
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.1",
-    "react-scripts": "5.0.1",
     "recharts": "^2.15.0",
     "stylis": "^4.3.4",
     "stylis-plugin-rtl": "^2.1.1",
@@ -31,7 +30,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false ./node_modules/.bin/react-scripts build",
+    "build": "CI=false npm install react-scripts && react-scripts build",
     "vercel-build": "npm install && npm run build",
     "test": "react-scripts test"
   },
@@ -67,7 +66,8 @@
     "source-map-loader": "^5.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "react-scripts": "5.0.1"
   },
   "jest": {
     "moduleNameMapper": {
