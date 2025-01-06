@@ -7,7 +7,7 @@
     "start": "ts-node src/server.ts",
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "migrate": "ts-node src/config/database.ts",
+    "migrate": "sequelize-cli db:migrate",
     "postinstall": "npm run migrate",
     "test": "echo \"Tests temporarily disabled\""
   },
