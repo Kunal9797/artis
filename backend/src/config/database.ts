@@ -2,26 +2,11 @@ import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import sequelize from './sequelize';
 
 const execAsync = promisify(exec);
 dotenv.config();
 
-const sequelize = new Sequelize(process.env.DATABASE_URL || '', {
-  dialect: 'postgres',
-  logging: false,
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false
-    }
-  },
-  define: {
-    timestamps: true,
-    underscored: false
-  }
-});
-
-// Add this sync function
 export const syncDatabase = async () => {
   try {
     console.log('Starting database sync and migrations...');
