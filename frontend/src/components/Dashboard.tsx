@@ -10,6 +10,8 @@ import {
   Button,
   IconButton,
   Menu,
+  useMediaQuery,
+  useTheme as useMuiTheme,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +32,8 @@ const Dashboard: React.FC = () => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState('home');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
   const handlePageClick = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget);
@@ -46,12 +50,18 @@ const Dashboard: React.FC = () => {
 
   const getCurrentPageTitle = () => {
     switch (currentPage) {
-      case 'home': return 'Dashboard';
-      case 'inventory': return 'Inventory Management';
-      case 'catalog': return 'Product Catalog';
-      case 'orders': return 'Paper Orders';
-      case 'info': return 'Information';
-      default: return 'Dashboard';
+      case 'home': 
+        return 'Dashboard';
+      case 'inventory': 
+        return isMobile ? 'Inventory' : 'Inventory Management';
+      case 'catalog': 
+        return isMobile ? 'Products' : 'Product Catalog';
+      case 'orders': 
+        return isMobile ? 'Orders' : 'Paper Orders';
+      case 'info': 
+        return 'Information';
+      default: 
+        return 'Dashboard';
     }
   };
 
@@ -63,10 +73,15 @@ const Dashboard: React.FC = () => {
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         backdropFilter: 'blur(8px)'
       }}>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Toolbar sx={{ 
+          justifyContent: 'space-between',
+          gap: 1,
+          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+        }}>
           <Box sx={{ 
             display: 'flex', 
             alignItems: 'center',
+            flexShrink: 0,
             '& img': {
               transition: 'transform 0.3s ease',
               cursor: 'pointer',
@@ -78,34 +93,43 @@ const Dashboard: React.FC = () => {
             <img 
               src={Logo} 
               alt="Artis Logo" 
-              style={{ height: '50px' }} 
-              onClick={() => handlePageChange('home')}
-            />
-            <img 
-              src={ArtisLogoText} 
-              alt="Artis Laminates" 
               style={{ 
-                height: '40px',
-                marginLeft: '15px',
+                height: '50px',
+                width: 'auto',
               }} 
               onClick={() => handlePageChange('home')}
             />
+            <Box sx={{ 
+              display: { xs: 'none', sm: 'block' },
+              marginLeft: '15px',
+            }}>
+              <img 
+                src={ArtisLogoText} 
+                alt="Artis Laminates" 
+                style={{ 
+                  height: '40px',
+                }} 
+                onClick={() => handlePageChange('home')}
+              />
+            </Box>
           </Box>
 
           <Button
             onClick={handlePageClick}
             sx={{
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
+              position: { xs: 'relative', sm: 'absolute' },
+              left: { xs: 'auto', sm: '50%' },
+              transform: { xs: 'none', sm: 'translateX(-50%)' },
               color: '#fff',
-              fontSize: '1.6rem',
+              fontSize: { xs: '1.2rem', sm: '1.6rem' },
               fontWeight: 700,
               fontFamily: '"Poppins", sans-serif',
               textTransform: 'none',
               letterSpacing: '1.2px',
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              padding: '8px 16px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: { xs: '200px', sm: 'none' },
               background: 'linear-gradient(45deg, #fff 30%, #FFD700 90%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -156,7 +180,13 @@ const Dashboard: React.FC = () => {
             <MenuItem onClick={() => handlePageChange('info')}>Information</MenuItem>
           </Menu>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            flexShrink: 0,
+            ml: { xs: 'auto', sm: 0 }
+          }}>
             <IconButton onClick={toggleTheme} color="inherit">
               {isDarkMode ? 
                 <Brightness7Icon sx={{ color: '#FFD700' }} /> : 
