@@ -5,7 +5,7 @@ module.exports = {
     // 1. Add artisCodes array column
     await queryInterface.addColumn('Products', 'artisCodes', {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: true // temporarily allow null
+      allowNull: true
     });
 
     // 2. Migrate existing artisCode to artisCodes array
@@ -33,14 +33,37 @@ module.exports = {
       allowNull: false
     });
 
-    // 5. Add unique constraint on supplierCode + supplier
+    // 5. Handle duplicate supplier codes before adding constraint
+    await queryInterface.sequelize.query(`
+      WITH duplicates AS (
+        SELECT "supplierCode", supplier, COUNT(*)
+        FROM "Products"
+        GROUP BY "supplierCode", supplier
+        HAVING COUNT(*) > 1
+      )
+      UPDATE "Products" p
+      SET "supplierCode" = p."supplierCode" || '_' || p.id
+      WHERE EXISTS (
+        SELECT 1 
+        FROM duplicates d 
+        WHERE d."supplierCode" = p."supplierCode" 
+        AND d.supplier = p.supplier
+      )
+      AND id NOT IN (
+        SELECT MIN(id) 
+        FROM "Products" 
+        GROUP BY "supplierCode", supplier
+      )
+    `);
+
+    // 6. Now add unique constraint
     await queryInterface.addConstraint('Products', {
       fields: ['supplierCode', 'supplier'],
       type: 'unique',
       name: 'unique_supplier_code_constraint'
     });
 
-    // 6. Remove old artisCode column
+    // 7. Remove old artisCode column
     await queryInterface.removeColumn('Products', 'artisCode');
   },
 
