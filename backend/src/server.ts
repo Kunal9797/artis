@@ -6,7 +6,10 @@ import { User } from './models';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import inventoryRoutes from './routes/inventory.routes';
-import syncDatabase from './config/database';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 // Load environment variables
 dotenv.config();
@@ -66,7 +69,26 @@ app.listen(PORT, '0.0.0.0', async () => {
   console.log('Database initialization starting...');
   
   try {
-    await syncDatabase();
+    // Check database connection
+    await sequelize.authenticate();
+    console.log('✓ Database connected');
+
+    // Run migrations
+    console.log('Running migrations...');
+    try {
+      const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate');
+      console.log('Migration output:', stdout);
+      if (stderr) console.error('Migration stderr:', stderr);
+      console.log('✓ Migrations completed');
+    } catch (migrationError) {
+      console.error('Migration error:', migrationError);
+      throw migrationError;
+    }
+
+    // Sync models
+    await sequelize.sync({ alter: true });
+    console.log('✓ Models synced successfully');
+    
     console.log('Database initialization completed');
   } catch (error) {
     console.error('Database initialization failed:', error);
