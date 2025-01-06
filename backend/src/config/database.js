@@ -9,6 +9,10 @@ module.exports = {
         require: true,
         rejectUnauthorized: false
       }
+    },
+    define: {
+      timestamps: true,
+      underscored: false
     }
   },
   production: {
@@ -19,6 +23,10 @@ module.exports = {
         require: true,
         rejectUnauthorized: false
       }
+    },
+    define: {
+      timestamps: true,
+      underscored: false
     }
   }
 }; 
