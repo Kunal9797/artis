@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import sequelize from './config/database';
+import sequelize from './config/sequelize';
 import { User } from './models';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
