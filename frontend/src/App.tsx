@@ -1,11 +1,22 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider as CustomThemeProvider } from './context/ThemeContext';
 import { CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const token = localStorage.getItem('token');
+  const location = useLocation();
+
+  if (!token) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
 
 const App: React.FC = () => {
   console.log('App component rendering');
