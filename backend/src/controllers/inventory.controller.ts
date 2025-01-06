@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Product from '../models/Product';
 import Transaction from '../models/Transaction';
 import { Op } from 'sequelize';
-import sequelize from '../config/database';
+import sequelize from '../config/sequelize';
 import * as XLSX from 'xlsx';
 import { updateProductAverageConsumption } from './product.controller';
 

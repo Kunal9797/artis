@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import Product from '../models/Product';
 import * as XLSX from 'xlsx';
-import sequelize from '../config/database';
+import sequelize from '../config/sequelize';
 import { Op } from 'sequelize';
 import Transaction from '../models/Transaction';
 
