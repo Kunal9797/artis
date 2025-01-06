@@ -2,9 +2,9 @@
   "version": 2,
   "builds": [
     {
-      "src": "frontend/package.json",
+      "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { 
+      "config": {
         "distDir": "build"
       }
     }
@@ -22,4 +22,4 @@
       "dest": "/index.html"
     }
   ]
-}
+} 
