@@ -7,7 +7,7 @@ import sequelize from './sequelize';
 const execAsync = promisify(exec);
 dotenv.config();
 
-export async function syncDatabase() {
+const syncDatabase = async () => {
   try {
     console.log('Starting database sync and migrations...');
     
@@ -33,11 +33,13 @@ export async function syncDatabase() {
     console.error('Database initialization error:', error);
     throw error;
   }
-}
+};
 
 if (require.main === module) {
   syncDatabase().catch(error => {
     console.error('Failed to sync database:', error);
     process.exit(1);
   });
-} 
+}
+
+export default syncDatabase; 

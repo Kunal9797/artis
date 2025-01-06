@@ -6,7 +6,7 @@ import { User } from './models';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import inventoryRoutes from './routes/inventory.routes';
-import { syncDatabase } from './config/database';
+import syncDatabase from './config/database';
 
 // Load environment variables
 dotenv.config();
