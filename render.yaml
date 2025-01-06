@@ -3,7 +3,7 @@ services:
     name: artis-backend
     env: node
     buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && node dist/config/database.js && npm start
+    startCommand: cd backend && node dist/config/database.js && node dist/server.js
     envVars:
       - key: NODE_ENV
         value: production
