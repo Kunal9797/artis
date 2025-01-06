@@ -30,8 +30,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false npm install react-scripts && react-scripts build",
-    "vercel-build": "npm install && npm run build",
+    "build": "CI=false react-scripts build",
+    "vercel-build": "npm install --legacy-peer-deps && npm run build",
     "test": "react-scripts test"
   },
   "eslintConfig": {
