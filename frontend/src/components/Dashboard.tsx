@@ -134,9 +134,9 @@ const Dashboard: React.FC = () => {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               textShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              '&:hover': {
+              '&:hover, &:focus': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
-                transform: 'translateX(-50%) scale(1.02)',
+                transform: { xs: 'none', sm: 'translateX(-50%) scale(1.02)' },
                 letterSpacing: '1.8px',
                 textShadow: '0 0 20px rgba(255,215,0,0.4)',
                 background: 'linear-gradient(45deg, #fff 30%, #FFC107 90%)',

@@ -99,7 +99,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
     }));
   };
 
-  const getSupplierConsumption = () => {
+  const getSupplierConsumption = (topCount: number = 7) => {
     const allSupplierData: Record<string, number> = {};
     
     filteredInventory.forEach(item => {
@@ -130,8 +130,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
       }))
       .sort((a, b) => b.value - a.value);
 
-    const topSuppliers = sortedData.slice(0, 7);
-    const othersSuppliers = sortedData.slice(7);
+    const topSuppliers = sortedData.slice(0, topCount);
+    const othersSuppliers = sortedData.slice(topCount);
     const othersValue = othersSuppliers.reduce((sum, item) => sum + item.value, 0);
     
     if (othersValue > 0) {
@@ -139,7 +139,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
         name: 'Others',
         value: Number(othersValue.toFixed(2))
       });
-      // Store only the others suppliers data
+      // Store all others suppliers data
       setSupplierData(Object.fromEntries(
         othersSuppliers.map(({name, value}) => [name, value])
       ));
@@ -148,7 +148,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
     return topSuppliers;
   };
 
-  const memoizedSupplierConsumption = useMemo(() => getSupplierConsumption(), [filteredInventory, timeFrame]);
+  const memoizedSupplierConsumption = useMemo(() => getSupplierConsumption(7), [filteredInventory, timeFrame]);
 
   const StatBox = ({ icon, value, unit, label }: { icon: React.ReactNode, value: string | number, unit?: string, label: string }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -178,14 +178,15 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
 
   const CustomLegend = () => (
     <Stack 
-      direction="row" 
-      spacing={3}
-      alignItems="center"
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={2}
+      alignItems={{ xs: 'flex-start', sm: 'center' }}
       sx={{ 
         backgroundColor: isDarkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.9)',
-        padding: '12px 24px',
+        padding: '12px 20px',
         borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        minWidth: 'auto'
       }}
     >
       <Box
@@ -332,6 +333,137 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
     ];
   }, [filteredInventory]);
 
+  const MobilePieChart: React.FC<{ data: any[] }> = ({ data }) => {
+    const { isDarkMode } = useTheme();
+
+    // Take top 5 suppliers and combine rest into Others
+    const topSuppliers = data.slice(0, 5);
+    const othersValue = data.slice(5).reduce((sum, item) => sum + item.value, 0);
+    const chartData = othersValue > 0 
+      ? [...topSuppliers, { name: 'Others', value: othersValue }]
+      : topSuppliers;
+
+    const total = chartData.reduce((sum, item) => sum + item.value, 0);
+    const otherSuppliers = data.slice(5);
+
+    return (
+      <Box sx={{ position: 'relative', width: '100%', height: 500 }}>
+        <ResponsiveContainer height={300}>
+          <PieChart>
+            <defs>
+              <linearGradient id="othersGradientMobile" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
+                <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
+                <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
+                <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
+                <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
+                <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
+              </linearGradient>
+            </defs>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={100}
+              paddingAngle={1}
+              label={({ name, value, percent, cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+                const RADIAN = Math.PI / 180;
+                const radius = outerRadius + 20;
+                const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                const sin = Math.sin(-midAngle * RADIAN);
+                const cos = Math.cos(-midAngle * RADIAN);
+                const textAnchor = cos >= 0 ? 'start' : 'end';
+
+                return (
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor={textAnchor}
+                    fill={name === 'Others' 
+                      ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
+                      : `hsl(${200 + index * 25}, 70%, 55%)`}
+                    fontSize="11"
+                    fontWeight="500"
+                  >
+                    <tspan x={x} dy="0">{`${name.split(' ')[0]}`}</tspan>
+                    <tspan x={x} dy="14">{`${(percent * 100).toFixed(1)}%`}</tspan>
+                  </text>
+                );
+              }}
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.name === 'Others' 
+                    ? 'url(#othersGradientMobile)'
+                    : `hsl(${200 + index * 25}, 70%, 55%)`}
+                  opacity={0.85}
+                />
+              ))}
+            </Pie>
+            <text
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              fill={isDarkMode ? '#fff' : '#333'}
+            >
+              <tspan fontSize="14" fontWeight="500">Total</tspan>
+              <tspan x="50%" dy="20" fontSize="13" fontWeight="600">
+                {`${total.toLocaleString()} kgs`}
+              </tspan>
+            </text>
+          </PieChart>
+        </ResponsiveContainer>
+
+        {/* Others Breakdown Box */}
+        {otherSuppliers.length > 0 && (
+          <Box sx={{
+            mt: 2,
+            p: 2,
+            borderRadius: 1,
+            bgcolor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)',
+            border: 1,
+            borderColor: isDarkMode ? 'grey.800' : 'grey.300',
+            maxHeight: 200,
+            overflowY: 'auto'
+          }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ 
+              background: 'linear-gradient(45deg, #FFD700, #FF8C00, #FF4500, #4169E1, #8A2BE2)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 600
+            }}>
+              Others Breakdown:
+            </Typography>
+            <Grid container spacing={1}>
+              {memoizedSupplierConsumption
+                .slice(5, 7)  // Get suppliers from rank 6 onwards (including Others)
+                .concat(
+                  Object.entries(supplierData)
+                    .map(([name, value]) => ({ name, value }))
+                )
+                .sort((a, b) => b.value - a.value)
+                .map((supplier) => {
+                  const percentage = (supplier.value / total * 100).toFixed(1);
+                  return (
+                    <Grid item xs={6} key={supplier.name}>
+                      <Typography variant="caption" display="block" sx={{ color: 'text.secondary' }}>
+                        {`${supplier.name}: ${percentage}%`}
+                      </Typography>
+                    </Grid>
+                  );
+                })}
+            </Grid>
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
@@ -373,19 +505,24 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
         }}>
           <CardContent>
             <Stack 
-              direction="row" 
+              direction={{ xs: 'column', sm: 'row' }} 
               justifyContent="space-between" 
-              alignItems="flex-start"
+              alignItems={{ xs: 'stretch', sm: 'flex-start' }}
               mb={2}
               gap={2}
+              sx={{
+                flexWrap: { xs: 'nowrap', sm: 'wrap' },
+                overflowX: 'auto',
+                pb: { xs: 1, sm: 0 }
+              }}
             >
               <CustomLegend />
               <Stack 
-                direction="row" 
+                direction={{ xs: 'column', sm: 'row' }} 
                 spacing={2}
                 sx={{ 
-                  flexWrap: 'wrap',
-                  gap: 2
+                  minWidth: 'min-content',
+                  flexShrink: 0
                 }}
               >
                 <FormControl size="small" sx={{ minWidth: 180 }}>
@@ -453,16 +590,19 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
               height: 400, 
               width: '100%',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              '& .recharts-legend-wrapper': {
-                width: '240px !important',
-                right: '0 !important'
+              '& .recharts-wrapper': {
+                minWidth: { xs: '100%', sm: '90%' },
+                margin: '0 auto'
               }
             }}>
               <ResponsiveContainer>
                 <ComposedChart
                   data={getMonthlyConsumption()}
-                  margin={{ top: 40, right: 180, left: 20, bottom: 5 }}
+                  margin={{ top: 40, right: 30, left: 10, bottom: 40 }}
+                  barGap={0}
+                  barCategoryGap={2}
                 >
                   <CartesianGrid 
                     strokeDasharray="3 3" 
@@ -471,14 +611,35 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                   />
                   <XAxis 
                     dataKey="month" 
-                    tick={{ fill: isDarkMode ? '#fff' : '#666' }}
+                    tick={(props) => {
+                      const { x, y, payload } = props;
+                      return (
+                        <g transform={`translate(${x},${y})`}>
+                          <text
+                            x={0}
+                            y={0}
+                            dy={10}
+                            textAnchor="end"
+                            fill={isDarkMode ? '#fff' : '#666'}
+                            transform="rotate(-45)"
+                            fontSize={11}
+                          >
+                            {payload.value}
+                          </text>
+                        </g>
+                      );
+                    }}
                     axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
                     tickLine={false}
+                    interval={0}
+                    height={60}
+                    tickMargin={5}
                   />
                   <YAxis 
                     tick={{ fill: isDarkMode ? '#fff' : '#666' }}
                     axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
                     tickLine={false}
+                    width={45}
                   />
                   <Tooltip
                     contentStyle={{
@@ -526,16 +687,19 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                     stroke={isDarkMode ? '#FFB74D' : '#F57C00'}
                     strokeDasharray="3 3"
                     strokeWidth={2}
-                    label={{
-                      value: `Avg Consumption: ${getMonthlyConsumption()[0]?.average?.toLocaleString()} kgs`,
-                      fill: isDarkMode ? '#FFB74D' : '#F57C00',
-                      fontSize: 12,
-                      fontWeight: '500',
-                      position: 'right'
-                    }}
                   />
                 </ComposedChart>
               </ResponsiveContainer>
+              <Typography 
+                sx={{ 
+                  color: isDarkMode ? '#FFB74D' : '#F57C00',
+                  mt: -3,
+                  fontSize: '0.875rem',
+                  fontWeight: 500
+                }}
+              >
+                Average Consumption: {getMonthlyConsumption()[0]?.average?.toLocaleString()} kgs
+              </Typography>
             </Box>
           </CardContent>
         </Card>
@@ -558,7 +722,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
               gap={2}
             >
               <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
-                {`Top Suppliers in ${timeFrame === 'all' ? 'All Time' : timeFrame}`}
+                {`Top Suppliers of ${timeFrame === 'all' ? 'All Time' : timeFrame}`}
               </Typography>
               <FormControl size="small" sx={{ minWidth: 180 }}>
                 <InputLabel>Time Frame</InputLabel>
@@ -575,14 +739,29 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                 </Select>
               </FormControl>
             </Stack>
+
+            {/* Mobile View */}
             <Box sx={{ 
-              height: 400, 
-              width: '100%',
-              position: 'relative'
+              display: { xs: 'block', md: 'none' } // Show only on mobile
+            }}>
+              <MobilePieChart data={memoizedSupplierConsumption} />
+            </Box>
+
+            {/* Desktop View */}
+            <Box sx={{ 
+              display: { xs: 'none', md: 'block' } // Show only on desktop
             }}>
               <ResponsiveContainer width="100%" height={400}>
                 <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <defs>
+                    <linearGradient id="othersGradientDesktop" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
+                      <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
+                      <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
+                      <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
+                      <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
+                      <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
+                    </linearGradient>
                     {memoizedSupplierConsumption.map((_, index) => (
                       <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
                         <stop offset="0%" stopColor={`hsl(${200 + index * 25}, 70%, 55%)`} />
@@ -735,7 +914,9 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                     {memoizedSupplierConsumption.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`}
-                        fill={`url(#gradient-${index})`}
+                        fill={entry.name === 'Others' 
+                          ? 'url(#othersGradientDesktop)'
+                          : `url(#gradient-${index})`}
                         strokeWidth={0}
                         opacity={0.85}
                         onMouseEnter={(e) => {
