@@ -64,7 +64,15 @@ const aggregateMonthlyConsumption = (transactions: Transaction[]) => {
   }, {});
 
   const sortedEntries = Object.entries(monthlyData)
-    .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+    .sort((a, b) => {
+      const dateA = new Date(a[0]);
+      const dateB = new Date(b[0]);
+      // Sort from past to future (ascending)
+      if (dateA.getFullYear() !== dateB.getFullYear()) {
+        return dateA.getFullYear() - dateB.getFullYear();
+      }
+      return dateA.getMonth() - dateB.getMonth();
+    });
   
   const monthlyValues = Object.values(monthlyData);
   const averageConsumption = monthlyValues.length > 0 
@@ -103,14 +111,29 @@ const MobileConsumptionChart: React.FC<{ data: any[] }> = ({ data }) => {
           />
           <XAxis 
             dataKey="month" 
-            tick={{ 
-              fontSize: 12,
-              fill: isDarkMode ? '#fff' : '#666',
-              textAnchor: 'middle',
+            tick={(props) => {
+              const { x, y, payload } = props;
+              return (
+                <g transform={`translate(${x},${y})`}>
+                  <text
+                    x={0}
+                    y={0}
+                    dy={16}
+                    dx={-10}
+                    textAnchor="end"
+                    fill={isDarkMode ? '#fff' : '#666'}
+                    fontSize={11}
+                    transform="rotate(-45)"
+                  >
+                    {payload.value}
+                  </text>
+                </g>
+              );
             }}
             tickLine={false}
             axisLine={{ stroke: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }}
             interval={0}
+            height={60}
           />
           <YAxis 
             tick={{ fontSize: 12 }}
