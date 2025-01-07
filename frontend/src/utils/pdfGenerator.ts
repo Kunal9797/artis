@@ -42,15 +42,21 @@ export const generateOrderPDF = async (orderData: OrderData) => {
     doc.text('Dear Sir/Madam,', 20, 115);
     doc.text('Please arrange to supply the following design papers:', 20, 125);
     
+    const columns = [
+      { header: 'Design Code', key: 'supplierCode', width: 120 },
+      { header: 'Artis Code', key: 'artisCodes', width: 150 },
+      { header: 'Quantity (kgs)', key: 'quantity', width: 100 }
+    ];
+    
     const tableData = orderData.items.map(item => [
       item.product.supplierCode || '',
-      item.product.name,
-      `${item.quantity} kg`
+      item.product.artisCodes || '',
+      `${item.quantity} kgs`
     ]);
     
     doc.autoTable({
       startY: 140,
-      head: [['Design Code', 'Design Name', 'Quantity']],
+      head: [['Design Code', 'Artis Code', 'Quantity']],
       body: tableData,
       headStyles: { 
         fillColor: [43, 42, 41],
@@ -83,6 +89,7 @@ export const generateOrderPDF = async (orderData: OrderData) => {
     if (finalY < 700) {
       doc.text('Thank you for your cooperation.', 20, finalY);
       doc.text('Best regards,', 20, finalY + 20);
+      doc.text('Karan Gupta', 20, finalY + 33);
       doc.text('Artis Laminate', 20, finalY + 40);
     }
     

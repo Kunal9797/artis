@@ -48,19 +48,15 @@ const DesignPaperOrder: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [productsResponse, inventoryResponse] = await Promise.all([
-          api.get('/api/products'),
-          api.get('/api/inventory')
-        ]);
-        
+        const productsResponse = await api.get('/api/products');
         setProducts(productsResponse.data);
         
-        // Create a map of productId to current stock
-        const inventoryMap = new Map();
-        inventoryResponse.data.forEach((item: any) => {
-          inventoryMap.set(item.productId, item.currentStock);
+        // Create a map of productId to current stock directly from products
+        const stockMap = new Map();
+        productsResponse.data.forEach((product: any) => {
+          stockMap.set(product.id, product.currentStock);
         });
-        setInventoryLevels(inventoryMap);
+        setInventoryLevels(stockMap);
       } catch (error) {
         console.error('Error fetching data:', error);
       }

@@ -5,7 +5,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CategoryIcon from '@mui/icons-material/Category';
 import BusinessIcon from '@mui/icons-material/Business';
-import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Bar, ReferenceLine, Legend, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Bar, ReferenceLine, Legend, Tooltip, PieChart, Pie, Cell, Sector } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 import { aggregateMonthlyConsumption } from '../../utils/consumption';
 import { Transaction } from '../../types/transaction';
@@ -23,7 +23,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
     purchases: true
   });
   const [activeGraph, setActiveGraph] = useState<'combined' | 'consumption'>('combined');
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const [timeFrame, setTimeFrame] = useState('all');
   const [supplierData, setSupplierData] = useState<Record<string, number>>({});
 
@@ -62,14 +62,48 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
   }, [inventory, filterType, filterValue]);
 
   const getMonthlyConsumption = () => {
-    const allTransactions = filteredInventory.reduce((acc, item) => {
-      if (item.transactions) {
-        return [...acc, ...item.transactions];
-      }
-      return acc;
-    }, [] as Transaction[]);
+    const monthOrder: { [key: string]: number } = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
 
-    return aggregateMonthlyConsumption(allTransactions);
+    const monthlyData = filteredInventory.reduce((acc: Record<string, number>, item) => {
+      if (!item.transactions) return acc;
+      
+      item.transactions.forEach(t => {
+        if (t.type === 'OUT') {
+          const month = new Date(t.date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short' 
+          });
+          acc[month] = (acc[month] || 0) + Number(t.quantity);
+        }
+      });
+      
+      return acc;
+    }, {} as Record<string, number>);
+
+    const values = Object.values(monthlyData);
+    const average = values.length > 0 
+      ? values.reduce((sum, val) => sum + val, 0) / values.length 
+      : 0;
+
+    return Object.entries(monthlyData)
+      .map(([month, amount]) => ({
+        month,
+        amount,
+        average
+      }))
+      .sort((a, b) => {
+        const [monthA, yearA] = a.month.split(' ');
+        const [monthB, yearB] = b.month.split(' ');
+        
+        if (yearA !== yearB) {
+          return Number(yearA) - Number(yearB);
+        }
+        
+        return monthOrder[monthA as keyof typeof monthOrder] - monthOrder[monthB as keyof typeof monthOrder];
+      });
   };
 
   const aggregateMonthlyPurchases = (transactions: Transaction[]) => {
@@ -335,6 +369,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
 
   const MobilePieChart: React.FC<{ data: any[] }> = ({ data }) => {
     const { isDarkMode } = useTheme();
+    const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
 
     // Take top 5 suppliers and combine rest into Others
     const topSuppliers = data.slice(0, 5);
@@ -345,6 +380,22 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
 
     const total = chartData.reduce((sum, item) => sum + item.value, 0);
     const otherSuppliers = data.slice(5);
+
+    const renderActiveShape = (props: any) => {
+      const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
+      
+      return (
+        <Sector
+          cx={cx}
+          cy={cy}
+          innerRadius={innerRadius}
+          outerRadius={outerRadius + 10}
+          startAngle={startAngle}
+          endAngle={endAngle}
+          fill={fill}
+        />
+      );
+    };
 
     return (
       <Box sx={{ position: 'relative', width: '100%', height: 500 }}>
@@ -368,16 +419,31 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
               cy="50%"
               innerRadius={60}
               outerRadius={100}
-              paddingAngle={1}
-              label={({ name, value, percent, cx, cy, midAngle, innerRadius, outerRadius, index }) => {
+              paddingAngle={2}
+              strokeWidth={0}
+              activeIndex={activeIndex}
+              activeShape={renderActiveShape}
+              onMouseEnter={(_, index) => setActiveIndex(index)}
+              onClick={(_, index) => setActiveIndex(index === activeIndex ? undefined : index)}
+              label={({
+                cx,
+                cy,
+                midAngle,
+                innerRadius,
+                outerRadius,
+                percent,
+                name,
+                value,
+                index
+              }) => {
                 const RADIAN = Math.PI / 180;
-                const radius = outerRadius + 20;
+                const radius = outerRadius * 1.2;
                 const x = cx + radius * Math.cos(-midAngle * RADIAN);
                 const y = cy + radius * Math.sin(-midAngle * RADIAN);
                 const sin = Math.sin(-midAngle * RADIAN);
                 const cos = Math.cos(-midAngle * RADIAN);
                 const textAnchor = cos >= 0 ? 'start' : 'end';
-
+                
                 return (
                   <text
                     x={x}
@@ -386,11 +452,14 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                     fill={name === 'Others' 
                       ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
                       : `hsl(${200 + index * 25}, 70%, 55%)`}
-                    fontSize="11"
-                    fontWeight="500"
+                    fontSize={index === activeIndex ? "13" : "11"}
+                    fontWeight={index === activeIndex ? "600" : "500"}
+                    style={{
+                      transition: 'all 0.3s ease'
+                    }}
                   >
-                    <tspan x={x} dy="0">{`${name.split(' ')[0]}`}</tspan>
-                    <tspan x={x} dy="14">{`${(percent * 100).toFixed(1)}%`}</tspan>
+                    <tspan x={x} dy="0">{name}</tspan>
+                    <tspan x={x} dy="18">{`${(percent * 100).toFixed(1)}%`}</tspan>
                   </text>
                 );
               }}
@@ -409,10 +478,28 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
               x="50%"
               y="50%"
               textAnchor="middle"
+              dominantBaseline="middle"
               fill={isDarkMode ? '#fff' : '#333'}
+              style={{
+                pointerEvents: 'none'
+              }}
             >
-              <tspan fontSize="14" fontWeight="500">Total</tspan>
-              <tspan x="50%" dy="20" fontSize="13" fontWeight="600">
+              <tspan
+                x="50%"
+                dy="-12"
+                fontSize="12"
+                fontWeight="500"
+                textAnchor="middle"
+              >
+                Consumption
+              </tspan>
+              <tspan
+                x="50%"
+                dy="24"
+                fontSize="14"
+                fontWeight="600"
+                textAnchor="middle"
+              >
                 {`${total.toLocaleString()} kgs`}
               </tspan>
             </text>
@@ -423,36 +510,66 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
         {otherSuppliers.length > 0 && (
           <Box sx={{
             mt: 2,
-            p: 2,
-            borderRadius: 1,
-            bgcolor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)',
+            p: 1.5,
+            borderRadius: 1.5,
+            bgcolor: isDarkMode ? 'rgba(30,30,30,0.95)' : 'rgba(250,250,250,0.97)',
             border: 1,
-            borderColor: isDarkMode ? 'grey.800' : 'grey.300',
+            borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
             maxHeight: 200,
-            overflowY: 'auto'
+            overflowY: 'auto',
+            boxShadow: isDarkMode 
+              ? '0 2px 8px rgba(0,0,0,0.3)' 
+              : '0 2px 8px rgba(0,0,0,0.08)'
           }}>
             <Typography variant="subtitle2" gutterBottom sx={{ 
               background: 'linear-gradient(45deg, #FFD700, #FF8C00, #FF4500, #4169E1, #8A2BE2)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              fontWeight: 600
+              fontWeight: 600,
+              mb: 0.5
             }}>
               Others Breakdown:
             </Typography>
-            <Grid container spacing={1}>
-              {memoizedSupplierConsumption
-                .slice(5, 7)  // Get suppliers from rank 6 onwards (including Others)
-                .concat(
-                  Object.entries(supplierData)
-                    .map(([name, value]) => ({ name, value }))
-                )
+            <Grid container spacing={0.5}>
+              {[
+                ...memoizedSupplierConsumption.slice(5, 7),
+                ...Object.entries(supplierData)
+                  .map(([name, value]) => ({ name, value }))
+                  .filter(supplier => supplier.name !== 'Others')
+              ]
                 .sort((a, b) => b.value - a.value)
                 .map((supplier) => {
                   const percentage = (supplier.value / total * 100).toFixed(1);
                   return (
                     <Grid item xs={6} key={supplier.name}>
-                      <Typography variant="caption" display="block" sx={{ color: 'text.secondary' }}>
-                        {`${supplier.name}: ${percentage}%`}
+                      <Typography 
+                        variant="caption" 
+                        display="block" 
+                        sx={{ 
+                          p: 0.25,
+                          borderRadius: 0.5,
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                            transform: 'translateX(2px)'
+                          }
+                        }}
+                      >
+                        <Box component="span" sx={{ 
+                          color: isDarkMode ? '#fff' : '#555',
+                          fontWeight: isDarkMode ? 400 : 500,
+                          opacity: isDarkMode ? 0.9 : 1
+                        }}>
+                          {supplier.name}:&nbsp;
+                        </Box>
+                        <Box component="span" sx={{ 
+                          background: 'linear-gradient(45deg, #FFD700, #FF8C00)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          fontWeight: 600
+                        }}>
+                          {percentage}%
+                        </Box>
                       </Typography>
                     </Grid>
                   );
@@ -773,11 +890,11 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                     data={memoizedSupplierConsumption}
                     dataKey="value"
                     nameKey="name"
-                    cx={250}
-                    cy={170}
+                    cx="50%"
+                    cy="50%"
                     innerRadius={80}
-                    outerRadius={160}
-                    paddingAngle={1}
+                    outerRadius={140}
+                    paddingAngle={2}
                     strokeWidth={0}
                     label={({
                       cx,
@@ -949,17 +1066,17 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                     ))}
                   </Pie>
                   <text
-                    x={270}
-                    y={195}
+                    x="50%"
+                    y="50%"
                     textAnchor="middle"
-                    dominantBaseline="central"
+                    dominantBaseline="middle"
                     fill={isDarkMode ? '#fff' : '#333'}
                     style={{
                       pointerEvents: 'none'
                     }}
                   >
                     <tspan
-                      x={270}
+                      x="50%"
                       dy="-12"
                       fontSize="16"
                       fontWeight="500"
@@ -968,7 +1085,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                       Total Consumption
                     </tspan>
                     <tspan
-                      x={270}
+                      x="50%"
                       dy="24"
                       fontSize="15"
                       fontWeight="600"
