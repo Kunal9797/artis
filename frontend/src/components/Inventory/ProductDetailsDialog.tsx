@@ -16,6 +16,8 @@ import {
   Card,
   CardContent,
   Grid,
+  useMediaQuery,
+  useTheme as useMuiTheme,
 } from '@mui/material';
 import { productApi, inventoryApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
@@ -84,10 +86,78 @@ const aggregateMonthlyConsumption = (transactions: Transaction[]) => {
   });
 };
 
+const MobileConsumptionChart: React.FC<{ data: any[] }> = ({ data }) => {
+  const { isDarkMode } = useTheme();
+  
+  return (
+    <Box sx={{ width: '100%', height: 300, mt: 2 }}>
+      <ResponsiveContainer>
+        <BarChart
+          data={data}
+          margin={{ top: 40, right: 10, left: -20, bottom: 20 }}
+        >
+          <CartesianGrid 
+            strokeDasharray="3 3" 
+            vertical={false}
+            stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} 
+          />
+          <XAxis 
+            dataKey="month" 
+            tick={{ 
+              fontSize: 12,
+              fill: isDarkMode ? '#fff' : '#666',
+              textAnchor: 'middle',
+            }}
+            tickLine={false}
+            axisLine={{ stroke: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }}
+            interval={0}
+          />
+          <YAxis 
+            tick={{ fontSize: 12 }}
+            tickLine={false}
+            axisLine={{ stroke: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }}
+            tickFormatter={(value) => `${value}kg`}
+          />
+          <Bar 
+            dataKey="amount"
+            fill={isDarkMode ? '#7E57C2' : '#5E35B1'}
+            radius={[4, 4, 0, 0]}
+            label={{
+              position: 'top',
+              content: (props: any) => {
+                const { value, x, y } = props;
+                return (
+                  <text
+                    x={x + props.width / 2}
+                    y={y - 10}
+                    fill={isDarkMode ? '#fff' : '#666'}
+                    textAnchor="middle"
+                    fontSize={12}
+                    fontWeight="600"
+                  >
+                    {value}
+                  </text>
+                );
+              }
+            }}
+          />
+          <ReferenceLine
+            y={data[0]?.average || 0}
+            stroke="#FF7043"
+            strokeDasharray="3 3"
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </Box>
+  );
+};
+
 const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<ProductDetails | null>(null);
   const { isDarkMode } = useTheme();
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
   useEffect(() => {
     if (open && productId) {
@@ -174,114 +244,284 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
           </Box>
         ) : (
           <Box sx={{ mt: 2 }}>
-            {/* Current Stock and Monthly Consumption Section */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {/* Current Stock */}
-              <Grid item xs={12} md={4}>
-                <Card elevation={3}>
+            {/* Stats Section */}
+            {isMobile ? (
+              <>
+                {/* Stat Bubbles */}
+                <Card elevation={3} sx={{ mb: 4 }}>
                   <CardContent>
-                    <Typography variant="h6" color={isDarkMode ? '#90CAF9' : 'primary'} gutterBottom>
-                      Current Stock
-                    </Typography>
-                    <Typography variant="h3" color={isDarkMode ? '#fff' : 'inherit'}>
-                      {details?.currentStock}
-                      <Typography 
-                        component="span" 
-                        variant="h5" 
-                        color={isDarkMode ? 'grey.400' : 'text.secondary'}
-                        sx={{ ml: 1 }}
-                      >
-                        kgs
-                      </Typography>
-                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Card 
+                          elevation={3}
+                          sx={{ 
+                            borderRadius: 2,
+                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+                          }}
+                        >
+                          <CardContent sx={{ p: 2, textAlign: 'center' }}>
+                            <Typography 
+                              variant="body2" 
+                              color="textSecondary"
+                              sx={{ mb: 1 }}
+                            >
+                              Current Stock
+                            </Typography>
+                            <Typography 
+                              variant="h5" 
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {Math.floor(details?.currentStock || 0)}
+                              <Typography 
+                                component="span" 
+                                variant="caption"
+                                color="textSecondary"
+                                sx={{ ml: 0.5 }}
+                              >
+                                kgs
+                              </Typography>
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Card 
+                          elevation={3}
+                          sx={{ 
+                            borderRadius: 2,
+                            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+                          }}
+                        >
+                          <CardContent sx={{ p: 2, textAlign: 'center' }}>
+                            <Typography 
+                              variant="body2" 
+                              color="textSecondary"
+                              sx={{ mb: 1 }}
+                            >
+                              Avg Consumption
+                            </Typography>
+                            <Typography 
+                              variant="h5"
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
+                              <Typography 
+                                component="span" 
+                                variant="caption"
+                                color="textSecondary"
+                                sx={{ ml: 0.5 }}
+                              >
+                                kgs
+                              </Typography>
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
                   </CardContent>
                 </Card>
-              </Grid>
 
-              {/* Monthly Consumption Chart */}
-              <Grid item xs={12} md={8}>
-                <Card elevation={3}>
+                {/* Monthly Consumption Chart */}
+                <Card elevation={3} sx={{ mb: 4 }}>
                   <CardContent>
                     <Typography variant="h6" color="primary" gutterBottom>
                       Monthly Consumption
                     </Typography>
-                    <Box sx={{ height: 200, width: '100%' }}>
-                      <ResponsiveContainer>
-                        <ComposedChart
-                          data={aggregateMonthlyConsumption(details?.transactions || [])}
-                          margin={{ top: 40, right: 120, left: 20, bottom: 5 }}
-                          height={300}
-                        >
-                          <CartesianGrid 
-                            strokeDasharray="3 3" 
-                            stroke={isDarkMode ? '#444' : '#eee'} 
-                            vertical={false}
-                          />
-                          <XAxis 
-                            dataKey="month" 
-                            tick={{ fill: isDarkMode ? '#fff' : '#666' }}
-                            axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
-                            tickLine={false}
-                          />
-                          <YAxis 
-                            tick={{ fill: isDarkMode ? '#fff' : '#666' }}
-                            axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
-                            tickLine={false}
-                          />
-                          <Bar 
-                            dataKey="amount" 
-                            fill={isDarkMode ? '#B39DDB' : '#9575CD'} 
-                            name="Monthly Consumption"
-                            barSize={60}
-                            radius={[4, 4, 0, 0]}
-                            opacity={0.8}
-                            label={{
-                              position: 'top',
-                              content: (props: any) => {
-                                const { value, x, y } = props;
-                                return (
-                                  <g transform={`translate(${x},${y})`}>
-                                    <text
-                                      x={30}
-                                      y={-10}
-                                      fill={isDarkMode ? '#fff' : '#333'}
-                                      textAnchor="middle"
-                                      fontSize={14}
-                                      fontWeight="600"
-                                    >
-                                      {`${value} kgs`}
-                                    </text>
-                                  </g>
-                                );
-                              }
-                            }}
-                          />
-                          <ReferenceLine
-                            y={aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
-                            stroke="#FF7043"
-                            strokeDasharray="5 5"
-                            label={{
-                              value: `Avg: ${aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0} kgs`,
-                              position: 'right',
-                              fill: '#FF7043',
-                              fontSize: 14
-                            }}
-                          />
-                          <Legend
-                            verticalAlign="bottom"
-                            height={36}
-                            iconType="circle"
-                            formatter={(value) => {
-                              return <span style={{ color: isDarkMode ? '#fff' : '#666', fontSize: '14px' }}>{value}</span>;
-                            }}
-                          />
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    </Box>
+                    <MobileConsumptionChart data={aggregateMonthlyConsumption(details?.transactions || [])} />
                   </CardContent>
                 </Card>
+              </>
+            ) : (
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                {/* Current Stock */}
+                <Grid item xs={12} md={4}>
+                  <Card elevation={3}>
+                    <CardContent>
+                      <Typography variant="h6" color={isDarkMode ? '#90CAF9' : 'primary'} gutterBottom>
+                        Current Stock
+                      </Typography>
+                      <Typography variant="h3" color={isDarkMode ? '#fff' : 'inherit'}>
+                        {Math.floor(details?.currentStock || 0)}
+                        <Typography 
+                          component="span" 
+                          variant="h5" 
+                          color={isDarkMode ? 'grey.400' : 'text.secondary'}
+                          sx={{ ml: 1 }}
+                        >
+                          kgs
+                        </Typography>
+                      </Typography>
+                      <Typography 
+                        variant="h6" 
+                        color={isDarkMode ? 'grey.400' : 'text.secondary'}
+                        sx={{ mt: 2 }}
+                      >
+                        Avg Consumption: {aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0} kgs/month
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Monthly Consumption Chart */}
+                <Grid item xs={12} md={8}>
+                  <Card elevation={3}>
+                    <CardContent>
+                      <Typography variant="h6" color="primary" gutterBottom>
+                        Monthly Consumption
+                      </Typography>
+                      {isMobile ? (
+                        <Grid container spacing={2} sx={{ mb: 3 }}>
+                          <Grid item xs={6}>
+                            <Card 
+                              elevation={3}
+                              sx={{ 
+                                borderRadius: 2,
+                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'background.paper'
+                              }}
+                            >
+                              <CardContent sx={{ p: 2 }}>
+                                <Typography 
+                                  variant="subtitle2" 
+                                  color="textSecondary"
+                                  sx={{ mb: 1 }}
+                                >
+                                  Current Stock
+                                </Typography>
+                                <Typography 
+                                  variant="h6" 
+                                  color={isDarkMode ? '#fff' : 'inherit'}
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  {Math.floor(details?.currentStock || 0)}
+                                  <Typography 
+                                    component="span" 
+                                    variant="caption"
+                                    color="textSecondary"
+                                    sx={{ ml: 0.5 }}
+                                  >
+                                    kgs
+                                  </Typography>
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Card 
+                              elevation={3}
+                              sx={{ 
+                                borderRadius: 2,
+                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'background.paper'
+                              }}
+                            >
+                              <CardContent sx={{ p: 2 }}>
+                                <Typography 
+                                  variant="subtitle2" 
+                                  color="textSecondary"
+                                  sx={{ mb: 1 }}
+                                >
+                                  Avg Consumption
+                                </Typography>
+                                <Typography 
+                                  variant="h6" 
+                                  color={isDarkMode ? '#fff' : 'inherit'}
+                                  sx={{ fontWeight: 600 }}
+                                >
+                                  {aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
+                                  <Typography 
+                                    component="span" 
+                                    variant="caption"
+                                    color="textSecondary"
+                                    sx={{ ml: 0.5 }}
+                                  >
+                                    kgs
+                                  </Typography>
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        </Grid>
+                      ) : (
+                        <ResponsiveContainer width="100%" height={300}>
+                          <ComposedChart
+                            data={aggregateMonthlyConsumption(details?.transactions || [])}
+                            margin={{ top: 40, right: 120, left: 20, bottom: 5 }}
+                          >
+                            <CartesianGrid 
+                              strokeDasharray="3 3" 
+                              stroke={isDarkMode ? '#444' : '#eee'} 
+                              vertical={false}
+                            />
+                            <XAxis 
+                              dataKey="month" 
+                              tick={{ 
+                                fontSize: 12,
+                                fill: isDarkMode ? '#fff' : '#666',
+                                textAnchor: 'middle',
+                              }}
+                              tickLine={false}
+                              axisLine={{ stroke: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }}
+                              interval={0}
+                            />
+                            <YAxis 
+                              tick={{ fill: isDarkMode ? '#fff' : '#666' }}
+                              axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
+                              tickLine={false}
+                            />
+                            <Bar 
+                              dataKey="amount" 
+                              fill={isDarkMode ? '#B39DDB' : '#9575CD'} 
+                              name="Monthly Consumption"
+                              barSize={60}
+                              radius={[4, 4, 0, 0]}
+                              opacity={0.8}
+                              label={{
+                                position: 'top',
+                                content: (props: any) => {
+                                  const { value, x, y } = props;
+                                  return (
+                                    <g transform={`translate(${x},${y})`}>
+                                      <text
+                                        x={30}
+                                        y={-10}
+                                        fill={isDarkMode ? '#fff' : '#333'}
+                                        textAnchor="middle"
+                                        fontSize={14}
+                                        fontWeight="600"
+                                      >
+                                        {`${value} kgs`}
+                                      </text>
+                                    </g>
+                                  );
+                                }
+                              }}
+                            />
+                            <ReferenceLine
+                              y={aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
+                              stroke="#FF7043"
+                              strokeDasharray="5 5"
+                              label={{
+                                value: `Avg: ${aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0} kgs`,
+                                position: 'right',
+                                fill: '#FF7043',
+                                fontSize: 14
+                              }}
+                            />
+                            <Legend
+                              verticalAlign="bottom"
+                              height={36}
+                              iconType="circle"
+                              formatter={(value) => {
+                                return <span style={{ color: isDarkMode ? '#fff' : '#666', fontSize: '14px' }}>{value}</span>;
+                              }}
+                            />
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
               </Grid>
-            </Grid>
+            )}
 
             {/* Stock Movement Chart */}
             <Card elevation={3} sx={{ mb: 4 }}>
