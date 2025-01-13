@@ -9,12 +9,15 @@ import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Bar, R
 import { useTheme } from '../../context/ThemeContext';
 import { aggregateMonthlyConsumption } from '../../utils/consumption';
 import { Transaction } from '../../types/transaction';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { Distributor } from '../../types/distributor';
 
 interface QuickStatsProps {
   inventory: InventoryItem[];
+  distributors?: Distributor[];
 }
 
-const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
+const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] }) => {
   const { isDarkMode } = useTheme();
   const [filterType, setFilterType] = useState<'none' | 'supplier' | 'category' | 'catalog'>('none');
   const [filterValue, setFilterValue] = useState('');
@@ -586,14 +589,21 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
       <Grid item xs={12}>
         <Card sx={{ p: 2, borderRadius: 2 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
+              <StatBox
+                icon={<LocationOnIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
+                value={distributors.length}
+                label="Total Distributors"
+              />
+            </Grid>
+            <Grid item xs={12} md={3}>
               <StatBox
                 icon={<CategoryIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
                 value={totalDesigns}
                 label="Total Designs"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <StatBox
                 icon={<InventoryIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
                 value={totalStock.toFixed(2)}
@@ -601,7 +611,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory }) => {
                 label="Total Stock"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <StatBox
                 icon={<BarChartIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
                 value={totalAvgConsumption.toFixed(2)}

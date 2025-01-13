@@ -1,6 +1,8 @@
 {
   "private": true,
-  "workspaces": ["frontend"],
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
     "build": "cd frontend && npm install && npm run build"
   },
@@ -10,5 +12,9 @@
     "lodash": "^4.17.21",
     "path": "^0.12.7",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "json-loader": "^0.5.7",
+    "react-app-rewired": "^2.2.1"
   }
 }

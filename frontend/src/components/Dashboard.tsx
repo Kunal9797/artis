@@ -26,6 +26,7 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useTheme } from '../context/ThemeContext';
 import DashboardHome from './DashboardHome';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import DistributorsMap from './DistributorsMap';
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuth();
@@ -60,8 +61,35 @@ const Dashboard: React.FC = () => {
         return isMobile ? 'Orders' : 'Paper Orders';
       case 'info': 
         return 'Information';
+      case 'distributors':
+        return 'Distributors';
       default: 
         return 'Dashboard';
+    }
+  };
+
+  const pages = [
+    { label: 'Home', value: 'home' },
+    { label: 'Products', value: 'products' },
+    { label: 'Orders', value: 'orders' },
+    { label: 'Inventory', value: 'inventory' },
+    { label: 'Distributors', value: 'distributors' },
+  ];
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'home':
+        return <DashboardHome setCurrentPage={setCurrentPage} />;
+      case 'products':
+        return <ProductCatalog />;
+      case 'orders':
+        return <OrdersPage />;
+      case 'inventory':
+        return <InventoryList />;
+      case 'distributors':
+        return <DistributorsMap />;
+      default:
+        return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
   };
 
@@ -178,6 +206,7 @@ const Dashboard: React.FC = () => {
             <MenuItem onClick={() => handlePageChange('catalog')}>Product Catalog</MenuItem>
             <MenuItem onClick={() => handlePageChange('orders')}>Purchase Orders</MenuItem>
             <MenuItem onClick={() => handlePageChange('info')}>Information</MenuItem>
+            <MenuItem onClick={() => handlePageChange('distributors')}>Distributors</MenuItem>
           </Menu>
 
           <Box sx={{ 
@@ -201,11 +230,7 @@ const Dashboard: React.FC = () => {
       </AppBar>
 
       <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-        {currentPage === 'home' && <DashboardHome setCurrentPage={setCurrentPage} />}
-        {currentPage === 'inventory' && <InventoryList />}
-        {currentPage === 'catalog' && <ProductCatalog />}
-        {currentPage === 'orders' && <OrdersPage />}
-        {currentPage === 'info' && <InfoPage />}
+        {renderContent()}
       </Box>
     </Box>
   );

@@ -11,8 +11,10 @@ import CategoryIcon from '@mui/icons-material/Category';
 import { useTheme } from '../context/ThemeContext';
 import QuickStats from './Dashboard/QuickStats';
 import { inventoryApi } from '../services/api';
+import { distributorApi } from '../services/distributorApi';
 import { InventoryItem } from './Inventory/InventoryList';
 import NavigationCard from './NavigationCard';
+import { Distributor } from '../types/distributor';
 
 
 interface DashboardHomeProps {
@@ -22,18 +24,25 @@ interface DashboardHomeProps {
 const DashboardHome: React.FC<DashboardHomeProps> = ({ setCurrentPage }) => {
   const { isDarkMode } = useTheme();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [distributors, setDistributors] = useState<Distributor[]>([]);
 
   useEffect(() => {
-    const fetchInventory = async () => {
+    const fetchData = async () => {
       try {
-        const response = await inventoryApi.getAllInventory();
-        setInventory(response.data);
+        const [inventoryResponse, distributorsData] = await Promise.all([
+          inventoryApi.getAllInventory(),
+          distributorApi.getAllDistributors()
+        ]);
+        
+        console.log('Fetched distributors:', distributorsData);
+        setInventory(inventoryResponse.data);
+        setDistributors(distributorsData);
       } catch (error) {
-        console.error('Failed to fetch inventory:', error);
+        console.error('Failed to fetch data:', error);
       }
     };
 
-    fetchInventory();
+    fetchData();
   }, []);
 
   return (
@@ -158,7 +167,10 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setCurrentPage }) => {
       </Grid>
 
       <Box sx={{ mt: 3 }}>
-        <QuickStats inventory={inventory} />
+        <QuickStats 
+          inventory={inventory} 
+          distributors={distributors}
+        />
       </Box>
     </Box>
   );
