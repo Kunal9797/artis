@@ -155,6 +155,139 @@ const StateLabels: React.FC<{ mapRef: React.RefObject<L.Map> }> = ({ mapRef }) =
   return null;
 };
 
+// Single component for both popup and mobile panel
+const DistributorInfo: React.FC<{ 
+  distributors: Distributor[],
+  isMobile?: boolean,
+  onClose?: () => void 
+}> = ({ distributors, isMobile = false, onClose }) => {
+  const { isDarkMode } = useTheme();
+  const location = `${distributors[0].city}, ${distributors[0].state}`;
+  
+  const content = (
+    <Box sx={{ width: '100%' }}>
+      {/* Location Header */}
+      <Typography 
+        variant="h6" 
+        sx={{ 
+          fontWeight: 600,
+          mb: 2,
+          fontSize: isMobile ? '1.2rem' : '1rem'
+        }}
+      >
+        {location}
+      </Typography>
+
+      {/* Distributors List */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {distributors.map(dist => (
+          <Box key={dist.id}>
+            {/* Name and Catalogs in same row */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mb: 0.5,
+              gap: 1
+            }}>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  fontWeight: 500,
+                  flex: '0 0 auto'
+                }}
+              >
+                {dist.name}
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 0.5, 
+                flexWrap: 'wrap',
+                flex: '1 1 auto',
+                justifyContent: 'flex-end'
+              }}>
+                {dist.catalogs.map(catalog => (
+                  <Chip
+                    key={catalog}
+                    label={catalog}
+                    size="small"
+                    sx={{
+                      height: '20px',
+                      fontSize: '0.7rem',
+                      bgcolor: getCatalogColor([catalog]),
+                      color: '#fff'
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+            
+            {/* Phone Number */}
+            {dist.phoneNumber && (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                color: 'text.secondary'
+              }}>
+                <PhoneIcon sx={{ fontSize: '0.9rem' }} />
+                <Typography variant="body2">
+                  {dist.phoneNumber}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+
+  // Mobile panel
+  if (isMobile) {
+    return (
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          bgcolor: isDarkMode ? 'rgba(26, 26, 26, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(8px)',
+          borderTopLeftRadius: '12px',
+          borderTopRightRadius: '12px',
+          p: 3,
+          pb: 4,
+          zIndex: 1000,
+        }}
+      >
+        {onClose && (
+          <IconButton
+            onClick={onClose}
+            sx={{ 
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: 'text.secondary'
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        )}
+        {content}
+      </Box>
+    );
+  }
+
+  // Desktop popup
+  return (
+    <Popup>
+      <Box sx={{ minWidth: 250, maxWidth: 300 }}>
+        {content}
+      </Box>
+    </Popup>
+  );
+};
+
 const DistributorsMap: React.FC = () => {
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [selectedCatalogs, setSelectedCatalogs] = useState<string[]>([]);
@@ -166,6 +299,9 @@ const DistributorsMap: React.FC = () => {
   const [showMobileDropdown, setShowMobileDropdown] = useState(false);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const [selectedDistributors, setSelectedDistributors] = useState<Distributor[] | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Distributor[] | null>(null);
+  const isMobile = window.innerWidth <= 768;
   
   const mapStyle = {
     tiles: {
@@ -517,10 +653,15 @@ const DistributorsMap: React.FC = () => {
     </Box>
   );
 
-  // Add this component for the mobile bottom panel
-  const MobileInfoPanel: React.FC<{ distributor: Distributor | null }> = ({ distributor }) => {
-    if (!distributor) return null;
-    
+  // Simple InfoPanel that works for both single and multiple distributors
+  const InfoPanel: React.FC<{ 
+    distributors: Distributor[], 
+    onClose: () => void,
+    onSelect?: (distributor: Distributor) => void 
+  }> = ({ distributors, onClose, onSelect }) => {
+    const isSingleDistributor = distributors.length === 1;
+    const distributor = distributors[0]; // For location info
+
     return (
       <Box
         sx={{
@@ -534,101 +675,73 @@ const DistributorsMap: React.FC = () => {
           borderTopRightRadius: '12px',
           borderTop: '1px solid',
           borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-          p: 2,
+          p: 3,
+          pb: 4,
           zIndex: 1000,
         }}
       >
-        {/* Header with name, catalogs, and close button */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'flex-start',
-          mb: 1.5 
-        }}>
-          <Box sx={{ 
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            flexWrap: 'wrap',
-            pr: 2
-          }}>
-            <Typography variant="h6" sx={{ 
-              fontSize: '1.1rem',
-              fontWeight: 600,
-              color: isDarkMode ? '#fff' : '#2c3e50'
-            }}>
-              {distributor.name}
-            </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 0.5,
-              flexWrap: 'wrap'
-            }}>
-              {distributor.catalogs.map(catalog => (
-                <Chip
-                  key={catalog}
-                  label={catalog}
-                  size="small"
-                  sx={{
-                    height: '20px',
-                    fontSize: '0.7rem',
-                    bgcolor: getCatalogColor([catalog]),
-                    color: '#fff',
-                    '& .MuiChip-label': {
-                      px: 1
-                    }
-                  }}
-                />
-              ))}
-            </Box>
-          </Box>
-          <IconButton 
-            size="small" 
-            onClick={() => {
-              setSelectedDistributor(null);
-              setSelectedMarkerId(null);
-            }}
-            sx={{ 
-              p: 0.5,
-              position: 'absolute',
-              right: 8,
-              top: 8,
-              color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)',
-              zIndex: 1001
-            }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
+        <IconButton
+          onClick={onClose}
+          sx={{ 
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: 'text.secondary',
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
 
-        {/* Contact Info */}
-        <Box sx={{ 
-          display: 'grid',
-          gridTemplateColumns: 'auto 1fr',
-          gap: 1,
-          alignItems: 'center'
-        }}>
-          <LocationOnIcon sx={{ 
-            fontSize: '1.2rem',
-            color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'
-          }} />
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        {/* Location header */}
+        <Box sx={{ mb: 2, mt: 1 }}>
+          <Typography variant="h6">
             {distributor.city}, {distributor.state}
           </Typography>
-          
-          {distributor.phoneNumber && (
-            <>
-              <PhoneIcon sx={{ 
-                fontSize: '1.2rem',
-                color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'
-              }} />
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {distributor.phoneNumber}
-              </Typography>
-            </>
-          )}
         </Box>
+
+        {/* Distributor list */}
+        <List sx={{ pt: 0 }}>
+          {distributors.map(dist => (
+            <ListItem 
+              key={dist.id}
+              sx={{ 
+                p: 2,
+                mb: 1,
+                borderRadius: 1,
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                  {dist.name}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
+                  {dist.catalogs.map(catalog => (
+                    <Chip
+                      key={catalog}
+                      label={catalog}
+                      size="small"
+                      sx={{
+                        bgcolor: getCatalogColor([catalog]),
+                        color: '#fff'
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                {dist.phoneNumber && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                    <PhoneIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
+                    <Typography variant="body2" color="text.secondary">
+                      {dist.phoneNumber}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </ListItem>
+          ))}
+        </List>
       </Box>
     );
   };
@@ -891,11 +1004,6 @@ const DistributorsMap: React.FC = () => {
         <MobileSearchResults />
       </Box>
 
-      {/* Add the mobile info panel */}
-      <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-        <MobileInfoPanel distributor={selectedDistributor} />
-      </Box>
-
       {/* Map Container */}
       <Box sx={{ flex: 1, position: 'relative', height: '100%' }}>
         <MapContainer
@@ -965,41 +1073,127 @@ const DistributorsMap: React.FC = () => {
           
           <TileLayer {...mapStyle.adminBoundaries} />
           
-          {filteredDistributors.map((distributor) => {
-            const location = locations.get(`${distributor.city}-${distributor.state}`);
-            const isSelected = selectedMarkerId === distributor.id;
-            
-            return location ? (
+          {Array.from(locations.entries()).map(([locationKey, location]) => {
+            const locationDistributors = filteredDistributors.filter(
+              d => `${d.city}-${d.state}` === locationKey
+            );
+
+            if (locationDistributors.length === 0) return null;
+
+            return (
               <Marker
-                key={distributor.id}
+                key={locationKey}
                 position={[location.lat, location.lng]}
-                icon={customIcon(isSelected, distributor)}
+                icon={customIcon(locationDistributors.some(d => d.id === selectedMarkerId), locationDistributors[0])}
                 eventHandlers={{
                   click: () => {
-                    setSelectedMarkerId(distributor.id);
-                    setSelectedDistributor(distributor);
+                    if (isMobile) {
+                      setSelectedLocation(locationDistributors);
+                    } else {
+                      setSelectedMarkerId(locationDistributors[0].id);
+                    }
                   }
                 }}
               >
-                {window.innerWidth >= 960 && ( // Only show popup on desktop
-                  <Popup
-                    eventHandlers={{
-                      remove: () => {
-                        setSelectedMarkerId(null);
-                        setSelectedDistributor(null);
-                      }
-                    }}
-                  >
-                    <DistributorPopup distributor={distributor} />
+                {!isMobile && selectedMarkerId === locationDistributors[0].id && (
+                  <Popup>
+                    <Box sx={{ minWidth: 250, maxWidth: 300 }}>
+                      <Box sx={{ width: '100%' }}>
+                        {/* Location Header */}
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 600,
+                            mb: 2,
+                            fontSize: '1rem'
+                          }}
+                        >
+                          {`${locationDistributors[0].city}, ${locationDistributors[0].state}`}
+                        </Typography>
+
+                        {/* Distributors List */}
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {locationDistributors.map(dist => (
+                            <Box key={dist.id}>
+                              {/* Name and Catalogs in same row */}
+                              <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                mb: 0.5,
+                                gap: 1
+                              }}>
+                                <Typography 
+                                  variant="subtitle1" 
+                                  sx={{ 
+                                    fontWeight: 500,
+                                    flex: '0 0 auto'
+                                  }}
+                                >
+                                  {dist.name}
+                                </Typography>
+                                <Box sx={{ 
+                                  display: 'flex', 
+                                  gap: 0.5, 
+                                  flexWrap: 'wrap',
+                                  flex: '1 1 auto',
+                                  justifyContent: 'flex-end'
+                                }}>
+                                  {dist.catalogs.map(catalog => (
+                                    <Chip
+                                      key={catalog}
+                                      label={catalog}
+                                      size="small"
+                                      sx={{
+                                        height: '20px',
+                                        fontSize: '0.7rem',
+                                        bgcolor: getCatalogColor([catalog]),
+                                        color: '#fff'
+                                      }}
+                                    />
+                                  ))}
+                                </Box>
+                              </Box>
+                              
+                              {/* Phone Number */}
+                              {dist.phoneNumber && (
+                                <Box sx={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: 1,
+                                  color: 'text.secondary'
+                                }}>
+                                  <PhoneIcon sx={{ fontSize: '0.9rem' }} />
+                                  <Typography variant="body2">
+                                    {dist.phoneNumber}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    </Box>
                   </Popup>
                 )}
               </Marker>
-            ) : null;
+            );
           })}
           
           <ZoomControl position="bottomright" />
         </MapContainer>
       </Box>
+
+      {isMobile && selectedLocation && (
+        <DistributorInfo 
+          distributors={selectedLocation} 
+          isMobile={true}
+          onClose={() => {
+            setSelectedLocation(null);
+            setSelectedMarkerId(null);
+          }}
+        />
+      )}
     </Box>
   );
 };
