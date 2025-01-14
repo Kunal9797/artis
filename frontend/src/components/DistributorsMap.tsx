@@ -20,7 +20,21 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SearchIcon from '@mui/icons-material/Search';
 import { Layer, LatLngBounds, LatLngExpression } from 'leaflet';
 import { GeoJSON as GeoJSONType } from 'geojson';
+import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
+import FactoryIcon from '@mui/icons-material/Factory';
+import MapMask from './MapMask';
 
+// Add type declaration for the mask function
+declare module 'leaflet' {
+  namespace L {
+    function mask(geojson: any, options?: {
+      fillOpacity?: number;
+      color?: string;
+      fillColor?: string;
+      interactive?: boolean;
+    }): any;
+  }
+}
 
 // India's boundaries (slightly adjusted for better view)
 const INDIA_BOUNDS = {
@@ -288,6 +302,40 @@ const DistributorInfo: React.FC<{
   );
 };
 
+// Add coordinates for Yamunanagar (you might want to verify these coordinates)
+const FACTORY_LOCATION = {
+  lat: 30.1290,
+  lng: 77.2674
+};
+
+// Update the factory icon definition
+const factoryIcon = L.divIcon({
+  className: 'custom-factory-icon',
+  html: `
+    <div style="
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    ">
+      <img 
+        src="/logo512.png" 
+        style="
+          width: 28px;
+          height: 28px;
+          object-fit: contain;
+        "
+        alt="Artis"
+      />
+    </div>
+  `,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+});
+
 const DistributorsMap: React.FC = () => {
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [selectedCatalogs, setSelectedCatalogs] = useState<string[]>([]);
@@ -305,34 +353,15 @@ const DistributorsMap: React.FC = () => {
   
   const mapStyle = {
     tiles: {
-      url: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+      url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}.png',
       attribution: '©OpenStreetMap, ©CartoDB'
-    },
-    adminBoundaries: {
-      url: 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
-      attribution: '©OpenStreetMap, ©CartoDB'
-    },
-    outsideIndia: {
-      color: '#000000',
-      fillColor: isDarkMode ? '#1a1a1a' : '#4a4a4a',
-      fillOpacity: 0.8,
-      weight: 0,
-      interactive: false
-    },
-    geoJson: {
-      fillColor: 'transparent',
-      weight: 2.5,
-      opacity: 1,
-      color: '#f1c40f',
-      fillOpacity: 0
     },
     stateLines: {
-      fillColor: 'transparent',
+      color: 'rgba(0,0,0,0.3)',
       weight: 1,
-      opacity: 0.4,
-      color: '#2c3e50',
+      fillColor: 'transparent',
       fillOpacity: 0,
-      dashArray: '2'
+      opacity: 0.5
     }
   };
 
@@ -349,14 +378,14 @@ const DistributorsMap: React.FC = () => {
     .state-label {
       background: none;
       border: none;
-      color: ${isDarkMode ? 'rgba(255,255,255,0.3)' : 'rgba(44,62,80,0.3)'};
+      color: rgba(44,62,80,0.3);
       font-size: 12px;
       font-weight: 500;
       text-align: center;
       text-transform: uppercase;
       pointer-events: none;
       white-space: nowrap;
-      text-shadow: ${isDarkMode ? '1px 1px 1px rgba(0,0,0,0.5)' : '1px 1px 1px rgba(255,255,255,0.5)'};
+      text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
     }
   `;
 
@@ -443,22 +472,14 @@ const DistributorsMap: React.FC = () => {
       geometry: {
         type: "Polygon",
         coordinates: [[
-          [-180, -90],
-          [-180, 90],
           [180, 90],
           [180, -90],
-          [-180, -90]
+          [-180, -90],
+          [-180, 90],
+          [180, 90]
         ]]
       }
     }]
-  };
-
-  // Create a mask using India's boundary
-  const maskStyle = {
-    fillColor: isDarkMode ? '#1a1a1a' : '#2c3e50',
-    fillOpacity: 0.6,
-    weight: 0,
-    interactive: false
   };
 
   const handleCatalogToggle = (catalog: string) => {
@@ -1010,69 +1031,27 @@ const DistributorsMap: React.FC = () => {
           ref={mapRef}
           center={[23.5937, 78.9629]}
           zoom={5}
-          style={{ height: '100%', width: '100%' }}
-          maxBounds={[
-            [INDIA_BOUNDS.south - 1, INDIA_BOUNDS.west - 1],
-            [INDIA_BOUNDS.north + 1, INDIA_BOUNDS.east + 1]
-          ]}
           minZoom={4}
-          maxZoom={8}
-          zoomSnap={0.5}
-          zoomDelta={0.5}
+          maxZoom={10}
+          style={{ 
+            height: '100%', 
+            width: '100%',
+            background: '#ffffff'
+          }}
           zoomControl={false}
+          maxBounds={[
+            [INDIA_BOUNDS.south - 5, INDIA_BOUNDS.west - 5],
+            [INDIA_BOUNDS.north + 5, INDIA_BOUNDS.east + 5]
+          ]}
         >
           <TileLayer {...mapStyle.tiles} />
+          <MapMask map={mapRef.current} />
           
-          {/* Dark background for non-India areas */}
-          {isValidGeoJSON(worldPolygon) && (
-            <GeoJSON 
-              key="world-mask"
-              data={worldPolygon}
-              style={maskStyle}
-            />
-          )}
-          
-          {/* White fill for India to create the mask */}
-          {isValidGeoJSON(indiaGeoJson) && (
-            <GeoJSON 
-              key="india-mask"
-              data={indiaGeoJson}
-              style={{
-                fillColor: 'white',
-                fillOpacity: 1,
-                weight: 0,
-                opacity: 0
-              }}
-            />
-          )}
-          
-          {/* India border */}
-          {isValidGeoJSON(indiaGeoJson) && (
-            <GeoJSON 
-              key="india-border"
-              data={indiaGeoJson}
-              style={{
-                fillColor: 'transparent',
-                fillOpacity: 0,
-                weight: 3.5,
-                color: '#f1c40f',
-                opacity: 1
-              }}
-            />
-          )}
-          
-          {/* State boundaries */}
-          {statesGeoJson && isValidGeoJSON(statesGeoJson) && (
-            <GeoJSON
-              key="state-boundaries"
-              data={statesGeoJson as GeoJSONType}
-              style={mapStyle.stateLines}
-            />
-          )}
-          <StateLabels mapRef={mapRef} />
-          
-          <TileLayer {...mapStyle.adminBoundaries} />
-          
+          <GeoJSON 
+            data={statesGeoJson}
+            style={mapStyle.stateLines}
+          />
+
           {Array.from(locations.entries()).map(([locationKey, location]) => {
             const locationDistributors = filteredDistributors.filter(
               d => `${d.city}-${d.state}` === locationKey
@@ -1089,6 +1068,7 @@ const DistributorsMap: React.FC = () => {
                   click: () => {
                     if (isMobile) {
                       setSelectedLocation(locationDistributors);
+                      setSelectedMarkerId(locationDistributors[0].id);
                     } else {
                       setSelectedMarkerId(locationDistributors[0].id);
                     }
@@ -1181,6 +1161,22 @@ const DistributorsMap: React.FC = () => {
           })}
           
           <ZoomControl position="bottomright" />
+
+          <Marker
+            position={[FACTORY_LOCATION.lat, FACTORY_LOCATION.lng]}
+            icon={factoryIcon}
+          >
+            <Popup>
+              <Box sx={{ p: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  Artis Factory
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Yamunanagar, Haryana
+                </Typography>
+              </Box>
+            </Popup>
+          </Marker>
         </MapContainer>
       </Box>
 
