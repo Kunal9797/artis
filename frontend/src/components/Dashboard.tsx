@@ -27,6 +27,7 @@ import { useTheme } from '../context/ThemeContext';
 import DashboardHome from './DashboardHome';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import DistributorsMap from './DistributorsMap';
+import InfoIcon from '@mui/icons-material/Info';
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuth();
@@ -70,17 +71,17 @@ const Dashboard: React.FC = () => {
 
   const pages = [
     { label: 'Home', value: 'home' },
-    { label: 'Products', value: 'products' },
+    { label: 'Products', value: 'catalog' },
     { label: 'Orders', value: 'orders' },
     { label: 'Inventory', value: 'inventory' },
-    { label: 'Distributors', value: 'distributors' },
+    { label: 'Distributors', value: 'distributors' }
   ];
 
   const renderContent = () => {
     switch (currentPage) {
       case 'home':
         return <DashboardHome setCurrentPage={setCurrentPage} />;
-      case 'products':
+      case 'catalog':
         return <ProductCatalog />;
       case 'orders':
         return <OrdersPage />;
@@ -88,6 +89,8 @@ const Dashboard: React.FC = () => {
         return <InventoryList />;
       case 'distributors':
         return <DistributorsMap />;
+      case 'info':
+        return <InfoPage />;
       default:
         return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
@@ -104,7 +107,8 @@ const Dashboard: React.FC = () => {
         <Toolbar sx={{ 
           justifyContent: 'space-between',
           gap: 1,
-          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          flexWrap: 'nowrap',
+          px: { xs: 1, sm: 2 }
         }}>
           <Box sx={{ 
             display: 'flex', 
@@ -216,13 +220,45 @@ const Dashboard: React.FC = () => {
             flexShrink: 0,
             ml: { xs: 'auto', sm: 0 }
           }}>
-            <IconButton onClick={toggleTheme} color="inherit">
+            <IconButton 
+              onClick={() => setCurrentPage('info')}
+              color="inherit"
+              sx={{
+                '&:hover': {
+                  color: '#FFD700',
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              <InfoIcon sx={{ color: '#fff' }} />
+            </IconButton>
+            <IconButton 
+              onClick={toggleTheme} 
+              color="inherit"
+              sx={{
+                '&:hover': {
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
               {isDarkMode ? 
                 <Brightness7Icon sx={{ color: '#FFD700' }} /> : 
                 <Brightness4Icon sx={{ color: '#4169E1' }} />
               }
             </IconButton>
-            <IconButton onClick={logout} color="inherit">
+            <IconButton 
+              onClick={logout} 
+              color="inherit"
+              sx={{
+                '&:hover': {
+                  color: '#FF4444',
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
               <LogoutIcon sx={{ color: '#fff' }} />
             </IconButton>
           </Box>

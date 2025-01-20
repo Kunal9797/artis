@@ -8,6 +8,7 @@ import {
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CategoryIcon from '@mui/icons-material/Category';
+import MapIcon from '@mui/icons-material/Map';
 import { useTheme } from '../context/ThemeContext';
 import QuickStats from './Dashboard/QuickStats';
 import { inventoryApi } from '../services/api';
@@ -122,10 +123,10 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setCurrentPage }) => {
             page: 'inventory'
           },
           {
-            title: "Product Catalog",
-            description: "Browse and manage your product catalog",
-            icon: <CategoryIcon />,
-            page: 'catalog'
+            title: "Distributor Map",
+            description: "View and manage distributor network",
+            icon: <MapIcon />,
+            page: 'distributors'
           },
           {
             title: "Purchase Orders",
