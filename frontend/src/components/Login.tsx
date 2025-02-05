@@ -27,11 +27,18 @@ const Login: React.FC = () => {
     
     try {
       const result = await authApi.login(username, password);
-      await login(result.data.token, result.data.user);
+      const { token, user } = result.data;
+      
+      // Validate user data
+      if (!user || !user.role) {
+        throw new Error('Invalid user data received');
+      }
+
+      await login(token, user);
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      setError('Invalid credentials');
+      setError(err.response?.data?.error || 'Invalid credentials');
     }
   };
 

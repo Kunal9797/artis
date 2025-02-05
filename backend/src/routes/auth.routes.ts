@@ -1,9 +1,22 @@
 import { Router } from 'express';
-import { register, login } from '../controllers/auth.controller';
+import { 
+  register, 
+  login, 
+  getAllUsers, 
+  updateUser, 
+  deleteUser 
+} from '../controllers/auth.controller';
+import { adminAuth } from '../middleware/auth';
 
 const router = Router();
 
-router.post('/register', register);
+// Public routes
 router.post('/login', login);
+
+// Admin only routes
+router.post('/register', adminAuth, register);
+router.get('/users', adminAuth, getAllUsers);
+router.put('/users/:userId', adminAuth, updateUser);
+router.delete('/users/:userId', adminAuth, deleteUser);
 
 export default router; 

@@ -9,6 +9,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import CategoryIcon from '@mui/icons-material/Category';
 import MapIcon from '@mui/icons-material/Map';
+import PeopleIcon from '@mui/icons-material/People';
 import { useTheme } from '../context/ThemeContext';
 import QuickStats from './Dashboard/QuickStats';
 import { inventoryApi } from '../services/api';
@@ -16,6 +17,7 @@ import { distributorApi } from '../services/distributorApi';
 import { InventoryItem } from './Inventory/InventoryList';
 import NavigationCard from './NavigationCard';
 import { Distributor } from '../types/distributor';
+import { useAuth } from '../context/AuthContext';
 
 
 interface DashboardHomeProps {
@@ -24,6 +26,7 @@ interface DashboardHomeProps {
 
 const DashboardHome: React.FC<DashboardHomeProps> = ({ setCurrentPage }) => {
   const { isDarkMode } = useTheme();
+  const { isAdmin } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [distributors, setDistributors] = useState<Distributor[]>([]);
 

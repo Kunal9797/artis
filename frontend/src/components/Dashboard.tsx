@@ -28,9 +28,10 @@ import DashboardHome from './DashboardHome';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import DistributorsMap from './DistributorsMap';
 import InfoIcon from '@mui/icons-material/Info';
+import UserManagement from './Users/UserManagement';
 
 const Dashboard: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState('home');
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
@@ -64,6 +65,8 @@ const Dashboard: React.FC = () => {
         return 'Information';
       case 'distributors':
         return 'Distributors';
+      case 'users':
+        return 'User Management';
       default: 
         return 'Dashboard';
     }
@@ -74,7 +77,8 @@ const Dashboard: React.FC = () => {
     { label: 'Products', value: 'catalog' },
     { label: 'Orders', value: 'orders' },
     { label: 'Inventory', value: 'inventory' },
-    { label: 'Distributors', value: 'distributors' }
+    { label: 'Distributors', value: 'distributors' },
+    { label: 'User Management', value: 'users', adminOnly: true }
   ];
 
   const renderContent = () => {
@@ -91,6 +95,8 @@ const Dashboard: React.FC = () => {
         return <DistributorsMap />;
       case 'info':
         return <InfoPage />;
+      case 'users':
+        return <UserManagement />;
       default:
         return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
@@ -211,6 +217,9 @@ const Dashboard: React.FC = () => {
             <MenuItem onClick={() => handlePageChange('orders')}>Purchase Orders</MenuItem>
             <MenuItem onClick={() => handlePageChange('info')}>Information</MenuItem>
             <MenuItem onClick={() => handlePageChange('distributors')}>Distributors</MenuItem>
+            {isAdmin() && (
+              <MenuItem onClick={() => handlePageChange('users')}>User Management</MenuItem>
+            )}
           </Menu>
 
           <Box sx={{ 

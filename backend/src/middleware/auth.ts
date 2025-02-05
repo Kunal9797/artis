@@ -8,6 +8,7 @@ interface AuthRequest extends Request {
 
 interface JwtPayload {
   id: number;
+  version: number;
 }
 
 export const auth = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -21,7 +22,7 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction) 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as JwtPayload;
     const user = await User.findByPk(decoded.id);
 
-    if (!user) {
+    if (!user || user.version !== decoded.version) {
       throw new Error();
     }
 

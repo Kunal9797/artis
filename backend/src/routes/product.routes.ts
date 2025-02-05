@@ -10,23 +10,20 @@ import {
   searchProducts,
   deleteAllProducts
 } from '../controllers/product.controller';
+import { auth, adminAuth } from '../middleware/auth';
 
 const router = Router();
 
-// Basic CRUD routes
-router.get('/', getAllProducts);
-router.get('/:id', getProduct);
-router.post('/', createProduct);
-router.put('/:id', updateProduct);
-router.delete('/:id', deleteProduct);
+// View routes (both admin and user)
+router.get('/', auth, getAllProducts);
+router.get('/:id', auth, getProduct);
+router.get('/search/:query', auth, searchProducts);
 
-// Bulk operations
-router.post('/bulk', upload.single('file'), bulkCreateProducts);
-
-// Search
-router.get('/search/:query', searchProducts);
-
-// Delete all products
-router.delete('/all', deleteAllProducts);
+// Modification routes (admin only)
+router.post('/', adminAuth, createProduct);
+router.put('/:id', adminAuth, updateProduct);
+router.delete('/:id', adminAuth, deleteProduct);
+router.post('/bulk', adminAuth, upload.single('file'), bulkCreateProducts);
+router.delete('/all', adminAuth, deleteAllProducts);
 
 export default router; 

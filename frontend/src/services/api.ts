@@ -6,12 +6,28 @@ const api = axios.create({
     : 'http://localhost:8099'
 });
 
+// Add request interceptor to include auth token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 // Auth API endpoints
 export const authApi = {
   login: (username: string, password: string) => 
     api.post('/api/auth/login', { email: username, password }),
-  register: (data: { username: string; email: string; password: string }) => 
-    api.post('/api/auth/register', data)
+  register: (data: { username: string; email: string; password: string; role: string }) => 
+    api.post('/api/auth/register', data),
+  getAllUsers: () => api.get('/api/auth/users'),
+  updateUser: (userId: string, data: { username?: string; email?: string; password?: string; role?: string }) => 
+    api.put(`/api/auth/users/${userId}`, data),
+  deleteUser: (userId: string) => 
+    api.delete(`/api/auth/users/${userId}`)
 };
 
 // Product API endpoints

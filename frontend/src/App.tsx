@@ -6,6 +6,7 @@ import { CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import UserManagement from './components/Users/UserManagement';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
@@ -36,6 +37,7 @@ const App: React.FC = () => {
                 <Login />
               </>
             } />
+            <Route path="/users" element={<UserManagement />} />
             <Route path="/*" element={
               <>
                 <ProtectedRoute>

@@ -11,22 +11,23 @@ import {
   bulkUploadPurchaseOrder,
   getInventoryDetails
 } from '../controllers/inventory.controller';
+import { auth, adminAuth } from '../middleware/auth';
 
 const router = Router();
 
 // Inventory management
-router.get('/', getAllInventory);
+router.get('/', auth, getAllInventory);
 router.get('/product/:productId', getInventory);
-router.get('/details/:id', getInventoryDetails);
-router.get('/transactions/recent', getRecentTransactions);
-router.get('/transactions/:productId', getProductTransactions);
+router.get('/details/:id', auth, getInventoryDetails);
+router.get('/recent', auth, getRecentTransactions);
+router.get('/transactions/:productId', auth, getProductTransactions);
 
 // Bulk operations
-router.post('/upload', upload.single('file'), bulkUploadInventory);
-router.post('/purchase-order/upload', upload.single('file'), bulkUploadPurchaseOrder);
-router.post('/clear', clearInventory);
+router.post('/bulk', adminAuth, upload.single('file'), bulkUploadInventory);
+router.post('/purchase', adminAuth, upload.single('file'), bulkUploadPurchaseOrder);
+router.delete('/clear', adminAuth, clearInventory);
 
 // Individual transactions
-router.post('/transaction', createTransaction);
+router.post('/transaction', adminAuth, createTransaction);
 
 export default router; 
