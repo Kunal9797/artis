@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 
 module.exports = {
   async up(queryInterface) {
-    const hashedPassword = await bcrypt.hash('artisadmin123', 10);
+    const hashedPassword = await bcrypt.hash('artisadmin12', 10);
     
     await queryInterface.bulkInsert('Users', [{
       id: '00000000-0000-0000-0000-000000000000',
