@@ -215,7 +215,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
     // Process each row
     await Promise.all(data.map(async (row: any) => {
       const artisCode = row['OUR CODE']?.toString();
-      const initialStock = parseFloat(row['IN']) || 0;
+      const initialStock = row['IN'] ? parseFloat(row['IN']) : 0;
 
       if (!artisCode) {
         skippedRows.push({
@@ -244,15 +244,29 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
           return;
         }
 
-        // Record initial stock (IN transaction)
-        await Transaction.create({
-          productId: product.id,
-          type: TransactionType.IN,
-          quantity: initialStock,
-          date: new Date('2024-01-09'),
-          notes: 'Initial Stock',
-          includeInAvg: false
-        }, { transaction: t });
+        const isInitialInventory = headers.some(h => h === 'IN' || h === 'OPEN');
+
+        if (isInitialInventory) {
+          // Reset current stock only for initial inventory upload
+          await product.update({
+            currentStock: 0,
+            lastUpdated: new Date()
+          }, { transaction: t });
+
+          if (initialStock > 0) {
+            await Transaction.create({
+              productId: product.id,
+              type: TransactionType.IN,
+              quantity: initialStock,
+              date: new Date('2024-01-09'),
+              notes: 'Initial Stock',
+              includeInAvg: false
+            }, { transaction: t });
+          }
+        }
+
+        // For consumption updates, don't reset current stock
+        let newStock = isInitialInventory ? initialStock : product.currentStock;
 
         // Record consumption transactions (OUT)
         for (const { date, column } of consumptionDates) {
@@ -273,32 +287,6 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
           console.log(`Consumption for ${column}: ${consumption}`);
           return sum + consumption;
         }, 0);
-
-        // Reset current stock before calculating new value
-        await product.update({
-          currentStock: 0,
-          lastUpdated: new Date()
-        }, { transaction: t });
-
-        // Calculate new stock considering all transactions
-        let newStock = initialStock;
-
-        // Add existing IN transactions
-        const existingTransactions = await Transaction.findAll({
-          where: { 
-            productId: product.id,
-            date: {
-              [Op.gt]: new Date('2024-01-09') // After initial stock date
-            }
-          },
-          transaction: t
-        });
-
-        existingTransactions.forEach(transaction => {
-          if (transaction.type === TransactionType.IN) {
-            newStock += Number(transaction.quantity);
-          }
-        });
 
         newStock = Number((newStock - totalConsumption).toFixed(2));
         console.log(`Initial stock: ${initialStock}, Total consumption: ${totalConsumption}, Final stock: ${newStock}`);

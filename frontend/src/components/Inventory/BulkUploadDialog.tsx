@@ -20,6 +20,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import { useTheme } from '../../context/ThemeContext';
 import * as XLSX from 'xlsx';
 import { inventoryApi } from '../../services/api';
@@ -30,7 +31,7 @@ interface BulkUploadDialogProps {
   onSuccess: () => void;
 }
 
-type TemplateType = 'inventory' | 'purchase';
+type TemplateType = 'inventory' | 'purchase' | 'consumption';
 
 interface TemplateInfo {
   type: TemplateType;
@@ -45,12 +46,21 @@ interface TemplateInfo {
 const templates: TemplateInfo[] = [
   {
     type: 'inventory',
-    title: 'Inventory Update',
-    description: 'Update stock levels and consumption data for multiple products',
+    title: 'Initial Inventory',
+    description: 'Update initial stock levels and consumption data',
     icon: <InventoryIcon sx={{ fontSize: 40 }} />,
     columns: ['SNO', 'OUR CODE', 'OUT', 'OUT', 'OUT', 'IN'],
     format: 'Two header rows with dates',
     example: '901, OUT: 21, IN: 295'
+  },
+  {
+    type: 'consumption',
+    title: 'Monthly Consumption',
+    description: 'Update consumption data for multiple products',
+    icon: <TimelineIcon sx={{ fontSize: 40 }} />,
+    columns: ['SNO', 'DESIGN CODE', 'JAN CONS.', 'FEB CONS.', 'MAR CONS.', 'APR CONS.'],
+    format: 'Two header rows with dates',
+    example: '901, JAN: 34, FEB: 21'
   },
   {
     type: 'purchase',
@@ -68,15 +78,21 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
 
   const handleDownloadTemplate = (template: TemplateType) => {
-    const templateUrl = template === 'inventory' 
-      ? '/templates/inventory-template.xlsx'
-      : '/templates/purchase-template.xlsx';
+    const templateUrl = {
+      inventory: '/templates/inventory-template.xlsx',
+      consumption: '/templates/consumption-template.xlsx',
+      purchase: '/templates/purchase-template.xlsx'
+    }[template];
+    
+    const fileName = {
+      inventory: 'inventory-template.xlsx',
+      consumption: 'consumption-template.xlsx',
+      purchase: 'purchase-template.xlsx'
+    }[template];
     
     const link = document.createElement('a');
     link.href = templateUrl;
-    link.download = template === 'inventory' 
-      ? 'inventory-template.xlsx'
-      : 'purchase-template.xlsx';
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -90,9 +106,9 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = template === 'inventory' 
-        ? await inventoryApi.uploadInventory(file)
-        : await inventoryApi.uploadPurchaseOrder(file);
+      const response = template === 'purchase' 
+        ? await inventoryApi.uploadPurchaseOrder(file)
+        : await inventoryApi.uploadInventory(file); // Both inventory and consumption use same endpoint
 
       if (response.data.processed?.length > 0) {
         onSuccess();

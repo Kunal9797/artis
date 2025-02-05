@@ -302,11 +302,21 @@ const DistributorInfo: React.FC<{
   );
 };
 
-// Add coordinates for Yamunanagar (you might want to verify these coordinates)
-const FACTORY_LOCATION = {
-  lat: 30.1290,
-  lng: 77.2674
-};
+// Update the factory locations to include both Yamunanagar and Ahmedabad
+const FACTORY_LOCATIONS = [
+  {
+    name: 'Yamunanagar',
+    state: 'Haryana',
+    lat: 30.1290,
+    lng: 77.2674
+  },
+  {
+    name: 'Ahmedabad',
+    state: 'Gujarat',
+    lat: 23.0225,
+    lng: 72.5714
+  }
+];
 
 // Update the factory icon definition
 const factoryIcon = L.divIcon({
@@ -1162,21 +1172,24 @@ const DistributorsMap: React.FC = () => {
           
           <ZoomControl position="bottomright" />
 
-          <Marker
-            position={[FACTORY_LOCATION.lat, FACTORY_LOCATION.lng]}
-            icon={factoryIcon}
-          >
-            <Popup>
-              <Box sx={{ p: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Artis Factory
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Yamunanagar, Haryana
-                </Typography>
-              </Box>
-            </Popup>
-          </Marker>
+          {FACTORY_LOCATIONS.map((location) => (
+            <Marker
+              key={`${location.name}-${location.state}`}
+              position={[location.lat, location.lng]}
+              icon={factoryIcon}
+            >
+              <Popup>
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                    Artis {location.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {location.name}, {location.state}
+                  </Typography>
+                </Box>
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
       </Box>
 
