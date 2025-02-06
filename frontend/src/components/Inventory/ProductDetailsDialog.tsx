@@ -63,16 +63,15 @@ const aggregateMonthlyConsumption = (transactions: Transaction[]) => {
     return acc;
   }, {});
 
+  // Convert dates to a consistent format for sorting
   const sortedEntries = Object.entries(monthlyData)
-    .sort((a, b) => {
-      const dateA = new Date(a[0]);
-      const dateB = new Date(b[0]);
-      // Sort from past to future (ascending)
-      if (dateA.getFullYear() !== dateB.getFullYear()) {
-        return dateA.getFullYear() - dateB.getFullYear();
-      }
-      return dateA.getMonth() - dateB.getMonth();
-    });
+    .map(([month, amount]) => ({
+      month,
+      amount,
+      date: new Date(month)
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .map(({ month, amount }) => [month, amount]);
   
   const monthlyValues = Object.values(monthlyData);
   const averageConsumption = monthlyValues.length > 0 

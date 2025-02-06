@@ -68,6 +68,10 @@ exports.app.get('/api/health', (req, res) => __awaiter(void 0, void 0, void 0, f
         res.status(500).json({ error: 'Database connection failed' });
     }
 }));
+// Simple ping endpoint for keepalive
+exports.app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+});
 const PORT = parseInt(process.env.PORT || '8099', 10);
 exports.app.listen(PORT, '0.0.0.0', () => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
