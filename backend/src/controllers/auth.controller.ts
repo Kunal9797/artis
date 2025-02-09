@@ -70,12 +70,21 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
+    console.log('Login attempt for username:', username);
     
     const user = await User.findOne({ 
       where: { username }
     });
 
-    if (!user || !(await user.validatePassword(password))) {
+    if (!user) {
+      console.log('User not found:', username);
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('Password validation:', isValidPassword ? 'success' : 'failed');
+
+    if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
@@ -88,6 +97,8 @@ export const login = async (req: Request, res: Response) => {
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
+
+    console.log('Login successful for user:', user.id);
 
     res.json({
       message: 'Login successful',
@@ -145,6 +156,9 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     } = req.body;
     const requestingUser = req.user;
 
+    console.log('Updating user:', userId);
+    console.log('Request body:', req.body);
+
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -158,9 +172,24 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Update all fields if provided
-    if (username) user.username = username;
-    if (email) user.email = email;
+    // Check for existing username/email if they're being changed
+    if (username && username !== user.username) {
+      const existingUsername = await User.findOne({ where: { username } });
+      if (existingUsername) {
+        return res.status(400).json({ error: 'Username already taken' });
+      }
+      user.username = username;
+    }
+
+    if (email && email !== user.email) {
+      const existingEmail = await User.findOne({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+      user.email = email;
+    }
+
+    // Update other fields if provided
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (phoneNumber) user.phoneNumber = phoneNumber;
@@ -177,6 +206,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     user.version = (user.version || 1) + 1;
     
     await user.save();
+    console.log('User updated successfully:', user.id);
 
     res.json({
       message: 'User updated successfully',

@@ -22,6 +22,7 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction) 
     console.log('=== Auth Middleware Start ===');
     const token = req.header('Authorization')?.replace('Bearer ', '');
     console.log('Received Authorization header:', req.header('Authorization'));
+    console.log('JWT_SECRET:', process.env.JWT_SECRET);
     
     if (!token) {
       console.log('No token found');
