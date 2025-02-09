@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider as CustomThemeProvider } from './context/ThemeContext';
 import { CssBaseline } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import Login from './components/Login';
 import DashboardRouter from './components/DashboardRouter';
 import RoleRoute from './components/RoleRoute';
@@ -33,9 +34,20 @@ const App: React.FC = () => {
             <Route 
               path="/*" 
               element={
-                <RoleRoute allowedRoles={['admin', 'user', 'SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD']}>
-                  <DashboardRouter />
-                </RoleRoute>
+                <Suspense fallback={
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '100vh' 
+                  }}>
+                    <CircularProgress />
+                  </div>
+                }>
+                  <RoleRoute allowedRoles={['admin', 'user', 'SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD']}>
+                    <DashboardRouter />
+                  </RoleRoute>
+                </Suspense>
               }
             />
           </Routes>

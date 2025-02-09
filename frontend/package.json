@@ -38,10 +38,11 @@
   },
   "scripts": {
     "start": "react-app-rewired start",
-    "build": "react-app-rewired build",
+    "build": "GENERATE_SOURCEMAP=false react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "generate-templates": "ts-node scripts/create-consumption-template.ts && ts-node scripts/create-purchase-template.ts && ts-node scripts/create-inventory-template.ts"
+    "generate-templates": "ts-node scripts/create-consumption-template.ts && ts-node scripts/create-purchase-template.ts && ts-node scripts/create-inventory-template.ts",
+    "analyze": "source-map-explorer 'build/static/js/*.js'"
   },
   "eslintConfig": {
     "extends": [
@@ -78,7 +79,8 @@
     "source-map-loader": "^5.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "source-map-explorer": "^2.5.3"
   },
   "jest": {
     "moduleNameMapper": {
