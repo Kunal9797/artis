@@ -156,29 +156,22 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     } = req.body;
     const requestingUser = req.user;
 
-    console.log('Updating user:', userId);
-    console.log('Request body:', req.body);
+    console.log('Starting user update for ID:', userId);
 
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Allow admins to update their own details
-    if (userId === requestingUser.id) {
-      // Don't allow role change for self
-      if (role && role !== requestingUser.role) {
-        return res.status(403).json({ error: 'Cannot change your own role' });
-      }
-    }
-
-    // Check for existing username/email if they're being changed
+    // Create update object
+    const updates: any = {};
+    
     if (username && username !== user.username) {
       const existingUsername = await User.findOne({ where: { username } });
       if (existingUsername) {
         return res.status(400).json({ error: 'Username already taken' });
       }
-      user.username = username;
+      updates.username = username;
     }
 
     if (email && email !== user.email) {
@@ -186,27 +179,41 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
       if (existingEmail) {
         return res.status(400).json({ error: 'Email already registered' });
       }
-      user.email = email;
+      updates.email = email;
     }
 
-    // Update other fields if provided
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (phoneNumber) user.phoneNumber = phoneNumber;
-    if (role) user.role = role;
+    // Handle other fields
+    if (firstName) updates.firstName = firstName;
+    if (lastName) updates.lastName = lastName;
+    if (phoneNumber) updates.phoneNumber = phoneNumber;
+    if (role && role !== user.role) {
+      if (userId === requestingUser.id) {
+        return res.status(403).json({ error: 'Cannot change your own role' });
+      }
+      updates.role = role;
+    }
 
-    // Handle password update
+    // Handle password separately to avoid double hashing
     if (password && password.trim() !== '') {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      user.password = hashedPassword;
+      // Hash password manually here instead of relying on hooks
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updates.password = hashedPassword;
+      console.log('Password updated with new hash');
     }
 
-    // Increment version to invalidate existing tokens
-    user.version = (user.version || 1) + 1;
+    // Increment version
+    updates.version = (user.version || 1) + 1;
     
-    await user.save();
-    console.log('User updated successfully:', user.id);
+    // Update user with all changes at once
+    await user.update(updates, { 
+      hooks: false // Disable hooks to prevent double hashing
+    });
+
+    console.log('User updated successfully:', {
+      id: user.id,
+      username: user.username,
+      version: user.version
+    });
 
     res.json({
       message: 'User updated successfully',
