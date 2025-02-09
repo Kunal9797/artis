@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Paper,
-  Typography,
   Table,
   TableBody,
   TableCell,
@@ -11,36 +10,45 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Alert
+  Typography,
+  Tooltip,
+  Alert,
+  Chip
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { useAuth } from '../../context/AuthContext';
-import UserForm from './UserForm';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon
+} from '@mui/icons-material';
 import { authApi } from '../../services/api';
-import { User } from '../../types/user';
+import { User, ROLE_LABELS, ROLE_COLORS } from '../../types/user';
+import UserForm from './UserForm';
+import ConfirmDialog from '../Common/ConfirmDialog';
+import { useTheme } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
+import { useAuth } from '../../context/AuthContext';
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [openForm, setOpenForm] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [openForm, setOpenForm] = useState(false);
+  const [openConfirm, setOpenConfirm] = useState(false);
   const [error, setError] = useState('');
-  const { isAdmin, user: currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { user: currentUser } = useAuth();
 
   const fetchUsers = async () => {
     try {
       const response = await authApi.getAllUsers();
       setUsers(response.data);
       setError('');
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setError('Failed to fetch users');
+    } catch (err: any) {
+      setError('Failed to load users');
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,31 +61,60 @@ const UserManagement: React.FC = () => {
     setOpenForm(true);
   };
 
-  const handleDelete = async (userId: string) => {
+  const handleDelete = (user: User) => {
+    setSelectedUser(user);
+    setOpenConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+
     try {
-      await authApi.deleteUser(userId);
+      await authApi.deleteUser(selectedUser.id);
       await fetchUsers();
-      setDeleteConfirmOpen(false);
+      setOpenConfirm(false);
       setSelectedUser(null);
-      setError('');
     } catch (err: any) {
+      setError('Failed to delete user');
       console.error('Error deleting user:', err);
-      setError(err.response?.data?.error || 'Failed to delete user');
     }
   };
 
-  if (!isAdmin()) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>You don't have permission to access this page.</Typography>
-      </Box>
-    );
-  }
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'SALES_EXECUTIVE':
+        return 'primary';
+      case 'ZONAL_HEAD':
+        return 'success';
+      case 'COUNTRY_HEAD':
+        return 'warning';
+      case 'admin':
+        return 'error';
+      case 'user':
+        return 'default';
+      default:
+        return 'default';
+    }
+  };
+
+  const getRoleLabel = (role: string): string => {
+    return ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role;
+  };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h5">User Management</Typography>
+    <Box sx={{ p: isMobile ? 2 : 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 2
+      }}>
+        <Typography variant="h4" sx={{ 
+          fontWeight: 500,
+          fontSize: isMobile ? '1.5rem' : '2rem'
+        }}>
+          {isMobile ? 'Users' : 'User Management'}
+        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -85,94 +122,168 @@ const UserManagement: React.FC = () => {
             setSelectedUser(null);
             setOpenForm(true);
           }}
+          sx={{ 
+            borderRadius: 2,
+            textTransform: 'none',
+            px: isMobile ? 2 : 3,
+            fontSize: isMobile ? '0.875rem' : '1rem'
+          }}
         >
           Add User
         </Button>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Username</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.role}</TableCell>
-                <TableCell>
-                  <IconButton 
-                    onClick={() => handleEdit(user)}
-                    title={user.id === currentUser?.id ? "Edit your account" : "Edit user"}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton 
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setDeleteConfirmOpen(true);
+      {isMobile ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {users.map((user) => (
+            <Paper
+              key={user.id}
+              sx={{ 
+                p: 2,
+                borderRadius: 2,
+                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                '&:hover': { bgcolor: 'action.hover' }
+              }}
+            >
+              {/* Left side: User info */}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ 
+                    fontWeight: 700,
+                    mb: 0.5
+                  }}>
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}`
+                      : user.username}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {user.username}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {user.phoneNumber || ''}
+                  </Typography>
+                </Box>
+
+                {/* Right side: Actions and role */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton 
+                      onClick={() => handleEdit(user)} 
+                      size="small"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    {user.id !== currentUser?.id && (
+                      <IconButton 
+                        onClick={() => handleDelete(user)} 
+                        size="small"
+                        color="error"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+                  <Chip
+                    label={getRoleLabel(user.role)}
+                    size="small"
+                    sx={{ 
+                      fontWeight: 500,
+                      bgcolor: ROLE_COLORS[user.role as keyof typeof ROLE_COLORS],
+                      color: 'white',
+                      height: 24
                     }}
-                    disabled={user.id === currentUser?.id}
-                    title={user.id === currentUser?.id ? "Can't delete your own account" : "Delete user"}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
+                  />
+                </Box>
+              </Box>
+            </Paper>
+          ))}
+        </Box>
+      ) : (
+        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Username</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Phone</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow 
+                  key={user.id}
+                  sx={{ '&:hover': { bgcolor: 'action.hover' } }}
+                >
+                  <TableCell>
+                    {user.firstName && user.lastName 
+                      ? `${user.firstName} ${user.lastName}`
+                      : '-'}
+                  </TableCell>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.phoneNumber || '-'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={getRoleLabel(user.role)}
+                      color={getRoleColor(user.role)}
+                      size="small"
+                      sx={{ 
+                        fontWeight: 500,
+                        minWidth: 100,
+                        textAlign: 'center',
+                        bgcolor: ROLE_COLORS[user.role as keyof typeof ROLE_COLORS],
+                        color: 'white'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Tooltip title="Edit">
+                      <IconButton 
+                        onClick={() => handleEdit(user)} 
+                        size="small"
+                        sx={{ mr: 1 }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {user.id !== currentUser?.id && (
+                      <Tooltip title="Delete">
+                        <IconButton 
+                          onClick={() => handleDelete(user)} 
+                          size="small"
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <UserForm
         open={openForm}
-        onClose={() => {
-          setOpenForm(false);
-          setSelectedUser(null);
-        }}
-        onSubmit={() => {
-          fetchUsers();
-          setOpenForm(false);
-          setSelectedUser(null);
-        }}
+        onClose={() => setOpenForm(false)}
+        onSubmit={fetchUsers}
         user={selectedUser}
       />
 
-      <Dialog 
-        open={deleteConfirmOpen} 
-        onClose={() => setDeleteConfirmOpen(false)}
-      >
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete user {selectedUser?.username}?
-          {selectedUser?.role === 'admin' && (
-            <Alert severity="warning" sx={{ mt: 2 }}>
-              Warning: You are about to delete an admin user.
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={() => selectedUser && handleDelete(selectedUser.id)}
-            color="error"
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete User"
+        content="Are you sure you want to delete this user? This action cannot be undone."
+      />
     </Box>
   );
 };

@@ -7,8 +7,12 @@ import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import distributorRoutes from './routes/distributor.routes';
+import swaggerUi from 'swagger-ui-express';
+import specs from './config/swagger';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { initializeAssociations } from './models/associations';
+import salesRoutes from './routes/sales.routes';
 
 const execAsync = promisify(exec);
 
@@ -33,6 +37,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Swagger documentation route (must be before other routes)
+app.use('/api-docs', swaggerUi.serve);
+app.get('/api-docs', swaggerUi.setup(specs));
+
 // Initialize database connection for each request
 app.use(async (req, res, next) => {
   try {
@@ -49,6 +57,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/distributors', distributorRoutes);
+app.use('/api/sales', salesRoutes);
 
 // Test route
 app.get('/api/test', (req: Request, res: Response) => {
@@ -64,6 +73,10 @@ app.get('/api/health', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Database connection failed' });
   }
 });
+
+// After database connection
+initializeAssociations();
+
 const PORT = parseInt(process.env.PORT || '8099', 10);
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);

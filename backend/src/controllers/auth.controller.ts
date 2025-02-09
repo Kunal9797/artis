@@ -10,29 +10,38 @@ interface AuthRequest extends Request {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role, firstName, lastName, phoneNumber } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      where: {
-        email,
-      },
+    // Check if username already exists
+    const existingUsername = await User.findOne({
+      where: { username },
     });
 
-    if (existingUser) {
+    if (existingUsername) {
+      return res.status(400).json({ error: 'Username already taken' });
+    }
+
+    // Check if email already exists
+    const existingEmail = await User.findOne({
+      where: { email },
+    });
+
+    if (existingEmail) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    // Create new user
+    // Create new user with required fields
     const user = await User.create({
       username,
       email,
       password,
-      role: 'user',
+      role,
+      firstName,
+      lastName,
+      phoneNumber,
       version: 1
     });
 
-    // Generate token
     const token = jwt.sign(
       { id: user.id },
       process.env.JWT_SECRET || 'your-secret-key',
@@ -47,24 +56,35 @@ export const register = async (req: Request, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber
       },
     });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Error registering user' });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const { username, password } = req.body;
+    
+    const user = await User.findOne({ 
+      where: { username }
+    });
 
     if (!user || !(await user.validatePassword(password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
     const token = jwt.sign(
-      { id: user.id, version: user.version },
+      { 
+        id: user.id, 
+        role: user.role,
+        version: user.version 
+      },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
@@ -77,6 +97,9 @@ export const login = async (req: Request, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
         version: user.version
       },
     });
@@ -89,7 +112,16 @@ export const login = async (req: Request, res: Response) => {
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'username', 'email', 'role', 'createdAt'],
+      attributes: [
+        'id', 
+        'username', 
+        'email', 
+        'role', 
+        'firstName',
+        'lastName',
+        'phoneNumber',
+        'createdAt'
+      ],
       order: [['createdAt', 'DESC']]
     });
     res.json(users);
@@ -102,8 +134,16 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { userId } = req.params;
-    const { username, email, password, role } = req.body;
-    const requestingUser = req.user; // Now TypeScript knows about req.user
+    const { 
+      username, 
+      email, 
+      password, 
+      role, 
+      firstName, 
+      lastName, 
+      phoneNumber 
+    } = req.body;
+    const requestingUser = req.user;
 
     const user = await User.findByPk(userId);
     if (!user) {
@@ -118,9 +158,12 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Update basic fields if provided
+    // Update all fields if provided
     if (username) user.username = username;
     if (email) user.email = email;
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (phoneNumber) user.phoneNumber = phoneNumber;
     if (role) user.role = role;
 
     // Handle password update
@@ -142,6 +185,9 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
         version: user.version
       }
     });

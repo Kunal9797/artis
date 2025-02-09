@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
       case 'distributors':
         return 'Distributors';
       case 'users':
-        return 'User Management';
+        return isMobile ? 'Users' : 'User Management';
       default: 
         return 'Dashboard';
     }

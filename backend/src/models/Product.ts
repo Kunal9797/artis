@@ -1,6 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize';
-import Transaction from './Transaction';
 
 class Product extends Model {
   public id!: string;
@@ -84,18 +83,5 @@ Product.init({
   modelName: 'Product',
   tableName: 'Products'
 });
-
-export const initializeAssociations = () => {
-  Product.hasMany(Transaction, {
-    foreignKey: 'productId',
-    as: 'transactions',
-    onDelete: 'CASCADE'
-  });
-
-  Transaction.belongsTo(Product, {
-    foreignKey: 'productId',
-    onDelete: 'CASCADE'
-  });
-};
 
 export default Product; 
