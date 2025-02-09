@@ -3,35 +3,46 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
     ? 'https://artis-backend.onrender.com'
-    : 'http://localhost:8099'
+    : 'http://localhost:8099',
+  withCredentials: true
 });
 
-// Add request interceptor to include auth token
+// Enhanced request interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  console.log('API Request - Token present:', !!token);
+  console.log('=== API Request ===');
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Base URL:', config.baseURL);
+  console.log('Endpoint:', config.url);
+  console.log('Method:', config.method);
+  console.log('Token present:', !!token);
+  console.log('Headers:', config.headers);
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log('API Request - Authorization header set:', `Bearer ${token.substring(0, 20)}...`);
   }
   return config;
 }, (error) => {
-  console.error('API Request interceptor error:', error);
+  console.error('Request Interceptor Error:', error);
   return Promise.reject(error);
 });
 
-// Add a response interceptor for debugging
+// Enhanced response interceptor
 api.interceptors.response.use(
   (response) => {
+    console.log('=== API Response Success ===');
+    console.log('Endpoint:', response.config.url);
+    console.log('Status:', response.status);
+    console.log('Data:', response.data);
     return response;
   },
   (error) => {
-    console.error('API Response error:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      headers: error.response?.headers
-    });
+    console.error('=== API Response Error ===');
+    console.error('Endpoint:', error.config?.url);
+    console.error('Status:', error.response?.status);
+    console.error('Error Data:', error.response?.data);
+    console.error('Error Message:', error.message);
+    console.error('Full Error:', error);
     return Promise.reject(error);
   }
 );
