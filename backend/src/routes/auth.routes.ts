@@ -4,7 +4,8 @@ import {
   login, 
   getAllUsers, 
   updateUser, 
-  deleteUser 
+  deleteUser,
+  registerWithSalesTeam
 } from '../controllers/auth.controller';
 import { adminAuth } from '../middleware/auth';
 import { auth } from '../middleware/auth';
@@ -105,6 +106,7 @@ router.post('/login', login);
 // Admin only routes
 router.get('/users', auth, adminAuth, getAllUsers);
 router.post('/register', auth, adminAuth, register);
+router.post('/register-with-sales-team', auth, adminAuth, registerWithSalesTeam);
 router.put('/users/:userId', auth, adminAuth, updateUser);
 router.delete('/users/:userId', auth, adminAuth, deleteUser);
 

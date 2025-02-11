@@ -1,8 +1,21 @@
 export interface PerformanceMetric {
-  period: string;
-  sales: number;
-  target: number;
-  lastYear: number;
+  timeSeriesData: {
+    date: string;
+    sales: number;
+  }[];
+  comparisonData: {
+    name: string;
+    current: number;
+    target: number;
+  }[];
+  metrics: {
+    targetAchievement: number;
+    targetAchievementTrend: string;
+    visitsCompleted: number;
+    visitsCompletedTrend: string;
+    avgDealSize: number;
+    avgDealSizeTrend: string;
+  };
 }
 
 export interface TeamMember {
@@ -10,7 +23,12 @@ export interface TeamMember {
   name: string;
   role: string;
   area: string;
-  performance: number;
+  performance: {
+    currentSales: number;
+    targetAchievement: number;
+    visitsCompleted: number;
+    avgDealSize: number;
+  };
   status: 'online' | 'offline';
 }
 
@@ -40,4 +58,25 @@ export interface Lead {
   value: string;
   status: 'new' | 'followup' | 'negotiation' | 'closed';
   probability: number;
+}
+
+export interface ISalesTeamMember extends TeamMember {
+  userId: string;
+  territory: string;
+  reportingTo: string | null;
+  targetQuarter: number;
+  targetYear: number;
+  targetAmount: number;
+  performance: {
+    currentSales: number;
+    targetAchievement: number;
+    visitsCompleted: number;
+    avgDealSize: number;
+  };
+  attendance: {
+    present: number;
+    absent: number;
+    total: number;
+  };
+  activities: Activity[];
 } 

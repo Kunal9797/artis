@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models';
+import { User, SalesTeam } from '../models';
 import bcrypt from 'bcrypt';
+import sequelize from '../config/sequelize';
 
 // Add this interface for typing the request with user
 interface AuthRequest extends Request {
@@ -248,5 +249,33 @@ export const deleteUser = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+};
+
+export const registerWithSalesTeam = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  
+  try {
+    const userData = req.body.user;
+    const salesTeamData = req.body.salesTeam;
+
+    // Create user
+    const user = await User.create(userData, { transaction: t });
+
+    // Create sales team entry
+    if (['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(user.role)) {
+      await SalesTeam.create({
+        userId: user.id,
+        role: user.role,
+        ...salesTeamData
+      }, { transaction: t });
+    }
+
+    await t.commit();
+    res.status(201).json(user);
+  } catch (error) {
+    await t.rollback();
+    console.error('Error in registerWithSalesTeam:', error);
+    res.status(400).json({ error: 'Failed to create user with sales team' });
   }
 }; 

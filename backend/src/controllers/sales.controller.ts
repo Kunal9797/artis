@@ -4,40 +4,16 @@ import sequelize from '../config/sequelize';
 import { SalesTeam, DealerVisit, Lead, Attendance, Message, User } from '../models';
 import { LeadStatus } from '../models/Lead';
 import { AttendanceStatus } from '../models/Attendance';
-import { UserRole } from '../models/User';
+import { UserRole, SalesRole } from '../models/User';
+import { getDateRange, createDateWhereClause } from '../utils/dateUtils';
+import { DateRangeQuery } from '../utils/dateUtils';
+import type { SalesTeamInstance } from '../models/SalesTeam';
 
 interface AuthRequest extends Request {
   user?: any;
   salesTeam?: any;
   file?: Express.Multer.File;
 }
-
-interface DateRangeQuery {
-  startDate?: string;
-  endDate?: string;
-}
-
-// Helper function to validate and parse dates
-const getDateRange = (query: DateRangeQuery): [Date, Date] | null => {
-  const { startDate, endDate } = query;
-  if (!startDate || !endDate) return null;
-
-  try {
-    return [new Date(startDate), new Date(endDate)];
-  } catch (error) {
-    return null;
-  }
-};
-
-// Helper function to create date range where clause
-const createDateWhereClause = (dateRange: [Date, Date] | null, field: string): any => {
-  if (!dateRange) return {};
-  return {
-    [field]: {
-      [Op.between]: dateRange,
-    },
-  };
-};
 
 // Team Management Controllers
 export const createSalesTeam = async (req: AuthRequest, res: Response) => {
@@ -566,32 +542,94 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
 
 export const getTeamPerformance = async (req: AuthRequest, res: Response) => {
   try {
-    const dateRange = getDateRange(req.query as DateRangeQuery);
-    if (!dateRange) {
-      return res.status(400).json({ error: 'Valid start date and end date are required' });
+    const view = req.query.view as 'personal' | 'zone' | 'country';
+    const timeRange = req.query.timeRange as 'week' | 'month' | 'quarter';
+    const dateRange = getDateRange({ timeRange });
+
+    if (view === 'personal') {
+      const salesTeamId = req.salesTeam?.id;
+      if (!salesTeamId) {
+        return res.status(400).json({ error: 'Sales team not found' });
+      }
+
+      // Get current period visits
+      const currentVisits = await DealerVisit.findAll({
+        where: {
+          salesTeamId,
+          ...createDateWhereClause(dateRange, 'visitDate')
+        }
+      });
+
+      // Get previous period visits for trend calculation
+      const previousDateRange = getDateRange({ 
+        timeRange, 
+        endDate: dateRange.startDate.toISOString() 
+      });
+      
+      const previousVisits = await DealerVisit.findAll({
+        where: {
+          salesTeamId,
+          ...createDateWhereClause(previousDateRange, 'visitDate')
+        }
+      });
+
+      // Calculate metrics
+      const currentSales = currentVisits.reduce((sum, visit) => sum + Number(visit.salesAmount || 0), 0);
+      const previousSales = previousVisits.reduce((sum, visit) => sum + Number(visit.salesAmount || 0), 0);
+      
+      const currentVisitsCount = currentVisits.length;
+      const previousVisitsCount = previousVisits.length;
+      
+      const avgDealSize = currentVisitsCount > 0 ? currentSales / currentVisitsCount : 0;
+      const previousAvgDealSize = previousVisitsCount > 0 ? previousSales / previousVisitsCount : 0;
+
+      // Get sales target
+      const salesTeam = await SalesTeam.findByPk(salesTeamId);
+      const targetAmount = salesTeam?.targetAmount || 0;
+
+      // Calculate trends
+      const salesTrend = previousSales > 0 
+        ? ((currentSales - previousSales) / previousSales * 100).toFixed(1) + '%'
+        : '0.0%';
+        
+      const visitsTrend = previousVisitsCount > 0
+        ? ((currentVisitsCount - previousVisitsCount) / previousVisitsCount * 100).toFixed(1) + '%'
+        : '0.0%';
+        
+      const dealSizeTrend = previousAvgDealSize > 0
+        ? ((avgDealSize - previousAvgDealSize) / previousAvgDealSize * 100).toFixed(1) + '%'
+        : '0.0%';
+
+      // Format response
+      const response = {
+        timeSeriesData: currentVisits.map(visit => ({
+          date: visit.visitDate,
+          sales: Number(visit.salesAmount || 0)
+        })),
+        comparisonData: [{
+          name: 'Current Period',
+          current: currentSales,
+          target: targetAmount
+        }],
+        metrics: {
+          targetAchievement: targetAmount > 0 ? (currentSales / targetAmount * 100) : 0,
+          targetAchievementTrend: salesTrend,
+          visitsCompleted: currentVisitsCount,
+          visitsCompletedTrend: visitsTrend,
+          avgDealSize,
+          avgDealSizeTrend: dealSizeTrend
+        }
+      };
+
+      return res.json(response);
     }
 
-    const visitWhere = createDateWhereClause(dateRange, 'visitDate');
+    // Zone/Country views will be implemented later
+    return res.status(400).json({ error: 'Zone and country views not yet implemented' });
 
-    const performance = await SalesTeam.findAll({
-      include: [{
-        model: DealerVisit,
-        where: visitWhere,
-        attributes: [],
-      }],
-      attributes: [
-        'id',
-        'territory',
-        [sequelize.fn('sum', sequelize.col('DealerVisits.salesAmount')), 'totalSales'],
-        [sequelize.fn('count', sequelize.col('DealerVisits.id')), 'totalVisits'],
-      ],
-      group: ['SalesTeam.id', 'SalesTeam.territory'],
-    });
-
-    res.json(performance);
   } catch (error) {
-    console.error('Error fetching team performance:', error);
-    res.status(500).json({ error: 'Failed to fetch team performance' });
+    console.error('Error fetching performance metrics:', error);
+    res.status(500).json({ error: 'Failed to fetch performance metrics' });
   }
 };
 
@@ -674,17 +712,69 @@ export const getAllSalesTeam = async (req: Request, res: Response) => {
     const salesTeam = await SalesTeam.findAll({
       include: [{
         model: User,
-        attributes: ['id', 'username', 'email', 'role']
+        attributes: ['id', 'username', 'email', 'role', 'firstName', 'lastName']
       }],
       order: [['createdAt', 'DESC']]
-    });
+    }) as SalesTeamInstance[];
 
-    res.json(salesTeam);
+    const formattedTeam = salesTeam.map(member => ({
+      id: member.id,
+      userId: member.userId,
+      name: member.User ? `${member.User.firstName} ${member.User.lastName}` : 'Unknown',
+      role: member.role,
+      territory: member.territory,
+      targetQuarter: member.targetQuarter,
+      targetYear: member.targetYear,
+      targetAmount: member.targetAmount,
+      reportingTo: member.reportingTo,
+      performance: {
+        currentSales: 0,
+        targetAchievement: 0,
+        visitsCompleted: 0,
+        avgDealSize: 0
+      },
+      attendance: {
+        present: 0,
+        absent: 0,
+        total: 0
+      },
+      status: 'online' as const
+    }));
+
+    res.json(formattedTeam);
   } catch (error) {
     console.error('Error fetching sales team:', error);
     res.status(500).json({ 
       error: 'Failed to fetch sales team',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+};
+
+export const getTeamMembers = async (req: Request, res: Response) => {
+  try {
+    const role = req.query.role as SalesRole;
+    
+    if (!role || !['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    const members = await SalesTeam.findAll({
+      where: { role: role },
+      include: [{
+        model: User,
+        attributes: ['firstName', 'lastName']
+      }]
+    }) as SalesTeamInstance[];
+
+    const formattedMembers = members.map(member => ({
+      id: member.id,
+      name: `${member.User?.firstName} ${member.User?.lastName}`
+    }));
+
+    res.json(formattedMembers);
+  } catch (error) {
+    console.error('Error fetching team members:', error);
+    res.status(500).json({ error: 'Failed to fetch team members' });
   }
 }; 

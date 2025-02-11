@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -7,7 +7,8 @@ import {
   Grid,
   Card,
   CardContent,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import {
   LineChart,
@@ -21,6 +22,8 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import { salesApi } from '../../../../services/salesApi';
+import { PerformanceMetric } from '../../../../types/sales';
 
 interface PerformanceMetricsProps {
   personalView?: boolean;
@@ -32,53 +35,61 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
   zoneView = false 
 }) => {
   const theme = useTheme();
-  const [timeRange, setTimeRange] = useState('month');
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter'>('month');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<PerformanceMetric | null>(null);
 
-  // Mock data - replace with API calls
-  const salesData = [
-    { month: 'Jan', sales: 4000, target: 3000, lastYear: 3800 },
-    { month: 'Feb', sales: 3500, target: 3000, lastYear: 3200 },
-    { month: 'Mar', sales: 4500, target: 3500, lastYear: 4000 },
-    { month: 'Apr', sales: 3800, target: 3500, lastYear: 3600 },
-    { month: 'May', sales: 4800, target: 4000, lastYear: 4200 },
-    { month: 'Jun', sales: 5000, target: 4000, lastYear: 4500 }
-  ];
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        setLoading(true);
+        const view = personalView ? 'personal' : zoneView ? 'zone' : 'country';
+        const response = await salesApi.getPerformanceMetrics({ view, timeRange });
+        setMetrics(response.data);
+        setError(null);
+      } catch (err: any) {
+        console.error('Error fetching metrics:', err);
+        setError(err.response?.data?.error || 'Failed to load metrics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+  }, [timeRange, personalView, zoneView]);
+
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}><CircularProgress /></Box>;
+  if (error) return <Box sx={{ p: 3, color: 'error.main' }}><Typography>{error}</Typography></Box>;
+  if (!metrics) return null;
 
   const performanceMetrics = [
     {
       title: 'Target Achievement',
-      value: '92%',
-      trend: '+5%',
+      value: `${metrics.metrics.targetAchievement.toFixed(1) || '0.0'}%`,
+      trend: metrics.metrics.targetAchievementTrend || '0.0%',
       color: theme.palette.success.main
     },
     {
-      title: 'Conversion Rate',
-      value: '28%',
-      trend: '+2%',
+      title: 'Visits Completed',
+      value: metrics.metrics.visitsCompleted.toString() || '0',
+      trend: metrics.metrics.visitsCompletedTrend || '0.0%',
       color: theme.palette.primary.main
     },
     {
       title: 'Avg Deal Size',
-      value: '₹42K',
-      trend: '+8%',
+      value: `₹${(metrics.metrics.avgDealSize/1000 || 0).toFixed(1)}K`,
+      trend: metrics.metrics.avgDealSizeTrend || '0.0%',
       color: theme.palette.info.main
     }
   ];
 
   return (
     <Box>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        mb: 3 
-      }}>
+      {/* Time Range Toggle */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">
-          {personalView 
-            ? 'My Performance' 
-            : zoneView 
-              ? 'Zone Performance' 
-              : 'Overall Performance'}
+          {personalView ? 'My Performance' : zoneView ? 'Zone Performance' : 'Overall Performance'}
         </Typography>
         <ToggleButtonGroup
           value={timeRange}
@@ -92,22 +103,15 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
         </ToggleButtonGroup>
       </Box>
 
-      {/* Performance Metrics Cards */}
+      {/* Metric Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {performanceMetrics.map((metric) => (
           <Grid item xs={12} md={4} key={metric.title}>
             <Card>
               <CardContent>
-                <Typography color="textSecondary" variant="subtitle2">
-                  {metric.title}
-                </Typography>
-                <Typography variant="h4" sx={{ my: 1 }}>
-                  {metric.value}
-                </Typography>
-                <Typography 
-                  variant="body2"
-                  color={metric.trend.startsWith('+') ? 'success.main' : 'error.main'}
-                >
+                <Typography color="textSecondary" variant="subtitle2">{metric.title}</Typography>
+                <Typography variant="h4" sx={{ my: 1 }}>{metric.value}</Typography>
+                <Typography variant="body2" color={metric.trend.startsWith('+') ? 'success.main' : 'error.main'}>
                   {metric.trend} vs last {timeRange}
                 </Typography>
               </CardContent>
@@ -119,9 +123,12 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
       {/* Sales Trend Chart */}
       <Box sx={{ height: 300, mt: 4 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={salesData}>
+          <LineChart data={metrics.timeSeriesData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
+            <XAxis 
+              dataKey="date" 
+              tickFormatter={(date) => new Date(date).toLocaleDateString()}
+            />
             <YAxis />
             <Tooltip />
             <Legend />
@@ -132,37 +139,18 @@ const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({
               name="Sales"
               strokeWidth={2}
             />
-            <Line 
-              type="monotone" 
-              dataKey="target" 
-              stroke={theme.palette.warning.main} 
-              name="Target"
-              strokeDasharray="5 5"
-            />
-            <Line 
-              type="monotone" 
-              dataKey="lastYear" 
-              stroke={theme.palette.grey[400]} 
-              name="Last Year"
-              strokeDasharray="3 3"
-            />
           </LineChart>
         </ResponsiveContainer>
       </Box>
 
-      {/* Performance Comparison Chart */}
-      {!personalView && (
+      {/* Comparison Chart for non-personal views */}
+      {!personalView && metrics.comparisonData && (
         <Box sx={{ height: 300, mt: 4 }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             {zoneView ? 'Executive Performance' : 'Zone Performance'}
           </Typography>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={[
-              { name: zoneView ? 'Exec 1' : 'Zone A', current: 4000, target: 4500 },
-              { name: zoneView ? 'Exec 2' : 'Zone B', current: 3500, target: 4000 },
-              { name: zoneView ? 'Exec 3' : 'Zone C', current: 4800, target: 4500 },
-              { name: zoneView ? 'Exec 4' : 'Zone D', current: 3800, target: 4000 }
-            ]}>
+            <BarChart data={metrics.comparisonData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />

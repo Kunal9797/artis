@@ -26,12 +26,14 @@ import {
 import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
+  Assessment as AssessmentIcon,
   Search as SearchIcon
 } from '@mui/icons-material';
 import { salesApi } from '../services/salesApi';
 import { ISalesTeamMember } from '../types/sales';
 import { ROLE_LABELS, ROLE_COLORS } from '../types/user';
 import SalesTeamMemberDetails from './SalesTeamMemberDetails';
+import SalesTeamTargetDialog from './SalesTeamTargetDialog';
 
 const SalesTeamManagement: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<ISalesTeamMember[]>([]);
@@ -42,6 +44,8 @@ const SalesTeamManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [filterRole, setFilterRole] = useState('all');
+  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+  const [selectedForTarget, setSelectedForTarget] = useState<ISalesTeamMember | null>(null);
 
   useEffect(() => {
     fetchTeamMembers();
@@ -104,7 +108,24 @@ const SalesTeamManagement: React.FC = () => {
   };
 
   const getFilteredMembers = () => {
-    return teamMembers.filter(member => {
+    let filteredList = teamMembers;
+    
+    // First apply tab filtering
+    switch (tabValue) {
+      case 1: // Sales Executives
+        filteredList = filteredList.filter(member => member.role === 'SALES_EXECUTIVE');
+        break;
+      case 2: // Zonal Heads
+        filteredList = filteredList.filter(member => member.role === 'ZONAL_HEAD');
+        break;
+      case 3: // Country Heads
+        filteredList = filteredList.filter(member => member.role === 'COUNTRY_HEAD');
+        break;
+      // case 0 is "All Members" so no filtering needed
+    }
+
+    // Then apply search and role filters
+    return filteredList.filter(member => {
       const matchesSearch = 
         member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         member.territory.toLowerCase().includes(searchQuery.toLowerCase());
@@ -124,6 +145,11 @@ const SalesTeamManagement: React.FC = () => {
           return a.name.localeCompare(b.name);
       }
     });
+  };
+
+  const handleSetTarget = (member: ISalesTeamMember) => {
+    setSelectedForTarget(member);
+    setTargetDialogOpen(true);
   };
 
   if (loading) {
@@ -241,6 +267,11 @@ const SalesTeamManagement: React.FC = () => {
                       <VisibilityIcon />
                     </IconButton>
                   </Tooltip>
+                  <Tooltip title="Set Target">
+                    <IconButton onClick={() => handleSetTarget(member)}>
+                      <AssessmentIcon />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Edit">
                     <IconButton>
                       <EditIcon />
@@ -257,6 +288,18 @@ const SalesTeamManagement: React.FC = () => {
         <SalesTeamMemberDetails
           member={selectedMember}
           onClose={handleCloseDetails}
+        />
+      )}
+
+      {selectedForTarget && (
+        <SalesTeamTargetDialog
+          open={targetDialogOpen}
+          onClose={() => {
+            setTargetDialogOpen(false);
+            setSelectedForTarget(null);
+          }}
+          member={selectedForTarget}
+          onUpdate={fetchTeamMembers}
         />
       )}
     </Box>

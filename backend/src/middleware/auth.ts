@@ -7,7 +7,9 @@ import SalesTeam from '../models/SalesTeam';
 interface JWTPayload {
   id: string;
   role: UserRole;
-  salesTeamId?: string;
+  exp?: number;
+  iat?: number;
+  version?: number;
 }
 
 // Enhanced request interface
@@ -19,33 +21,33 @@ interface AuthRequest extends Request {
 // Base authentication middleware
 export const auth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    console.log('=== Auth Middleware Start ===');
+    console.log('\n=== Detailed Auth Debug ===');
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    console.log('Received Authorization header:', req.header('Authorization'));
-    console.log('JWT_SECRET:', process.env.JWT_SECRET);
-    
-    if (!token) {
-      console.log('No token found');
-      throw new Error('Authentication required');
-    }
+    console.log('1. Token:', token ? token.substring(0, 20) + '...' : 'Missing');
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
-    console.log('Decoded token:', {
+    const decoded = jwt.verify(token!, process.env.JWT_SECRET!) as JWTPayload;
+    console.log('2. Decoded token:', {
       userId: decoded.id,
-      role: decoded.role
+      role: decoded.role,
+      exp: decoded.exp ? new Date(decoded.exp * 1000).toISOString() : 'No expiration'
     });
-    
+
     const user = await User.findByPk(decoded.id);
-    console.log('Found user:', user ? `${user.id} (${user.role})` : 'No user found');
-    
+    console.log('3. User lookup:', user ? {
+      id: user.id,
+      role: user.role,
+      exists: true
+    } : 'Not found');
+
     if (!user) {
       throw new Error('User not found');
     }
 
     req.user = decoded;
+    console.log('4. User role check:', ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(decoded.role));
 
-    // If user is sales team member, attach sales team info
     if (['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(decoded.role)) {
+      console.log('5. Looking up sales team for userId:', decoded.id);
       const salesTeam = await SalesTeam.findOne({ 
         where: { userId: decoded.id },
         include: [{
@@ -54,16 +56,28 @@ export const auth = async (req: AuthRequest, res: Response, next: NextFunction) 
         }]
       });
       
+      console.log('6. SalesTeam lookup result:', salesTeam ? {
+        id: salesTeam.id,
+        userId: salesTeam.userId,
+        role: salesTeam.role,
+        exists: true,
+        managerInfo: salesTeam.getManager ? await salesTeam.getManager() : null
+      } : 'Not found');
+
       if (!salesTeam) {
         throw new Error('Sales team member not found');
       }
       req.salesTeam = salesTeam;
     }
 
-    console.log('=== Auth Middleware End ===');
+    console.log('7. Auth successful');
     next();
-  } catch (error) {
-    console.error('Auth middleware error:', error);
+  } catch (error: any) {
+    console.error('\n=== Auth Error ===');
+    console.error('Error type:', error?.constructor?.name || 'Unknown');
+    console.error('Error message:', error?.message || 'Unknown error');
+    console.error('Stack:', error?.stack || 'No stack trace');
+    console.error('JWT Secret exists:', !!process.env.JWT_SECRET);
     res.status(401).json({ error: 'Please authenticate' });
   }
 };
@@ -168,5 +182,38 @@ export const salesExecutiveAuth = async (req: AuthRequest, res: Response, next: 
   if (!['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
     return res.status(403).json({ error: 'Sales executive access required' });
   }
+  next();
+};
+
+// Add this new middleware
+export const performanceAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const view = req.query.view as string;
+  
+  switch (view) {
+    case 'personal':
+      // Allow all sales roles to access their own data
+      if (!['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(req.user?.role!)) {
+        return res.status(403).json({ error: 'Sales team access required' });
+      }
+      break;
+      
+    case 'zone':
+      // Only allow zonal head and above
+      if (!['ZONAL_HEAD', 'COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+        return res.status(403).json({ error: 'Zonal head access required' });
+      }
+      break;
+      
+    case 'country':
+      // Only allow country head and admin
+      if (!['COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+        return res.status(403).json({ error: 'Country head access required' });
+      }
+      break;
+      
+    default:
+      return res.status(400).json({ error: 'Invalid view parameter' });
+  }
+  
   next();
 }; 

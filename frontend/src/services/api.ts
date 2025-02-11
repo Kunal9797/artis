@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { UserFormData } from '../types/user';
 
 const api = axios.create({
   baseURL: process.env.NODE_ENV === 'production' 
@@ -16,11 +17,15 @@ api.interceptors.request.use((config) => {
   console.log('Endpoint:', config.url);
   console.log('Method:', config.method);
   console.log('Token present:', !!token);
-  console.log('Headers:', config.headers);
   
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    // Ensure token is properly formatted with 'Bearer ' prefix
+    config.headers.Authorization = token.startsWith('Bearer ') 
+      ? token 
+      : `Bearer ${token}`;
   }
+  
+  console.log('Headers:', config.headers);
   return config;
 }, (error) => {
   console.error('Request Interceptor Error:', error);
@@ -47,19 +52,16 @@ api.interceptors.response.use(
   }
 );
 
-const BASE_URL = 'http://localhost:8099/api';
-
 // Auth API endpoints
 export const authApi = {
-  login: (username: string, password: string) => 
-    api.post('/api/auth/login', { username, password }),
-  register: (data: { username: string; email: string; password: string; role: string }) => 
-    api.post('/api/auth/register', data),
+  login: (username: string, password: string) => api.post('/api/auth/login', { username, password }),
+  register: (data: UserFormData) => api.post('/api/auth/register', data),
+  registerWithSalesTeam: (userData: UserFormData, salesTeamData: any) => 
+    api.post('/api/auth/register-with-sales-team', { user: userData, salesTeam: salesTeamData }),
   getAllUsers: () => api.get('/api/auth/users'),
-  updateUser: (userId: string, data: { username?: string; email?: string; password?: string; role?: string }) => 
-    api.put(`/api/auth/users/${userId}`, data),
-  deleteUser: (userId: string) => 
-    api.delete(`/api/auth/users/${userId}`)
+  updateUser: (userId: string, data: Partial<UserFormData>) => api.put(`/api/auth/users/${userId}`, data),
+  deleteUser: (userId: string) => api.delete(`/api/auth/users/${userId}`),
+  getSalesTeamMembers: (role: string) => api.get(`/api/sales/team/members?role=${role}`)
 };
 
 // Product API endpoints

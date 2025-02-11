@@ -1,0 +1,218 @@
+.
+├── CURSOR_MEMORY.md
+├── README.md
+├── backend
+│   ├── Procfile
+│   ├── __tests__
+│   │   ├── fixtures
+│   │   │   └── test-inventory.xlsx
+│   │   ├── integration
+│   │   ├── placeholder.test.ts
+│   │   ├── setup.skip.ts
+│   │   └── unit
+│   ├── config
+│   │   └── config.json
+│   ├── jest.config.ts
+│   ├── migrations
+│   │   ├── 20240315000000-create-products.js
+│   │   ├── 20240315000001-merge-inventory-into-products.js
+│   │   ├── 20240315000002-update-product-structure.js
+│   │   ├── 20240315000003-create-transactions.js
+│   │   ├── 20240315000004-fix-null-catalogs.js
+│   │   ├── 20240315000005-make-name-optional.js
+│   │   ├── 20240315000006-create-users.js
+│   │   ├── 20240315000007-add-admin-user.js
+│   │   ├── 20240320000001-add-version-to-users.js
+│   │   ├── 20240320000002-reset-admin-password.js
+│   │   ├── 20240320000003-add-sales-roles-and-team.js
+│   │   ├── 20240320000004-create-dealer-visits.js
+│   │   ├── 20240320000005-create-leads.js
+│   │   ├── 20240320000006-create-attendance.js
+│   │   ├── 20240320000007-create-messages.js
+│   │   └── 20240320000008-add-user-details.js
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── seeders
+│   ├── src
+│   │   ├── app.ts
+│   │   ├── config
+│   │   │   ├── database.js
+│   │   │   ├── database.test.ts
+│   │   │   ├── database.ts
+│   │   │   ├── sequelize.ts
+│   │   │   ├── swagger.ts
+│   │   │   └── testDb.ts
+│   │   ├── controllers
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── distributor.controller.ts
+│   │   │   ├── inventory.controller.ts
+│   │   │   ├── product.controller.ts
+│   │   │   └── sales.controller.ts
+│   │   ├── middleware
+│   │   │   ├── auth.ts
+│   │   │   ├── rateLimiter.ts
+│   │   │   └── upload.ts
+│   │   ├── models
+│   │   │   ├── Attendance.ts
+│   │   │   ├── DealerVisit.ts
+│   │   │   ├── Distributor.ts
+│   │   │   ├── Lead.ts
+│   │   │   ├── Message.ts
+│   │   │   ├── Product.ts
+│   │   │   ├── SalesTeam.ts
+│   │   │   ├── Transaction.ts
+│   │   │   ├── User.ts
+│   │   │   ├── associations.ts
+│   │   │   └── index.ts
+│   │   ├── routes
+│   │   │   ├── auth.routes.ts
+│   │   │   ├── distributor.routes.ts
+│   │   │   ├── inventory.routes.ts
+│   │   │   ├── product.routes.ts
+│   │   │   └── sales.routes.ts
+│   │   ├── server.ts
+│   │   ├── testConnection.ts
+│   │   ├── types
+│   │   │   ├── global.d.ts
+│   │   │   └── sequelize.ts
+│   │   └── utils
+│   │       └── hashPassword.ts
+│   └── tsconfig.json
+├── frontend
+│   ├── config-overrides.js
+│   ├── jest.config.ts
+│   ├── package.json
+│   ├── public
+│   │   ├── favicon.ico
+│   │   ├── index.html
+│   │   ├── logo192.png
+│   │   ├── logo512.png
+│   │   ├── manifest.json
+│   │   ├── robots.txt
+│   │   ├── templates
+│   │   │   ├── consumption-template.xlsx
+│   │   │   ├── inventory-template.xlsx
+│   │   │   ├── letterhead.pdf
+│   │   │   ├── letterhead.png
+│   │   │   ├── product-template.xlsx
+│   │   │   └── purchase-template.xlsx
+│   │   └── test.html
+│   ├── scripts
+│   │   ├── create-consumption-template.ts
+│   │   ├── create-excel-template.ts
+│   │   ├── create-inventory-template.ts
+│   │   ├── create-purchase-template.ts
+│   │   └── tsconfig.json
+│   ├── src
+│   │   ├── App.css
+│   │   ├── App.test.tsx
+│   │   ├── App.tsx
+│   │   ├── assets
+│   │   │   ├── ArtislamLogo.png
+│   │   │   ├── artislaminatestext.png
+│   │   │   ├── artislogo.png
+│   │   │   ├── artislogo2.png
+│   │   │   └── letterhead.ts
+│   │   ├── components
+│   │   │   ├── BulkImportDialog.tsx
+│   │   │   ├── CatalogTags.tsx
+│   │   │   ├── Common
+│   │   │   │   └── ConfirmDialog.tsx
+│   │   │   ├── CustomLetter.tsx
+│   │   │   ├── Dashboard
+│   │   │   │   ├── QuickStats.tsx
+│   │   │   │   └── __tests__
+│   │   │   │       └── tests.test.ts
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── DashboardHome.tsx
+│   │   │   ├── DashboardRouter.tsx
+│   │   │   ├── DesignPaperOrder.tsx
+│   │   │   ├── DistributorsMap.tsx
+│   │   │   ├── InfoPage.tsx
+│   │   │   ├── Inventory
+│   │   │   │   ├── BulkUploadDialog.tsx
+│   │   │   │   ├── HistoryDialog.tsx
+│   │   │   │   ├── InventoryList.tsx
+│   │   │   │   ├── MobileInventoryCard.tsx
+│   │   │   │   ├── ProductDetailsDialog.tsx
+│   │   │   │   └── TransactionDialog.tsx
+│   │   │   ├── LetterPreview.tsx
+│   │   │   ├── Login.tsx
+│   │   │   ├── MapMask.tsx
+│   │   │   ├── Navbar.tsx
+│   │   │   ├── NavigationCard.tsx
+│   │   │   ├── OrderInfo.tsx
+│   │   │   ├── OrdersPage.tsx
+│   │   │   ├── ProductCatalog.tsx
+│   │   │   ├── ProductFilters.tsx
+│   │   │   ├── ProductForm.tsx
+│   │   │   ├── ProtectedRoute.tsx
+│   │   │   ├── RoleRoute.tsx
+│   │   │   ├── Sales
+│   │   │   │   ├── Dashboard
+│   │   │   │   │   ├── CountryHeadDashboard.tsx
+│   │   │   │   │   ├── SalesExecDashboard.tsx
+│   │   │   │   │   ├── ZonalHeadDashboard.tsx
+│   │   │   │   │   └── components
+│   │   │   │   │       ├── ActivitySummary.tsx
+│   │   │   │   │       ├── DealerVisits.tsx
+│   │   │   │   │       ├── LeadManagement.tsx
+│   │   │   │   │       ├── PerformanceMetrics.tsx
+│   │   │   │   │       └── TeamOverview.tsx
+│   │   │   │   ├── DealerManagement
+│   │   │   │   │   └── DealerList.tsx
+│   │   │   │   ├── Leads
+│   │   │   │   │   └── LeadList.tsx
+│   │   │   │   ├── SalesDashboard.tsx
+│   │   │   │   ├── Territory
+│   │   │   │   │   └── TerritoryView.tsx
+│   │   │   │   └── components
+│   │   │   │       └── SalesNavbar.tsx
+│   │   │   ├── Unauthorized.tsx
+│   │   │   └── Users
+│   │   │       ├── UserForm.tsx
+│   │   │       └── UserManagement.tsx
+│   │   ├── context
+│   │   │   ├── AuthContext.tsx
+│   │   │   └── ThemeContext.tsx
+│   │   ├── custom.d.ts
+│   │   ├── data
+│   │   │   ├── coordinatesCache.ts
+│   │   │   ├── geojson.d.ts
+│   │   │   ├── indiaGeoJson.ts
+│   │   │   ├── states.geojson
+│   │   │   └── statesGeoJsonData.ts
+│   │   ├── index.css
+│   │   ├── index.tsx
+│   │   ├── jest.config.ts
+│   │   ├── logo.svg
+│   │   ├── reportWebVitals.ts
+│   │   ├── services
+│   │   │   ├── api.ts
+│   │   │   ├── distributorApi.ts
+│   │   │   ├── geocodingService.ts
+│   │   │   └── salesApi.ts
+│   │   ├── setupTests.ts
+│   │   ├── theme.ts
+│   │   ├── types
+│   │   │   ├── distributor.ts
+│   │   │   ├── geojson.d.ts
+│   │   │   ├── order.ts
+│   │   │   ├── product.ts
+│   │   │   ├── sales.ts
+│   │   │   ├── transaction.ts
+│   │   │   └── user.ts
+│   │   └── utils
+│   │       ├── consumption.ts
+│   │       ├── geoJsonUtils.ts
+│   │       ├── pdfGenerator.ts
+│   │       ├── test-utils.tsx
+│   │       └── tests.ts
+│   └── tsconfig.json
+├── package-lock.json
+├── package.json
+├── project_structure.txt
+├── render.yaml
+└── vercel.json
+
+41 directories, 175 files

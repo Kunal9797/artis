@@ -65,6 +65,7 @@ const Login: React.FC = () => {
             borderRadius: 2,
             overflow: 'hidden',
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            bgcolor: '#fff',
           }}
         >
           <Box 

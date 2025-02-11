@@ -1,15 +1,14 @@
 const { override } = require('customize-cra');
 
-module.exports = override(
-  (config) => {
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        minSize: 20000,
-        maxSize: 244000,
-      },
-    };
-    return config;
-  }
-);
+module.exports = override((config) => {
+  // Disable optimization temporarily
+  config.optimization = {
+    minimize: false,
+    splitChunks: false,
+  };
+  
+  // Add more logging
+  config.stats = 'verbose';
+  
+  return config;
+});

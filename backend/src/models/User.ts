@@ -3,7 +3,7 @@ import sequelize from '../config/sequelize';
 import bcrypt from 'bcrypt';
 
 export type UserRole = 'admin' | 'user' | 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD';
-type SalesRole = Extract<UserRole, 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD'>;
+export type SalesRole = Extract<UserRole, 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD'>;
 
 interface RoleHierarchy {
   COUNTRY_HEAD: SalesRole[];

@@ -37,6 +37,7 @@ import {
   getSalesReport,
   getTeamPerformance,
   getVisitMetrics,
+  getTeamMembers,
 } from '../controllers/sales.controller';
 
 import {
@@ -46,6 +47,8 @@ import {
   countryHeadAuth,
   zonalHeadAuth,
   salesExecutiveAuth,
+  performanceAuth,
+  hierarchicalAuth,
 } from '../middleware/auth';
 
 const router = Router();
@@ -143,12 +146,13 @@ const router = Router();
  */
 
 // Team Management Routes
-router.post('/teams', adminAuth, createSalesTeam);
-router.get('/teams', adminAuth, getAllSalesTeam);
-router.get('/teams/:id', salesAuth, getSalesTeamDetails);
-router.put('/teams/:id', adminAuth, updateSalesTeam);
-router.delete('/teams/:id', adminAuth, deleteSalesTeam);
-router.get('/hierarchy', countryHeadAuth, getTeamHierarchy);
+router.get('/team/all', auth, adminAuth, getAllSalesTeam);
+router.post('/team', auth, adminAuth, createSalesTeam);
+router.put('/team/:id', auth, adminAuth, updateSalesTeam);
+router.delete('/team/:id', auth, adminAuth, deleteSalesTeam);
+router.get('/team/:id', auth, hierarchicalAuth, getSalesTeamDetails);
+router.get('/team/hierarchy', auth, salesAuth, getTeamHierarchy);
+router.get('/team/members/:role', auth, salesAuth, getTeamMembers);
 
 // Dealer Visit Routes
 router.post('/visits', salesExecutiveAuth, upload.single('photo'), recordDealerVisit);
@@ -176,7 +180,7 @@ router.put('/messages/:id/read', salesAuth, markMessageRead);
 
 // Analytics Routes
 router.get('/reports/sales', zonalHeadAuth, getSalesReport);
-router.get('/reports/performance', countryHeadAuth, getTeamPerformance);
+router.get('/reports/performance', auth, performanceAuth, getTeamPerformance);
 router.get('/reports/visits', zonalHeadAuth, getVisitMetrics);
 
 export default router; 

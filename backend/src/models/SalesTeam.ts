@@ -1,16 +1,15 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/sequelize';
-import User, { UserRole } from './User';
+import User, { UserRole, SalesRole } from './User';
 
-type SalesRole = Extract<UserRole, 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD'>;
-
-interface ValidReportingStructure {
+// Export these interfaces
+export interface ValidReportingStructure {
   SALES_EXECUTIVE: SalesRole[];
   ZONAL_HEAD: SalesRole[];
   COUNTRY_HEAD: SalesRole[];
 }
 
-interface SalesTeamAttributes {
+export interface SalesTeamAttributes {
   id: string;
   userId: string;
   role: SalesRole;
@@ -21,9 +20,24 @@ interface SalesTeamAttributes {
   targetAmount: number;
 }
 
-interface SalesTeamCreationAttributes extends Omit<SalesTeamAttributes, 'id'> {}
+export interface UserAssociation {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+  firstName: string;
+  lastName: string;
+}
 
-class SalesTeam extends Model<SalesTeamAttributes, SalesTeamCreationAttributes> {
+export interface SalesTeamInstance extends Model<SalesTeamAttributes, Omit<SalesTeamAttributes, 'id'>>, SalesTeamAttributes {
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+  User?: UserAssociation;
+  getSubordinates(): Promise<SalesTeamInstance[]>;
+  getManager(): Promise<SalesTeamInstance | null>;
+}
+
+class SalesTeam extends Model<SalesTeamAttributes, Omit<SalesTeamAttributes, 'id'>> {
   public id!: string;
   public userId!: string;
   public role!: SalesRole;
@@ -33,23 +47,22 @@ class SalesTeam extends Model<SalesTeamAttributes, SalesTeamCreationAttributes> 
   public targetYear!: number;
   public targetAmount!: number;
 
-  // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
-  // Helper method to get subordinates
-  public async getSubordinates(): Promise<SalesTeam[]> {
+  public User?: UserAssociation;
+
+  public async getSubordinates(): Promise<SalesTeamInstance[]> {
     return SalesTeam.findAll({
       where: {
         reportingTo: this.id
       }
-    });
+    }) as Promise<SalesTeamInstance[]>;
   }
 
-  // Helper method to get reporting manager
-  public async getManager(): Promise<SalesTeam | null> {
+  public async getManager(): Promise<SalesTeamInstance | null> {
     if (!this.reportingTo) return null;
-    return SalesTeam.findByPk(this.reportingTo);
+    return SalesTeam.findByPk(this.reportingTo) as Promise<SalesTeamInstance | null>;
   }
 }
 
@@ -74,7 +87,7 @@ SalesTeam.init(
     },
     territory: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     reportingTo: {
       type: DataTypes.UUID,
@@ -86,7 +99,7 @@ SalesTeam.init(
     },
     targetQuarter: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       validate: {
         min: 1,
         max: 4,
@@ -94,11 +107,11 @@ SalesTeam.init(
     },
     targetYear: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     targetAmount: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
+      allowNull: true,
       validate: {
         min: 0,
       },

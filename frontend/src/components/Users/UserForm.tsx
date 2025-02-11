@@ -25,6 +25,14 @@ interface UserFormProps {
   user: User | null;
 }
 
+interface SalesTeamFormData {
+  territory?: string;
+  reportingTo?: string;
+  targetQuarter?: number;
+  targetYear?: number;
+  targetAmount?: number;
+}
+
 const initialFormData: UserFormData = {
   username: '',
   email: '',
@@ -37,6 +45,8 @@ const initialFormData: UserFormData = {
 
 const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) => {
   const [formData, setFormData] = useState<UserFormData>(initialFormData);
+  const [salesTeamData, setSalesTeamData] = useState<SalesTeamFormData>({});
+  const [managers, setManagers] = useState<{id: string, name: string}[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -56,6 +66,23 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
     }
   }, [user]);
 
+  useEffect(() => {
+    if (formData.role === 'SALES_EXECUTIVE') {
+      loadManagers('ZONAL_HEAD');
+    } else if (formData.role === 'ZONAL_HEAD') {
+      loadManagers('COUNTRY_HEAD');
+    }
+  }, [formData.role]);
+
+  const loadManagers = async (managerRole: string) => {
+    try {
+      const response = await authApi.getSalesTeamMembers(managerRole);
+      setManagers(response.data);
+    } catch (error) {
+      console.error('Failed to load managers:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -63,13 +90,14 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
 
     try {
       if (user) {
-        const updateData = {
-          ...formData,
-          ...(formData.password ? { password: formData.password } : {})
-        };
-        await authApi.updateUser(user.id, updateData);
+        await authApi.updateUser(user.id, formData);
       } else {
-        await authApi.register(formData);
+        const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
+        if (isSalesRole) {
+          await authApi.registerWithSalesTeam(formData, salesTeamData);
+        } else {
+          await authApi.register(formData);
+        }
       }
       onSubmit();
       onClose();
@@ -88,6 +116,45 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
       ...prev,
       [field]: e.target.value
     }));
+  };
+
+  const renderSalesTeamFields = () => {
+    if (!['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role)) {
+      return null;
+    }
+
+    return (
+      <>
+        <TextField
+          label="Territory"
+          value={salesTeamData.territory || ''}
+          onChange={(e) => setSalesTeamData(prev => ({
+            ...prev,
+            territory: e.target.value
+          }))}
+          fullWidth
+        />
+
+        {formData.role !== 'COUNTRY_HEAD' && (
+          <FormControl fullWidth>
+            <InputLabel>Reporting To</InputLabel>
+            <Select
+              value={salesTeamData.reportingTo || ''}
+              onChange={(e) => setSalesTeamData(prev => ({
+                ...prev,
+                reportingTo: e.target.value as string
+              }))}
+            >
+              {managers.map(manager => (
+                <MenuItem key={manager.id} value={manager.id}>
+                  {manager.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+      </>
+    );
   };
 
   return (
@@ -210,6 +277,8 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
                 <MenuItem value="user">{ROLE_LABELS.user}</MenuItem>
               </Select>
             </FormControl>
+
+            {renderSalesTeamFields()}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2, bgcolor: 'background.paper' }}>
