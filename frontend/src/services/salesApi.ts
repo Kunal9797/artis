@@ -1,13 +1,12 @@
 import api from './api';
+import { PerformanceMetric, DealerVisit, Lead, Activity, ISalesTeamMember } from '../types/sales';
 
 export const salesApi = {
   // Performance Metrics
   getPerformanceMetrics: (params: { 
     view: 'personal' | 'zone' | 'country',
     timeRange: 'week' | 'month' | 'quarter'
-  }) => {
-    return api.get('/api/sales/performance', { params });
-  },
+  }) => api.get<PerformanceMetric>('/api/sales/reports/performance', { params }),
 
   // Team Management
   getTeamMembers: (params: { zoneId?: string }) => {
@@ -21,11 +20,43 @@ export const salesApi = {
   }) => {
     return api.get('/api/sales/activities', { params });
   },
-
-  // Dealer Visits
-  getDealerVisits: (params: { date: string }) => {
-    return api.get('/api/sales/visits', { params });
+  // Add new endpoint
+  getAllSalesTeam: () => {
+    return api.get<ISalesTeamMember[]>('/api/sales/team/all');
   },
+  // Dealer Visits
+  getDealerVisits: (params?: { 
+    startDate?: string, 
+    endDate?: string 
+  }) => api.get<DealerVisit[]>('/api/sales/visits', { params }),
+
+  recordDealerVisit: (data: {
+    dealerName: string,
+    location: string,
+    visitDate: string,
+    notes?: string,
+    salesAmount: number,
+    isOfflineEntry?: boolean,
+    offlineId?: string,
+    photo?: File
+  }) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        if (value instanceof File) {
+          formData.append(key, value);
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else {
+          formData.append(key, value);
+        }
+      }
+    });
+    return api.post<DealerVisit>('/api/sales/visits', formData);
+  },
+
+  syncOfflineVisits: (visits: DealerVisit[]) => 
+    api.post<DealerVisit[]>('/api/sales/visits/sync', { visits }),
 
   updateVisitStatus: (visitId: string, status: 'completed' | 'pending' | 'cancelled') => {
     return api.put(`/api/sales/visits/${visitId}/status`, { status });
