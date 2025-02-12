@@ -5,7 +5,8 @@ import {
   getAllUsers, 
   updateUser, 
   deleteUser,
-  registerWithSalesTeam
+  registerWithSalesTeam,
+  updateUserWithSalesTeam
 } from '../controllers/auth.controller';
 import { adminAuth } from '../middleware/auth';
 import { auth } from '../middleware/auth';
@@ -109,5 +110,6 @@ router.post('/register', auth, adminAuth, register);
 router.post('/register-with-sales-team', auth, adminAuth, registerWithSalesTeam);
 router.put('/users/:userId', auth, adminAuth, updateUser);
 router.delete('/users/:userId', auth, adminAuth, deleteUser);
+router.put('/users/:userId/with-sales-team', auth, adminAuth, updateUserWithSalesTeam);
 
 export default router; 

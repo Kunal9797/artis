@@ -236,18 +236,53 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  
   try {
     const { userId } = req.params;
     
+    console.log('\n=== Delete User Debug ===');
+    console.log('1. Attempting to delete user:', userId);
+
+    // First, find the user
     const user = await User.findByPk(userId);
     if (!user) {
+      await t.rollback();
       return res.status(404).json({ error: 'User not found' });
     }
 
-    await user.destroy();
+    console.log('2. Found user:', {
+      id: user.id,
+      role: user.role
+    });
+
+    // Check if user has a sales team entry
+    const salesTeam = await SalesTeam.findOne({
+      where: { userId },
+      transaction: t
+    });
+
+    console.log('3. Sales team entry:', salesTeam ? 'Found' : 'Not found');
+
+    // If sales team entry exists, delete it first
+    if (salesTeam) {
+      await salesTeam.destroy({ transaction: t });
+      console.log('4. Deleted sales team entry');
+    }
+
+    // Now delete the user
+    await user.destroy({ transaction: t });
+    console.log('5. Deleted user');
+
+    await t.commit();
+    console.log('6. Transaction committed successfully');
+
     res.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting user:', error);
+  } catch (error: any) {
+    await t.rollback();
+    console.error('\n=== Delete User Error ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error?.stack);
     res.status(500).json({ error: 'Failed to delete user' });
   }
 };
@@ -277,5 +312,110 @@ export const registerWithSalesTeam = async (req: Request, res: Response) => {
     await t.rollback();
     console.error('Error in registerWithSalesTeam:', error);
     res.status(400).json({ error: 'Failed to create user with sales team' });
+  }
+};
+
+export const updateUserWithSalesTeam = async (req: AuthRequest, res: Response) => {
+  const t = await sequelize.transaction();
+  
+  try {
+    const { userId } = req.params;
+    const userData = req.body.user;
+    const salesTeamData = req.body.salesTeam;
+
+    console.log('\n=== Update User With Sales Team Debug ===');
+    console.log('1. Request Data:', {
+      userId,
+      userData,
+      salesTeamData
+    });
+
+    // Find user
+    const user = await User.findByPk(userId);
+    console.log('2. Found User:', user ? {
+      id: user.id,
+      currentRole: user.role,
+      newRole: userData.role
+    } : 'User not found');
+
+    if (!user) {
+      await t.rollback();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update user
+    await user.update(userData, { transaction: t });
+    console.log('3. Updated User Role:', {
+      from: user.role,
+      to: userData.role
+    });
+
+    // Handle sales team data
+    const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(userData.role);
+    console.log('4. Is Sales Role:', isSalesRole);
+    
+    // Find existing sales team entry
+    let salesTeam = await SalesTeam.findOne({ 
+      where: { userId: user.id },
+      transaction: t 
+    });
+
+    console.log('5. Existing Sales Team:', salesTeam ? {
+      id: salesTeam.id,
+      currentRole: salesTeam.role,
+      newRole: userData.role
+    } : 'No existing sales team entry');
+
+    if (isSalesRole) {
+      const updateData = {
+        role: userData.role,
+        territory: salesTeamData.territory || (salesTeam?.territory || ''),
+        reportingTo: salesTeamData.reportingTo || null,
+        targetQuarter: salesTeamData.targetQuarter || (salesTeam?.targetQuarter || 1),
+        targetYear: salesTeamData.targetYear || (salesTeam?.targetYear || new Date().getFullYear()),
+        targetAmount: salesTeamData.targetAmount || (salesTeam?.targetAmount || 0)
+      };
+
+      console.log('6. Update/Create Data:', updateData);
+
+      if (salesTeam) {
+        // Update existing entry with new role and data
+        await salesTeam.update(updateData, { transaction: t });
+        console.log('7. Updated existing sales team entry');
+      } else {
+        // Create new sales team entry
+        salesTeam = await SalesTeam.create({
+          userId: user.id,
+          ...updateData
+        }, { transaction: t });
+        console.log('7. Created new sales team entry');
+      }
+    } else if (salesTeam) {
+      // If user is no longer in a sales role but has a sales team entry, remove it
+      await salesTeam.destroy({ transaction: t });
+      console.log('7. Removed sales team entry (no longer sales role)');
+    }
+
+    await t.commit();
+    console.log('8. Transaction committed successfully');
+
+    res.json({ 
+      message: 'User updated successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber
+      }
+    });
+  } catch (error: any) {
+    await t.rollback();
+    console.error('\n=== Update User With Sales Team Error ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error?.stack);
+    res.status(500).json({ error: 'Failed to update user with sales team' });
   }
 }; 

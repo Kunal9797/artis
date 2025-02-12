@@ -61,7 +61,9 @@ export const authApi = {
   getAllUsers: () => api.get('/api/auth/users'),
   updateUser: (userId: string, data: Partial<UserFormData>) => api.put(`/api/auth/users/${userId}`, data),
   deleteUser: (userId: string) => api.delete(`/api/auth/users/${userId}`),
-  getSalesTeamMembers: (role: string) => api.get(`/api/sales/team/members?role=${role}`)
+  getSalesTeamMembers: (role: string) => api.get(`/api/sales/team/members?role=${role}`),
+  updateUserWithSalesTeam: (userId: string, userData: Partial<UserFormData>, salesTeamData: any) => 
+    api.put(`/api/auth/users/${userId}/with-sales-team`, { user: userData, salesTeam: salesTeamData })
 };
 
 // Product API endpoints

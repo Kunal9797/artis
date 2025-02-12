@@ -83,13 +83,13 @@ const SalesTeamTargetDialog: React.FC<SalesTeamTargetDialogProps> = ({
           <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Target Amount"
+              label="Target Amount (Sheets)"
               type="number"
-              value={targetData.targetAmount}
-              onChange={(e) => setTargetData(prev => ({ ...prev, targetAmount: Number(e.target.value) }))}
-              InputProps={{
-                startAdornment: <Typography sx={{ mr: 1 }}>₹</Typography>
-              }}
+              value={Math.round(targetData.targetAmount)}
+              onChange={(e) => setTargetData(prev => ({ 
+                ...prev, 
+                targetAmount: Math.round(Number(e.target.value)) 
+              }))}
             />
           </Grid>
         </Grid>

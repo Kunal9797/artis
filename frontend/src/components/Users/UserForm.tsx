@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { authApi } from '../../services/api';
 import { User, UserFormData, ROLE_LABELS } from '../../types/user';
+import { salesApi } from '../../services/salesApi';
 
 interface UserFormProps {
   open: boolean;
@@ -26,7 +27,6 @@ interface UserFormProps {
 }
 
 interface SalesTeamFormData {
-  territory?: string;
   reportingTo?: string;
   targetQuarter?: number;
   targetYear?: number;
@@ -76,8 +76,12 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
 
   const loadManagers = async (managerRole: string) => {
     try {
-      const response = await authApi.getSalesTeamMembers(managerRole);
-      setManagers(response.data);
+      const response = await salesApi.getAllSalesTeam();
+      const filteredManagers = response.data.filter(member => member.role === managerRole);
+      setManagers(filteredManagers.map(manager => ({
+        id: manager.id,
+        name: manager.name
+      })));
     } catch (error) {
       console.error('Failed to load managers:', error);
     }
@@ -90,7 +94,21 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
 
     try {
       if (user) {
-        await authApi.updateUser(user.id, formData);
+        // Check if this is a role change involving sales roles
+        const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
+        const wasSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(user.role);
+        
+        // Use updateUserWithSalesTeam if either the old or new role is a sales role
+        if (isSalesRole || wasSalesRole) {
+          console.log('Updating user with sales team data:', {
+            userId: user.id,
+            formData,
+            salesTeamData
+          });
+          await authApi.updateUserWithSalesTeam(user.id, formData, salesTeamData);
+        } else {
+          await authApi.updateUser(user.id, formData);
+        }
       } else {
         const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
         if (isSalesRole) {
@@ -103,7 +121,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
       onClose();
     } catch (err: any) {
       console.error('Form submission error:', err);
-      setError(err.response?.data?.error || 'Failed to save user');
+      setError(err.response?.data?.error || 'Failed to save user. Please check all fields are valid.');
     } finally {
       setLoading(false);
     }
@@ -125,16 +143,6 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
 
     return (
       <>
-        <TextField
-          label="Territory"
-          value={salesTeamData.territory || ''}
-          onChange={(e) => setSalesTeamData(prev => ({
-            ...prev,
-            territory: e.target.value
-          }))}
-          fullWidth
-        />
-
         {formData.role !== 'COUNTRY_HEAD' && (
           <FormControl fullWidth>
             <InputLabel>Reporting To</InputLabel>
@@ -216,7 +224,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
               value={formData.firstName}
               onChange={handleChange('firstName')}
               fullWidth
-              autoFocus
+              autoComplete="given-name"
             />
 
             <TextField
@@ -225,6 +233,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
               value={formData.lastName}
               onChange={handleChange('lastName')}
               fullWidth
+              autoComplete="family-name"
             />
 
             <TextField
@@ -233,6 +242,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
               value={formData.phoneNumber}
               onChange={handleChange('phoneNumber')}
               fullWidth
+              autoComplete="tel"
             />
 
             <TextField
@@ -241,6 +251,9 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
               value={formData.username}
               onChange={handleChange('username')}
               fullWidth
+              autoComplete="username"
+              helperText="Username must be at least 3 characters long"
+              error={formData.username.length > 0 && formData.username.length < 3}
             />
 
             <TextField
@@ -250,6 +263,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
               value={formData.email}
               onChange={handleChange('email')}
               fullWidth
+              autoComplete="email"
             />
 
             <TextField
@@ -259,6 +273,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
               onChange={handleChange('password')}
               required={!user}
               fullWidth
+              autoComplete={user ? "new-password" : "current-password"}
               helperText={user ? "Leave blank to keep current password" : "Required for new user"}
             />
 

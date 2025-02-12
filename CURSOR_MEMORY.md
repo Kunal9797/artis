@@ -65,7 +65,7 @@
 4. Controller: backend/src/controllers/inventory.controller.ts
 
 ### Sales Team Management Flow
-1. Main View: frontend/src/components/SalesTeamManagement.tsx
+1. Main View: frontend/src/components/Sales/SalesTeamManagement.tsx
    - Handles team member listing
    - Implements filtering and sorting
    - Manages data formatting and type safety
@@ -81,12 +81,36 @@
    - Performance metrics types
    - Activity tracking types
 
+### User Management Flow
+1. Main View: frontend/src/components/Users/UserManagement.tsx
+   - Handles user CRUD operations
+   - Manages role transitions
+   - Handles associated data cleanup
+2. Form Component: frontend/src/components/Users/UserForm.tsx
+   - Manages user creation/updates
+   - Handles role-specific data
+   - Validates input data
+3. API Service: frontend/src/services/api.ts
+   - User CRUD endpoints
+   - Special endpoints for sales role transitions
+4. Controller: backend/src/controllers/auth.controller.ts
+   - Transaction-based user operations
+   - Cascade deletions
+   - Role transition logic
+
 ## Data Models
 
 ### User & Authentication
-- **User Model**: Authentication, roles, permissions
-- **SalesTeam Model**: Hierarchical team structure
-- **Attendance Model**: Location-based tracking
+- **User Model**: 
+  - Authentication
+  - Role management
+  - Version tracking
+  - Cascade relationships
+- **SalesTeam Model**: 
+  - Role-specific data
+  - Territory management
+  - Reporting structure
+  - Performance metrics
 
 ### Sales Operations
 - **Lead Model**: Customer inquiries and follow-ups
@@ -304,3 +328,10 @@ Key migrations:
 - Status management (online/offline)
 - Performance calculation
 - Territory mapping
+
+### User Role Management
+- Transaction-based role transitions
+- Associated data cleanup
+- Cascade deletions
+- Role-specific data validation
+- Type-safe data transformations

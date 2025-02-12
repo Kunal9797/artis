@@ -18,10 +18,16 @@
 - Added type-safe formatters for team member data
 - Improved data loading states and error messages
 
+### Fixed
+- Role transition bug between sales roles (SALES_EXECUTIVE, ZONAL_HEAD, COUNTRY_HEAD)
+- User deletion issue with associated sales team entries
+- Sales team data persistence during role changes
+- Proper cascade deletion for user and sales team entries
+
 ### Technical Details
 - Location: @frontend/src/components/Sales/SalesTeamManagement.tsx
 - Dependencies: Material-UI, React Router
-- API Endpoints: /api/sales/team/*
+- API Endpoints: /api/sales/team/*, /api/auth/users/*
 - Database: Extended SalesTeam model usage
 - Type Safety: Enhanced TypeScript interfaces for team member data
 
@@ -34,5 +40,5 @@ This enhancement provides administrators with comprehensive tools to manage sale
 - Attendance management
 - Graceful handling of missing or incomplete data
 - Type-safe data transformations
-
-The changes build upon existing user management functionality while adding sales-specific features and robust error handling. 
+- Proper role transitions within sales hierarchy
+- Clean user deletion with associated data 

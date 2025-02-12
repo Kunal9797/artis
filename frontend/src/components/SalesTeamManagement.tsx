@@ -21,7 +21,12 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -46,19 +51,23 @@ const SalesTeamManagement: React.FC = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
   const [selectedForTarget, setSelectedForTarget] = useState<ISalesTeamMember | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedForEdit, setSelectedForEdit] = useState<ISalesTeamMember | null>(null);
+  const [editTerritory, setEditTerritory] = useState('');
 
   useEffect(() => {
     fetchTeamMembers();
   }, []);
 
   const formatTeamMember = (member: any): ISalesTeamMember => {
+    console.log('Formatting member:', member);
     return {
       id: member.id,
-      name: `${member.User?.firstName} ${member.User?.lastName}`,
+      name: member.User ? `${member.User.firstName} ${member.User.lastName}` : 'Unknown',
       userId: member.userId,
       role: member.role,
       area: member.territory || '',
-      territory: member.territory,
+      territory: member.territory || '',
       status: 'online' as const,
       reportingTo: member.reportingTo,
       targetQuarter: member.targetQuarter,
@@ -152,6 +161,39 @@ const SalesTeamManagement: React.FC = () => {
     setTargetDialogOpen(true);
   };
 
+  const handleEditClick = (member: ISalesTeamMember) => {
+    setSelectedForEdit(member);
+    setEditTerritory(member.territory || '');
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!selectedForEdit) return;
+    
+    try {
+      await salesApi.updateTeamMember(selectedForEdit.id, {
+        territory: editTerritory
+      });
+      await fetchTeamMembers(); // Refresh the list
+      setEditDialogOpen(false);
+      setSelectedForEdit(null);
+    } catch (error) {
+      console.error('Failed to update territory:', error);
+    }
+  };
+
+  const handleEditTerritory = async (member: ISalesTeamMember, newTerritory: string) => {
+    try {
+      await salesApi.updateTeamMember(member.id, {
+        territory: newTerritory
+      });
+      await fetchTeamMembers(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to update territory:', error);
+      setError('Failed to update territory');
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -230,6 +272,7 @@ const SalesTeamManagement: React.FC = () => {
               <TableCell>Name</TableCell>
               <TableCell>Role</TableCell>
               <TableCell>Territory</TableCell>
+              <TableCell>Target Amount (Sheets)</TableCell>
               <TableCell>Target Achievement</TableCell>
               <TableCell>Visits</TableCell>
               <TableCell>Attendance</TableCell>
@@ -250,6 +293,12 @@ const SalesTeamManagement: React.FC = () => {
                   />
                 </TableCell>
                 <TableCell>{member.territory}</TableCell>
+                <TableCell>
+                  {member.targetAmount ? 
+                    Math.round(member.targetAmount).toLocaleString() : 
+                    '—'
+                  }
+                </TableCell>
                 <TableCell>
                   <Chip
                     label={`${member.performance?.targetAchievement || 0}%`}
@@ -273,7 +322,7 @@ const SalesTeamManagement: React.FC = () => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Edit">
-                    <IconButton>
+                    <IconButton onClick={() => handleEditClick(member)}>
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
@@ -301,6 +350,26 @@ const SalesTeamManagement: React.FC = () => {
           member={selectedForTarget}
           onUpdate={fetchTeamMembers}
         />
+      )}
+
+      {editDialogOpen && selectedForEdit && (
+        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
+          <DialogTitle>Edit Territory</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Territory"
+              fullWidth
+              value={editTerritory}
+              onChange={(e) => setEditTerritory(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleEditSave} variant="contained">Save</Button>
+          </DialogActions>
+        </Dialog>
       )}
     </Box>
   );

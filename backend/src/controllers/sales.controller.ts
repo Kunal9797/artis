@@ -53,17 +53,29 @@ export const updateSalesTeam = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Sales team not found' });
     }
 
-    await salesTeam.update({
-      territory,
-      targetQuarter,
-      targetYear,
-      targetAmount,
+    const updates: any = {};
+    if (territory !== undefined) updates.territory = territory;
+    if (targetQuarter !== undefined) updates.targetQuarter = targetQuarter;
+    if (targetYear !== undefined) updates.targetYear = targetYear;
+    if (targetAmount !== undefined) updates.targetAmount = targetAmount;
+
+    await salesTeam.update(updates);
+
+    // Fetch updated record with User data
+    const updatedTeam = await SalesTeam.findByPk(id, {
+      include: [{
+        model: User,
+        attributes: ['firstName', 'lastName']
+      }]
     });
 
-    res.json(salesTeam);
+    res.json(updatedTeam);
   } catch (error) {
     console.error('Error updating sales team:', error);
-    res.status(500).json({ error: 'Failed to update sales team' });
+    res.status(500).json({ 
+      error: 'Failed to update sales team',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 
@@ -707,47 +719,20 @@ const findManager = (hierarchy: any, managerId: string): any => {
 };
 
 // Add this function to get all sales team members
-export const getAllSalesTeam = async (req: Request, res: Response) => {
+export const getAllSalesTeam = async (req: AuthRequest, res: Response) => {
   try {
-    const salesTeam = await SalesTeam.findAll({
+    const salesTeams = await SalesTeam.findAll({
       include: [{
         model: User,
-        attributes: ['id', 'username', 'email', 'role', 'firstName', 'lastName']
+        attributes: ['id', 'firstName', 'lastName', 'email', 'role']
       }],
       order: [['createdAt', 'DESC']]
-    }) as SalesTeamInstance[];
-
-    const formattedTeam = salesTeam.map(member => ({
-      id: member.id,
-      userId: member.userId,
-      name: member.User ? `${member.User.firstName} ${member.User.lastName}` : 'Unknown',
-      role: member.role,
-      territory: member.territory,
-      targetQuarter: member.targetQuarter,
-      targetYear: member.targetYear,
-      targetAmount: member.targetAmount,
-      reportingTo: member.reportingTo,
-      performance: {
-        currentSales: 0,
-        targetAchievement: 0,
-        visitsCompleted: 0,
-        avgDealSize: 0
-      },
-      attendance: {
-        present: 0,
-        absent: 0,
-        total: 0
-      },
-      status: 'online' as const
-    }));
-
-    res.json(formattedTeam);
-  } catch (error) {
-    console.error('Error fetching sales team:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch sales team',
-      details: error instanceof Error ? error.message : 'Unknown error'
     });
+
+    res.json(salesTeams);
+  } catch (error) {
+    console.error('Error fetching all sales teams:', error);
+    res.status(500).json({ error: 'Failed to fetch sales teams' });
   }
 };
 

@@ -13,6 +13,19 @@ export const salesApi = {
     return api.get('/api/sales/team', { params });
   },
 
+  getAllSalesTeam: () => {
+    return api.get<ISalesTeamMember[]>('/api/sales/team/all');
+  },
+
+  updateTeamMember: (id: string, data: {
+    targetQuarter?: number;
+    targetYear?: number;
+    targetAmount?: number;
+    territory?: string;
+  }) => {
+    return api.put(`/api/sales/team/${id}`, data);
+  },
+
   // Activity
   getActivities: (params: { 
     view: 'personal' | 'zone' | 'country',
@@ -20,10 +33,7 @@ export const salesApi = {
   }) => {
     return api.get('/api/sales/activities', { params });
   },
-  // Add new endpoint
-  getAllSalesTeam: () => {
-    return api.get<ISalesTeamMember[]>('/api/sales/team/all');
-  },
+
   // Dealer Visits
   getDealerVisits: (params?: { 
     startDate?: string, 

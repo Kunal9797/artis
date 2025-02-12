@@ -148,7 +148,7 @@ const router = Router();
 // Team Management Routes
 router.get('/team/all', auth, adminAuth, getAllSalesTeam);
 router.post('/team', auth, adminAuth, createSalesTeam);
-router.put('/team/:id', auth, adminAuth, updateSalesTeam);
+router.put('/team/:id', auth, salesAuth, updateSalesTeam);
 router.delete('/team/:id', auth, adminAuth, deleteSalesTeam);
 router.get('/team/:id', auth, hierarchicalAuth, getSalesTeamDetails);
 router.get('/team/hierarchy', auth, salesAuth, getTeamHierarchy);
