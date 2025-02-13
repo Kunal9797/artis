@@ -30,6 +30,7 @@ import DistributorsMap from './DistributorsMap';
 import InfoIcon from '@mui/icons-material/Info';
 import UserManagement from './Users/UserManagement';
 import SalesTeamManagement from './SalesTeamManagement';
+import LeadManagement from './Leads/LeadManagement';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -70,6 +71,8 @@ const Dashboard: React.FC = () => {
         return isMobile ? 'Users' : 'User Management';
       case 'salesTeam':
         return 'Sales Team Management';
+      case 'leads':
+        return 'Lead Management';
       default: 
         return 'Dashboard';
     }
@@ -82,7 +85,8 @@ const Dashboard: React.FC = () => {
     { label: 'Inventory', value: 'inventory' },
     { label: 'Distributors', value: 'distributors' },
     { label: 'User Management', value: 'users', adminOnly: true },
-    { label: 'Sales Team', value: 'salesTeam', adminOnly: true }
+    { label: 'Sales Team', value: 'salesTeam', adminOnly: true },
+    { label: 'Lead Management', value: 'leads', adminOnly: true }
   ];
 
   const renderContent = () => {
@@ -103,6 +107,8 @@ const Dashboard: React.FC = () => {
         return <UserManagement />;
       case 'salesTeam':
         return isAdmin() ? <SalesTeamManagement /> : null;
+      case 'leads':
+        return isAdmin() ? <LeadManagement /> : null;
       default:
         return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
@@ -228,6 +234,9 @@ const Dashboard: React.FC = () => {
             )}
             {isAdmin() && (
               <MenuItem onClick={() => handlePageChange('salesTeam')}>Sales Team Management</MenuItem>
+            )}
+            {isAdmin() && (
+              <MenuItem onClick={() => handlePageChange('leads')}>Lead Management</MenuItem>
             )}
           </Menu>
 

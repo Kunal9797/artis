@@ -45,7 +45,7 @@ Attendance.init(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: SalesTeam,
+        model: 'SalesTeams',
         key: 'id',
       },
     },

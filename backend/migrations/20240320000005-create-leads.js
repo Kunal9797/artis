@@ -30,9 +30,10 @@ module.exports = {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'SalesTeam',
+          model: 'SalesTeams',
           key: 'id'
         },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
       assignedBy: {
@@ -41,11 +42,22 @@ module.exports = {
         references: {
           model: 'Users',
           key: 'id'
-        }
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       notes: {
         type: DataTypes.TEXT,
         allowNull: true
+      },
+      location: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      notesHistory: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: []
       },
       createdAt: {
         type: DataTypes.DATE,
@@ -60,17 +72,17 @@ module.exports = {
     });
 
     // Add indexes
-    await queryInterface.addIndex('Leads', ['assignedTo']);
     await queryInterface.addIndex('Leads', ['status']);
+    await queryInterface.addIndex('Leads', ['assignedTo']);
+    await queryInterface.addIndex('Leads', ['customerName']);
     await queryInterface.addIndex('Leads', ['phoneNumber']);
-    await queryInterface.addIndex('Leads', ['createdAt']);
   },
 
   async down(queryInterface) {
-    await queryInterface.removeIndex('Leads', ['assignedTo']);
     await queryInterface.removeIndex('Leads', ['status']);
+    await queryInterface.removeIndex('Leads', ['assignedTo']);
+    await queryInterface.removeIndex('Leads', ['customerName']);
     await queryInterface.removeIndex('Leads', ['phoneNumber']);
-    await queryInterface.removeIndex('Leads', ['createdAt']);
     await queryInterface.dropTable('Leads');
   }
 }; 

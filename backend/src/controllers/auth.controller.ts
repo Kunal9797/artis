@@ -418,4 +418,39 @@ export const updateUserWithSalesTeam = async (req: AuthRequest, res: Response) =
     console.error('Stack trace:', error?.stack);
     res.status(500).json({ error: 'Failed to update user with sales team' });
   }
+};
+
+export const getSalesTeamMembers = async (req: Request, res: Response) => {
+  try {
+    const salesTeamMembers = await SalesTeam.findAll({
+      include: [{
+        model: User,
+        attributes: ['firstName', 'lastName', 'role'],
+        required: true  // This ensures User exists
+      }],
+      where: {
+        role: ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD']
+      }
+    });
+
+    const formattedMembers = salesTeamMembers.map(member => {
+      if (!member.User) {
+        console.warn(`Sales team member ${member.id} has no associated user`);
+        return null;
+      }
+
+      return {
+        id: member.id,
+        userId: member.userId,
+        name: `${member.User.firstName} ${member.User.lastName}`,
+        role: member.role
+      };
+    }).filter((member): member is NonNullable<typeof member> => member !== null);
+
+    console.log('Fetched sales team members:', formattedMembers);
+    res.json(formattedMembers);
+  } catch (error) {
+    console.error('Error fetching sales team members:', error);
+    res.status(500).json({ error: 'Failed to fetch sales team members' });
+  }
 }; 

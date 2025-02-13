@@ -30,6 +30,7 @@
   - `/Inventory`: Inventory management components
   - `/Users`: User management components
   - `/Common`: Shared components
+  - `/Leads`: Lead management components
 - **/src/services**: API services
 - **/src/context**: Global state management
 - **/src/types**: TypeScript definitions
@@ -98,6 +99,18 @@
    - Cascade deletions
    - Role transition logic
 
+### Lead Management Flow
+1. Lead Creation/Update
+   - Entry Point: frontend/src/components/Leads/LeadManagement.tsx
+   - Form Handling: components/Leads/components/LeadForm.tsx
+   - API Service: services/leadApi.ts
+   - Database: Lead -> SalesTeam -> User relationship
+2. Lead List: frontend/src/components/Leads/LeadList.tsx
+   - Displays lead data
+   - Handles edit/delete actions
+   - Shows assignee information
+   - Shows territory and role data
+
 ## Data Models
 
 ### User & Authentication
@@ -158,6 +171,13 @@
 - Target setting and monitoring
 - Activity tracking
 - Attendance monitoring
+
+### Lead Management
+- Lead creation/update
+- Lead list display
+- Role-based access
+- Territory context
+- Assignment history
 
 ## Project Structure
 artis/
@@ -335,3 +355,57 @@ Key migrations:
 - Cascade deletions
 - Role-specific data validation
 - Type-safe data transformations
+
+## Lead Management System
+
+### Data Flow
+1. Lead Creation/Update
+   - Entry Point: frontend/src/components/Leads/LeadManagement.tsx
+   - Form Handling: components/Leads/components/LeadForm.tsx
+   - API Service: services/leadApi.ts
+   - Database: Lead -> SalesTeam -> User relationship
+
+### Key Components
+- **LeadManagement.tsx**: Main container component
+  - Handles CRUD operations
+  - Manages state and data flow
+  - Controls form dialogs
+  - Implements role-based access
+
+- **LeadList.tsx**: Display component
+  - Renders lead data
+  - Handles edit/delete actions
+  - Displays assignee information
+  - Shows territory and role data
+
+### Data Relationships
+- **Lead Model**:
+  - Associates with SalesTeam through assignedTo
+  - Tracks assignment history
+  - Maintains territory context
+  - Supports role-based assignments
+
+- **Assignment Flow**:
+  1. Lead created/updated with assignedTo
+  2. Links to SalesTeam member
+  3. Inherits territory and role context
+  4. Maintains proper hierarchical access
+
+### Best Practices
+1. **Data Consistency**:
+   - Always verify Lead-SalesTeam-User relationships
+   - Maintain proper role hierarchy
+   - Ensure territory alignment
+   - Track assignment history
+
+2. **UI/UX**:
+   - Simplify assignment workflows
+   - Provide clear role/territory context
+   - Maintain consistent data display
+   - Implement proper error handling
+
+3. **Data Validation**:
+   - Verify assignee existence
+   - Check role permissions
+   - Validate territory access
+   - Ensure data completeness

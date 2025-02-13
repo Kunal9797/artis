@@ -1,5 +1,6 @@
 import api from './api';
 import { PerformanceMetric, DealerVisit, Lead, Activity, ISalesTeamMember } from '../types/sales';
+import { SalesTeamAttributes } from '../../../backend/src/models/SalesTeam';
 
 export const salesApi = {
   // Performance Metrics
@@ -13,26 +14,26 @@ export const salesApi = {
     return api.get('/api/sales/team', { params });
   },
 
-  getAllSalesTeam: () => {
-    return api.get<ISalesTeamMember[]>('/api/sales/team/all');
+  getAllSalesTeam: async () => {
+    console.log('Fetching all sales team members...');
+    const response = await api.get('/api/sales/team/members');
+    console.log('Sales team response:', response.data);
+    return response;
   },
+  
+  createSalesTeamMember: (data: Omit<SalesTeamAttributes, 'id' | 'role'>) => 
+    api.post('/api/sales/team', data),
 
-  updateTeamMember: (id: string, data: {
-    targetQuarter?: number;
-    targetYear?: number;
-    targetAmount?: number;
-    territory?: string;
-  }) => {
-    return api.put(`/api/sales/team/${id}`, data);
-  },
+  updateTeamMember: (memberId: string, data: Partial<Omit<SalesTeamAttributes, 'id' | 'userId' | 'role'>>) => 
+    api.put(`/api/sales/team/${memberId}`, data),
+
+  getTeamDetails: (id: string) => api.get(`/api/sales/team/${id}`),
 
   // Activity
   getActivities: (params: { 
     view: 'personal' | 'zone' | 'country',
     limit?: number 
-  }) => {
-    return api.get('/api/sales/activities', { params });
-  },
+  }) => api.get('/api/sales/activities', { params }),
 
   // Dealer Visits
   getDealerVisits: (params?: { 
@@ -78,9 +79,11 @@ export const salesApi = {
   },
 
   createLead: (data: {
-    name: string;
-    contact: string;
-    value: string;
+    customerName: string;
+    phoneNumber: string;
+    enquiryDetails?: string;
+    assignedTo: string;
+    location: string;
     notes?: string;
   }) => {
     return api.post('/api/sales/leads', data);
@@ -92,7 +95,11 @@ export const salesApi = {
     notes?: string;
   }) => {
     return api.put(`/api/sales/leads/${leadId}`, data);
-  }
+  },
+
+  // Add this new endpoint
+  deleteSalesTeamMemberByUserId: (userId: string) => 
+    api.delete(`/api/sales/team/user/${userId}`),
 };
 
 export default salesApi; 

@@ -10,6 +10,12 @@ export enum LeadStatus {
   LOST = 'LOST',
 }
 
+interface NoteEntry {
+  timestamp: string;
+  note: string;
+  author: string;
+}
+
 interface LeadAttributes {
   id: string;
   customerName: string;
@@ -19,6 +25,8 @@ interface LeadAttributes {
   assignedTo: string;
   assignedBy: string;
   notes: string;
+  location: string;
+  notesHistory: NoteEntry[];
 }
 
 interface LeadCreationAttributes extends Omit<LeadAttributes, 'id'> {}
@@ -32,6 +40,8 @@ class Lead extends Model<LeadAttributes, LeadCreationAttributes> {
   public assignedTo!: string;
   public assignedBy!: string;
   public notes!: string;
+  public location!: string;
+  public notesHistory!: NoteEntry[];
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -40,10 +50,16 @@ class Lead extends Model<LeadAttributes, LeadCreationAttributes> {
   // Helper method to reassign lead
   public async reassign(newAssigneeId: string, assignedBy: string): Promise<void> {
     const oldAssigneeId = this.assignedTo;
+    const noteEntry: NoteEntry = {
+      timestamp: new Date().toISOString(),
+      note: `Reassigned from ${oldAssigneeId} to ${newAssigneeId}`,
+      author: assignedBy
+    };
+
     await this.update({
       assignedTo: newAssigneeId,
       assignedBy,
-      notes: this.notes + `\nReassigned from ${oldAssigneeId} to ${newAssigneeId} by ${assignedBy} on ${new Date().toISOString()}`
+      notesHistory: [...(this.notesHistory || []), noteEntry]
     });
   }
 }
@@ -63,7 +79,7 @@ Lead.init(
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        is: /^\+?[\d\s-]+$/,  // Basic phone number validation
+        is: /^\+?[1-9][0-9]{7,14}$/,  // Updated phone validation
       },
     },
     enquiryDetails: {
@@ -79,7 +95,7 @@ Lead.init(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: SalesTeam,
+        model: 'SalesTeams',
         key: 'id',
       },
     },
@@ -95,25 +111,35 @@ Lead.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    location: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    notesHistory: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: [],
+    },
   },
   {
     sequelize,
     modelName: 'Lead',
+    tableName: 'Leads',
     timestamps: true,
     hooks: {
       beforeUpdate: async (lead: Lead) => {
         // Add timestamp to notes when status changes
         if (lead.changed('status')) {
-          const timestamp = new Date().toISOString();
-          lead.notes = `${lead.notes || ''}\nStatus changed to ${lead.status} on ${timestamp}`;
+          const noteEntry: NoteEntry = {
+            timestamp: new Date().toISOString(),
+            note: `Status changed to ${lead.status}`,
+            author: lead.assignedBy
+          };
+          lead.notesHistory = [...(lead.notesHistory || []), noteEntry];
         }
       },
     },
   }
 );
-
-// Define associations
-Lead.belongsTo(SalesTeam, { as: 'assignee', foreignKey: 'assignedTo' });
-Lead.belongsTo(User, { as: 'assigner', foreignKey: 'assignedBy' });
 
 export default Lead; 

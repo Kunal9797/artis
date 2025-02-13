@@ -59,11 +59,29 @@ export const authApi = {
   registerWithSalesTeam: (userData: UserFormData, salesTeamData: any) => 
     api.post('/api/auth/register-with-sales-team', { user: userData, salesTeam: salesTeamData }),
   getAllUsers: () => api.get('/api/auth/users'),
-  updateUser: (userId: string, data: Partial<UserFormData>) => api.put(`/api/auth/users/${userId}`, data),
-  deleteUser: (userId: string) => api.delete(`/api/auth/users/${userId}`),
-  getSalesTeamMembers: (role: string) => api.get(`/api/sales/team/members?role=${role}`),
+  updateUser: async (userId: string, data: Partial<UserFormData>) => {
+    const response = await api.put(`/api/auth/users/${userId}`, data);
+    
+    // If role is being changed to a non-sales role, delete sales team entry
+    if (data.role && !['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(data.role)) {
+      try {
+        await api.delete(`/api/sales/team/user/${userId}`);
+      } catch (err) {
+        console.error('Error removing sales team entry:', err);
+      }
+    }
+    
+    return response;
+  },
   updateUserWithSalesTeam: (userId: string, userData: Partial<UserFormData>, salesTeamData: any) => 
-    api.put(`/api/auth/users/${userId}/with-sales-team`, { user: userData, salesTeam: salesTeamData })
+    api.put(`/api/auth/users/${userId}/with-sales-team`, { user: userData, salesTeam: salesTeamData }),
+  deleteUser: (userId: string) => api.delete(`/api/auth/users/${userId}`),
+  getSalesTeamMembers: () => api.get<Array<{
+    id: string;          // This should be the SalesTeam ID
+    userId: string;      // User ID
+    name: string;        // Full name
+    role: string;        // Role
+  }>>('/api/auth/sales-team-members'),
 };
 
 // Product API endpoints

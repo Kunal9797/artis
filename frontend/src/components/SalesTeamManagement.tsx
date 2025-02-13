@@ -60,19 +60,19 @@ const SalesTeamManagement: React.FC = () => {
   }, []);
 
   const formatTeamMember = (member: any): ISalesTeamMember => {
-    console.log('Formatting member:', member);
+    console.log('Raw member data:', member);
     return {
       id: member.id,
-      name: member.User ? `${member.User.firstName} ${member.User.lastName}` : 'Unknown',
+      name: member.name || 'Unknown',
       userId: member.userId,
       role: member.role,
       area: member.territory || '',
       territory: member.territory || '',
       status: 'online' as const,
       reportingTo: member.reportingTo,
-      targetQuarter: member.targetQuarter,
-      targetYear: member.targetYear,
-      targetAmount: member.targetAmount,
+      targetQuarter: member.targetQuarter || 1,
+      targetYear: member.targetYear || new Date().getFullYear(),
+      targetAmount: member.targetAmount || 0,
       performance: {
         currentSales: 0,
         targetAchievement: 0,
@@ -90,8 +90,16 @@ const SalesTeamManagement: React.FC = () => {
 
   const fetchTeamMembers = async () => {
     try {
+      console.log('Fetching team members...');
       const response = await salesApi.getAllSalesTeam();
+      console.log('Raw team data:', response.data);
+      
+      if (response.data.length > 0) {
+        console.log('Sample member data structure:', JSON.stringify(response.data[0], null, 2));
+      }
+      
       const formattedMembers = response.data.map(formatTeamMember);
+      console.log('Formatted members:', formattedMembers);
       setTeamMembers(formattedMembers);
       setError('');
     } catch (err: any) {
@@ -117,9 +125,12 @@ const SalesTeamManagement: React.FC = () => {
   };
 
   const getFilteredMembers = () => {
-    let filteredList = teamMembers;
+    // First filter out any non-sales roles
+    let filteredList = teamMembers.filter(member => 
+      ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(member.role)
+    );
     
-    // First apply tab filtering
+    // Then apply tab filtering
     switch (tabValue) {
       case 1: // Sales Executives
         filteredList = filteredList.filter(member => member.role === 'SALES_EXECUTIVE');
@@ -156,7 +167,7 @@ const SalesTeamManagement: React.FC = () => {
     });
   };
 
-  const handleSetTarget = (member: ISalesTeamMember) => {
+  const handleSetTarget = async (member: ISalesTeamMember) => {
     setSelectedForTarget(member);
     setTargetDialogOpen(true);
   };
@@ -169,28 +180,37 @@ const SalesTeamManagement: React.FC = () => {
 
   const handleEditSave = async () => {
     if (!selectedForEdit) return;
-    
+
     try {
       await salesApi.updateTeamMember(selectedForEdit.id, {
         territory: editTerritory
       });
-      await fetchTeamMembers(); // Refresh the list
+      await fetchTeamMembers();
       setEditDialogOpen(false);
       setSelectedForEdit(null);
-    } catch (error) {
-      console.error('Failed to update territory:', error);
+      setEditTerritory('');
+    } catch (err) {
+      console.error('Failed to update territory:', err);
+      setError('Failed to update territory');
     }
   };
 
-  const handleEditTerritory = async (member: ISalesTeamMember, newTerritory: string) => {
+  const handleCreateSalesTeamMember = async (userId: string) => {
     try {
-      await salesApi.updateTeamMember(member.id, {
-        territory: newTerritory
+      await salesApi.createSalesTeamMember({
+        userId,
+        territory: '',
+        targetQuarter: new Date().getMonth() < 3 ? 1 : 
+                      new Date().getMonth() < 6 ? 2 : 
+                      new Date().getMonth() < 9 ? 3 : 4,
+        targetYear: new Date().getFullYear(),
+        targetAmount: 0,
+        reportingTo: null
       });
-      await fetchTeamMembers(); // Refresh the list
-    } catch (error) {
-      console.error('Failed to update territory:', error);
-      setError('Failed to update territory');
+      await fetchTeamMembers();
+    } catch (err) {
+      console.error('Failed to create sales team member:', err);
+      setError('Failed to create sales team member');
     }
   };
 

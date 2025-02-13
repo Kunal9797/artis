@@ -10,14 +10,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Box,
+  Grid,
   Alert,
-  Typography,
-  Divider
 } from '@mui/material';
 import { authApi } from '../../services/api';
-import { User, UserFormData, ROLE_LABELS } from '../../types/user';
 import { salesApi } from '../../services/salesApi';
+import { User, UserFormData, ROLE_LABELS } from '../../types/user';
 
 interface UserFormProps {
   open: boolean;
@@ -26,27 +24,17 @@ interface UserFormProps {
   user: User | null;
 }
 
-interface SalesTeamFormData {
-  reportingTo?: string;
-  targetQuarter?: number;
-  targetYear?: number;
-  targetAmount?: number;
-}
-
-const initialFormData: UserFormData = {
-  username: '',
-  email: '',
-  password: '',
-  role: 'user',
-  firstName: '',
-  lastName: '',
-  phoneNumber: ''
-};
-
 const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) => {
-  const [formData, setFormData] = useState<UserFormData>(initialFormData);
-  const [salesTeamData, setSalesTeamData] = useState<SalesTeamFormData>({});
-  const [managers, setManagers] = useState<{id: string, name: string}[]>([]);
+  const [formData, setFormData] = useState<UserFormData>({
+    username: '',
+    email: '',
+    password: '',
+    role: 'user',
+    firstName: '',
+    lastName: '',
+    phoneNumber: ''
+  });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -61,266 +49,155 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
         lastName: user.lastName || '',
         phoneNumber: user.phoneNumber || ''
       });
-    } else {
-      setFormData(initialFormData);
     }
   }, [user]);
 
-  useEffect(() => {
-    if (formData.role === 'SALES_EXECUTIVE') {
-      loadManagers('ZONAL_HEAD');
-    } else if (formData.role === 'ZONAL_HEAD') {
-      loadManagers('COUNTRY_HEAD');
-    }
-  }, [formData.role]);
-
-  const loadManagers = async (managerRole: string) => {
-    try {
-      const response = await salesApi.getAllSalesTeam();
-      const filteredManagers = response.data.filter(member => member.role === managerRole);
-      setManagers(filteredManagers.map(manager => ({
-        id: manager.id,
-        name: manager.name
-      })));
-    } catch (error) {
-      console.error('Failed to load managers:', error);
-    }
+  const handleChange = (field: keyof UserFormData) => (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-
     try {
-      if (user) {
-        // Check if this is a role change involving sales roles
-        const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
-        const wasSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(user.role);
-        
-        // Use updateUserWithSalesTeam if either the old or new role is a sales role
-        if (isSalesRole || wasSalesRole) {
-          console.log('Updating user with sales team data:', {
-            userId: user.id,
-            formData,
-            salesTeamData
+      const response = user 
+        ? await authApi.updateUser(user.id, formData)
+        : await authApi.register(formData);
+
+      // Create sales team member in two cases:
+      // 1. New user with sales role
+      // 2. Existing user being updated to a sales role
+      const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
+      const wasNotSalesRole = user && !['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(user.role);
+      
+      if (isSalesRole && (!user || wasNotSalesRole)) {
+        try {
+          const userId = user ? user.id : response.data.user.id;
+          console.log('Creating sales team member for:', userId);
+          await salesApi.createSalesTeamMember({
+            userId,
+            territory: '',
+            targetQuarter: new Date().getMonth() < 3 ? 1 : 
+                          new Date().getMonth() < 6 ? 2 : 
+                          new Date().getMonth() < 9 ? 3 : 4,
+            targetYear: new Date().getFullYear(),
+            targetAmount: 0,
+            reportingTo: null
           });
-          await authApi.updateUserWithSalesTeam(user.id, formData, salesTeamData);
-        } else {
-          await authApi.updateUser(user.id, formData);
-        }
-      } else {
-        const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
-        if (isSalesRole) {
-          await authApi.registerWithSalesTeam(formData, salesTeamData);
-        } else {
-          await authApi.register(formData);
+        } catch (err) {
+          console.error('Error creating sales team member:', err);
+          setError('User updated but failed to set up sales team member');
+          return;
         }
       }
+
+      setError('');
       onSubmit();
-      onClose();
     } catch (err: any) {
-      console.error('Form submission error:', err);
-      setError(err.response?.data?.error || 'Failed to save user. Please check all fields are valid.');
+      console.error('Error submitting form:', err);
+      setError(err.response?.data?.error || 'Failed to submit form');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (field: keyof UserFormData) => (
-    e: React.ChangeEvent<HTMLInputElement | { value: unknown }>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.value
-    }));
-  };
-
-  const renderSalesTeamFields = () => {
-    if (!['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role)) {
-      return null;
-    }
-
-    return (
-      <>
-        {formData.role !== 'COUNTRY_HEAD' && (
-          <FormControl fullWidth>
-            <InputLabel>Reporting To</InputLabel>
-            <Select
-              value={salesTeamData.reportingTo || ''}
-              onChange={(e) => setSalesTeamData(prev => ({
-                ...prev,
-                reportingTo: e.target.value as string
-              }))}
-            >
-              {managers.map(manager => (
-                <MenuItem key={manager.id} value={manager.id}>
-                  {manager.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      </>
-    );
-  };
-
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          borderRadius: 2,
-          '& .MuiDialogTitle-root': {
-            bgcolor: 'background.paper',
-            py: 2
-          }
-        }
-      }}
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>
-          <Typography variant="h6" component="div">
-            {user ? 'Edit User' : 'Create New User'}
-          </Typography>
-        </DialogTitle>
-        <Divider />
+        <DialogTitle>{user ? 'Edit User' : 'Create User'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: 2, 
-            mt: 2,
-            '& .MuiTextField-root': {
-              '& .MuiOutlinedInput-root': {
-                '&.Mui-focused fieldset': {
-                  borderColor: 'primary.main'
-                }
-              }
-            }
-          }}>
-            {error && (
-              <Alert 
-                severity="error"
-                sx={{ 
-                  borderRadius: 1,
-                  '& .MuiAlert-icon': {
-                    color: 'error.main'
-                  }
-                }}
-              >
-                {error}
-              </Alert>
-            )}
-            
-            <TextField
-              required
-              label="First Name"
-              value={formData.firstName}
-              onChange={handleChange('firstName')}
-              fullWidth
-              autoComplete="given-name"
-            />
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="First Name"
+                value={formData.firstName}
+                onChange={handleChange('firstName')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="Last Name"
+                value={formData.lastName}
+                onChange={handleChange('lastName')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="Username"
+                value={formData.username}
+                onChange={handleChange('username')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange('email')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange('password')}
+                required={!user}
+                fullWidth
+                helperText={user ? "Leave blank to keep current password" : "Required for new user"}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Phone Number"
+                value={formData.phoneNumber}
+                onChange={handleChange('phoneNumber')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Role</InputLabel>
+                <Select
+                  value={formData.role}
+                  onChange={handleChange('role') as any}
+                  label="Role"
+                >
+                  {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                    <MenuItem key={role} value={role}>{label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
 
-            <TextField
-              required
-              label="Last Name"
-              value={formData.lastName}
-              onChange={handleChange('lastName')}
-              fullWidth
-              autoComplete="family-name"
-            />
-
-            <TextField
-              required
-              label="Phone Number"
-              value={formData.phoneNumber}
-              onChange={handleChange('phoneNumber')}
-              fullWidth
-              autoComplete="tel"
-            />
-
-            <TextField
-              required
-              label="Username"
-              value={formData.username}
-              onChange={handleChange('username')}
-              fullWidth
-              autoComplete="username"
-              helperText="Username must be at least 3 characters long"
-              error={formData.username.length > 0 && formData.username.length < 3}
-            />
-
-            <TextField
-              required
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange('email')}
-              fullWidth
-              autoComplete="email"
-            />
-
-            <TextField
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange('password')}
-              required={!user}
-              fullWidth
-              autoComplete={user ? "new-password" : "current-password"}
-              helperText={user ? "Leave blank to keep current password" : "Required for new user"}
-            />
-
-            <FormControl fullWidth>
-              <InputLabel id="role-label">Role</InputLabel>
-              <Select
-                labelId="role-label"
-                value={formData.role}
-                label="Role"
-                onChange={handleChange('role') as any}
-              >
-                <MenuItem value="admin">{ROLE_LABELS.admin}</MenuItem>
-                <MenuItem value="SALES_EXECUTIVE">{ROLE_LABELS.SALES_EXECUTIVE}</MenuItem>
-                <MenuItem value="ZONAL_HEAD">{ROLE_LABELS.ZONAL_HEAD}</MenuItem>
-                <MenuItem value="COUNTRY_HEAD">{ROLE_LABELS.COUNTRY_HEAD}</MenuItem>
-                <MenuItem value="user">{ROLE_LABELS.user}</MenuItem>
-              </Select>
-            </FormControl>
-
-            {renderSalesTeamFields()}
-          </Box>
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
         </DialogContent>
-        <DialogActions sx={{ p: 2, bgcolor: 'background.paper' }}>
-          <Button 
-            onClick={onClose} 
-            disabled={loading}
-            sx={{ 
-              color: 'text.secondary',
-              '&:hover': {
-                bgcolor: 'action.hover'
-              }
-            }}
-          >
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
             Cancel
           </Button>
           <Button 
             type="submit" 
             variant="contained" 
             disabled={loading}
-            sx={{
-              bgcolor: 'primary.main',
-              '&:hover': {
-                bgcolor: 'primary.dark'
-              }
-            }}
           >
-            {loading ? 'Saving...' : user ? 'Save Changes' : 'Create User'}
+            {loading ? 'Saving...' : user ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </form>

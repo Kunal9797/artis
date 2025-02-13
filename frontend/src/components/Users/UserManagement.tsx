@@ -42,6 +42,7 @@ const UserManagement: React.FC = () => {
   const fetchUsers = async () => {
     try {
       const response = await authApi.getAllUsers();
+      console.log('Fetched users:', response.data);
       setUsers(response.data);
       setError('');
     } catch (err: any) {
@@ -78,6 +79,12 @@ const UserManagement: React.FC = () => {
       setError('Failed to delete user');
       console.error('Error deleting user:', err);
     }
+  };
+
+  const handleUserOperation = async () => {
+    await fetchUsers();
+    setOpenForm(false);
+    setSelectedUser(null);
   };
 
   const getRoleColor = (role: string) => {
@@ -272,8 +279,11 @@ const UserManagement: React.FC = () => {
 
       <UserForm
         open={openForm}
-        onClose={() => setOpenForm(false)}
-        onSubmit={fetchUsers}
+        onClose={() => {
+          setOpenForm(false);
+          setSelectedUser(null);
+        }}
+        onSubmit={handleUserOperation}
         user={selectedUser}
       />
 

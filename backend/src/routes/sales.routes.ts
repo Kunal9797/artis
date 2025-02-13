@@ -22,6 +22,8 @@ import {
   reassignLead,
   getLeads,
   getLeadDetails,
+  deleteLead,
+  addLeadNote,
   
   // Attendance
   markAttendance,
@@ -49,6 +51,7 @@ import {
   salesExecutiveAuth,
   performanceAuth,
   hierarchicalAuth,
+  salesOrAdminAuth,
 } from '../middleware/auth';
 
 const router = Router();
@@ -145,14 +148,16 @@ const router = Router();
  *         description: Member not found
  */
 
-// Team Management Routes
-router.get('/team/all', auth, adminAuth, getAllSalesTeam);
-router.post('/team', auth, adminAuth, createSalesTeam);
-router.put('/team/:id', auth, salesAuth, updateSalesTeam);
-router.delete('/team/:id', auth, adminAuth, deleteSalesTeam);
-router.get('/team/:id', auth, hierarchicalAuth, getSalesTeamDetails);
+// Team Management Routes - Order matters! Most specific first
+router.get('/team/members', salesOrAdminAuth, getTeamMembers);
 router.get('/team/hierarchy', auth, salesAuth, getTeamHierarchy);
-router.get('/team/members/:role', auth, salesAuth, getTeamMembers);
+router.get('/team/all', auth, adminAuth, getAllSalesTeam);
+
+// Team CRUD operations
+router.post('/team', salesOrAdminAuth, createSalesTeam);
+router.get('/team/:id', auth, hierarchicalAuth, getSalesTeamDetails);
+router.put('/team/:id', salesOrAdminAuth, updateSalesTeam);
+router.delete('/team/:id', adminAuth, deleteSalesTeam);
 
 // Dealer Visit Routes
 router.post('/visits', salesExecutiveAuth, upload.single('photo'), recordDealerVisit);
@@ -162,11 +167,13 @@ router.put('/visits/:id', salesExecutiveAuth, updateDealerVisit);
 router.delete('/visits/:id', salesExecutiveAuth, deleteDealerVisit);
 
 // Lead Management Routes
-router.post('/leads', salesAuth, createLead);
-router.put('/leads/:id', salesAuth, updateLead);
-router.put('/leads/:id/reassign', zonalHeadAuth, reassignLead);
-router.get('/teams/:teamId/leads', salesAuth, getLeads);
-router.get('/leads/:id', salesAuth, getLeadDetails);
+router.post('/leads', salesOrAdminAuth, createLead);
+router.get('/leads', salesOrAdminAuth, getLeads);
+router.get('/leads/:id', salesOrAdminAuth, getLeadDetails);
+router.put('/leads/:id', salesOrAdminAuth, updateLead);
+router.delete('/leads/:id', salesOrAdminAuth, deleteLead);
+router.put('/leads/:id/assign', salesAuth, reassignLead);
+router.post('/leads/:id/notes', salesAuth, addLeadNote);
 
 // Attendance Routes
 router.post('/attendance', salesExecutiveAuth, markAttendance);

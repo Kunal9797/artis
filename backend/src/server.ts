@@ -13,6 +13,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { initializeAssociations } from './models/associations';
 import salesRoutes from './routes/sales.routes';
+import { auth } from './middleware/auth';
 
 const execAsync = promisify(exec);
 
@@ -36,6 +37,14 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add global auth middleware for /api routes
+app.use('/api', (req, res, next) => {
+  if (req.path === '/auth/login' || req.path === '/auth/register') {
+    return next();
+  }
+  auth(req, res, next);
+});
 
 // Swagger documentation route (must be before other routes)
 app.use('/api-docs', swaggerUi.serve);

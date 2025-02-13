@@ -21,64 +21,35 @@ interface AuthRequest extends Request {
 // Base authentication middleware
 export const auth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    console.log('\n=== Detailed Auth Debug ===');
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    console.log('1. Token:', token ? token.substring(0, 20) + '...' : 'Missing');
+    console.log('\n=== Base Auth Debug ===');
+    const authHeader = req.header('Authorization');
+    console.log('Auth Header:', authHeader);
+    
+    if (!authHeader) {
+      console.log('No auth header found');
+      return res.status(401).json({ error: 'No auth token' });
+    }
 
-    const decoded = jwt.verify(token!, process.env.JWT_SECRET!) as JWTPayload;
-    console.log('2. Decoded token:', {
-      userId: decoded.id,
+    const token = authHeader.replace('Bearer ', '');
+    console.log('Token found:', token.substring(0, 20) + '...');
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as JWTPayload;
+    console.log('Decoded token:', {
+      id: decoded.id,
       role: decoded.role,
-      exp: decoded.exp ? new Date(decoded.exp * 1000).toISOString() : 'No expiration'
+      exp: decoded.exp
     });
 
-    const user = await User.findByPk(decoded.id);
-    console.log('3. User lookup:', user ? {
-      id: user.id,
-      role: user.role,
-      exists: true
-    } : 'Not found');
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
     req.user = decoded;
-    console.log('4. User role check:', ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(decoded.role));
-
-    if (['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(decoded.role)) {
-      console.log('5. Looking up sales team for userId:', decoded.id);
-      const salesTeam = await SalesTeam.findOne({ 
-        where: { userId: decoded.id },
-        include: [{
-          model: SalesTeam,
-          as: 'manager'
-        }]
-      });
-      
-      console.log('6. SalesTeam lookup result:', salesTeam ? {
-        id: salesTeam.id,
-        userId: salesTeam.userId,
-        role: salesTeam.role,
-        exists: true,
-        managerInfo: salesTeam.getManager ? await salesTeam.getManager() : null
-      } : 'Not found');
-
-      if (!salesTeam) {
-        throw new Error('Sales team member not found');
-      }
-      req.salesTeam = salesTeam;
-    }
-
-    console.log('7. Auth successful');
+    console.log('User attached to request:', {
+      id: req.user.id,
+      role: req.user.role
+    });
+    
     next();
-  } catch (error: any) {
-    console.error('\n=== Auth Error ===');
-    console.error('Error type:', error?.constructor?.name || 'Unknown');
-    console.error('Error message:', error?.message || 'Unknown error');
-    console.error('Stack:', error?.stack || 'No stack trace');
-    console.error('JWT Secret exists:', !!process.env.JWT_SECRET);
-    res.status(401).json({ error: 'Please authenticate' });
+  } catch (error) {
+    console.error('Error in auth middleware:', error);
+    res.status(401).json({ error: 'Invalid token' });
   }
 };
 
@@ -104,7 +75,8 @@ export const adminAuth = async (req: AuthRequest, res: Response, next: NextFunct
 
 // Sales hierarchy middleware
 export const salesAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+  const userRole = req.user?.role?.toLowerCase();
+  if (!userRole || !['sales_executive', 'zonal_head', 'country_head', 'admin'].includes(userRole)) {
     return res.status(403).json({ error: 'Sales team access required' });
   }
   next();
@@ -149,9 +121,18 @@ const checkHierarchicalAccess = async (req: AuthRequest, teamId: string): Promis
 
 // Middleware for checking hierarchical access
 export const hierarchicalAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  console.log('\n=== hierarchicalAuth Debug ===');
+  console.log('Request path:', req.path);
+  console.log('Request method:', req.method);
+  console.log('Request params:', req.params);
+  console.log('Request query:', req.query);
+  console.log('Request body:', req.body);
+  
   const teamId = req.params.teamId || req.body.teamId;
+  console.log('Team ID from request:', teamId);
   
   if (!teamId) {
+    console.log('No team ID found in request - sending 400');
     return res.status(400).json({ error: 'Team ID required' });
   }
 
@@ -165,21 +146,24 @@ export const hierarchicalAuth = async (req: AuthRequest, res: Response, next: Ne
 
 // Role-specific middleware
 export const countryHeadAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!['COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+  const userRole = req.user?.role?.toLowerCase();
+  if (!userRole || !['country_head', 'admin'].includes(userRole)) {
     return res.status(403).json({ error: 'Country head access required' });
   }
   next();
 };
 
 export const zonalHeadAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!['ZONAL_HEAD', 'COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+  const userRole = req.user?.role?.toLowerCase();
+  if (!userRole || !['zonal_head', 'country_head', 'admin'].includes(userRole)) {
     return res.status(403).json({ error: 'Zonal head access required' });
   }
   next();
 };
 
 export const salesExecutiveAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+  const userRole = req.user?.role?.toLowerCase();
+  if (!userRole || !['sales_executive', 'zonal_head', 'country_head', 'admin'].includes(userRole)) {
     return res.status(403).json({ error: 'Sales executive access required' });
   }
   next();
@@ -188,25 +172,26 @@ export const salesExecutiveAuth = async (req: AuthRequest, res: Response, next: 
 // Add this new middleware
 export const performanceAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const view = req.query.view as string;
+  const userRole = req.user?.role?.toLowerCase();
   
   switch (view) {
     case 'personal':
       // Allow all sales roles to access their own data
-      if (!['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(req.user?.role!)) {
+      if (!userRole || !['sales_executive', 'zonal_head', 'country_head'].includes(userRole)) {
         return res.status(403).json({ error: 'Sales team access required' });
       }
       break;
       
     case 'zone':
       // Only allow zonal head and above
-      if (!['ZONAL_HEAD', 'COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+      if (!userRole || !['zonal_head', 'country_head', 'admin'].includes(userRole)) {
         return res.status(403).json({ error: 'Zonal head access required' });
       }
       break;
       
     case 'country':
       // Only allow country head and admin
-      if (!['COUNTRY_HEAD', 'admin'].includes(req.user?.role!)) {
+      if (!userRole || !['country_head', 'admin'].includes(userRole)) {
         return res.status(403).json({ error: 'Country head access required' });
       }
       break;
@@ -216,4 +201,58 @@ export const performanceAuth = async (req: AuthRequest, res: Response, next: Nex
   }
   
   next();
+};
+
+// Add this new middleware
+export const salesOrAdminAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    console.log('\n=== salesOrAdminAuth Debug START ===');
+    console.log('Request path:', req.path);
+    console.log('Request method:', req.method);
+    console.log('Request user:', {
+      id: req.user?.id,
+      role: req.user?.role,
+      originalRole: req.user?.role
+    });
+
+    if (!req.user) {
+      console.log('No user object found in salesOrAdminAuth');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const userRole = req.user.role?.toLowerCase();
+    console.log('User role after toLowerCase:', userRole);
+    
+    if (userRole === 'admin') {
+      console.log('Admin access granted in salesOrAdminAuth');
+      return next();
+    }
+
+    console.log('Not admin, checking sales roles...');
+    const salesRoles = ['sales_executive', 'zonal_head', 'country_head'];
+    if (!salesRoles.includes(userRole)) {
+      console.log('Invalid role in salesOrAdminAuth:', userRole);
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    console.log('Valid sales role, checking team...');
+    const salesTeam = await SalesTeam.findOne({
+      where: { userId: req.user.id }
+    });
+
+    console.log('Sales team query result:', salesTeam?.id || 'No team found');
+
+    if (!salesTeam) {
+      console.log('No sales team found for user in salesOrAdminAuth');
+      return res.status(403).json({ error: 'Sales team access required' });
+    }
+
+    req.salesTeam = salesTeam;
+    console.log('Sales team attached:', salesTeam.id);
+    console.log('=== salesOrAdminAuth Debug END ===');
+    next();
+  } catch (error) {
+    console.error('Error in salesOrAdminAuth:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }; 

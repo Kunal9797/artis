@@ -18,24 +18,41 @@ interface AuthRequest extends Request {
 // Team Management Controllers
 export const createSalesTeam = async (req: AuthRequest, res: Response) => {
   try {
-    const { userId, role, territory, reportingTo, targetQuarter, targetYear, targetAmount } = req.body;
+    console.log('=== createSalesTeam Debug ===');
+    console.log('Request body:', req.body);
+    
+    const { userId, territory, reportingTo, targetQuarter, targetYear, targetAmount } = req.body;
 
     // Verify user exists and has appropriate role
     const user = await User.findByPk(userId);
+    console.log('Found user:', user?.toJSON());
+    
     if (!user || !user.isSalesRole()) {
+      console.log('User not found or not a sales role');
       return res.status(400).json({ error: 'Invalid user or role' });
     }
 
+    // Check if user already has a sales team entry
+    const existingTeam = await SalesTeam.findOne({ where: { userId } });
+    if (existingTeam) {
+      console.log('User already has a sales team entry');
+      return res.status(400).json({ error: 'User already has a sales team entry' });
+    }
+
+    // Extract the sales role from the user's role
+    const salesRole = user.role as SalesRole;
+
     const salesTeam = await SalesTeam.create({
       userId,
-      role,
-      territory,
-      reportingTo,
-      targetQuarter,
-      targetYear,
-      targetAmount,
+      role: salesRole,
+      territory: territory || '',
+      reportingTo: reportingTo || null,
+      targetQuarter: targetQuarter || 1,
+      targetYear: targetYear || new Date().getFullYear(),
+      targetAmount: targetAmount || 0,
     });
 
+    console.log('Created sales team:', salesTeam.toJSON());
     res.status(201).json(salesTeam);
   } catch (error) {
     console.error('Error creating sales team:', error);
@@ -274,7 +291,34 @@ export const deleteDealerVisit = async (req: AuthRequest, res: Response) => {
 // Lead Management Controllers
 export const createLead = async (req: AuthRequest, res: Response) => {
   try {
-    const { customerName, phoneNumber, enquiryDetails, assignedTo } = req.body;
+    console.log('\n=== Create Lead Debug ===');
+    console.log('Request user:', req.user);
+    console.log('Request body:', req.body);
+    
+    const { customerName, phoneNumber, enquiryDetails, assignedTo, location, notes } = req.body;
+    
+    console.log('\nLooking up sales team member:', assignedTo);
+    const salesTeamMember = await SalesTeam.findByPk(assignedTo);
+    console.log('Found sales team member:', salesTeamMember?.toJSON());
+
+    if (!salesTeamMember) {
+      console.log('Sales team member not found');
+      return res.status(400).json({ 
+        error: 'Invalid assignedTo value. Sales team member not found.',
+        details: `Sales team member with ID ${assignedTo} does not exist.`
+      });
+    }
+
+    console.log('\nCreating lead with data:', {
+      customerName,
+      phoneNumber,
+      enquiryDetails,
+      status: LeadStatus.NEW,
+      assignedTo,
+      assignedBy: req.user?.id,
+      location,
+      notes
+    });
 
     const lead = await Lead.create({
       customerName,
@@ -282,68 +326,71 @@ export const createLead = async (req: AuthRequest, res: Response) => {
       enquiryDetails,
       status: LeadStatus.NEW,
       assignedTo,
-      assignedBy: req.user.id,
-      notes: '',
+      assignedBy: req.user?.id,
+      location,
+      notes,
+      notesHistory: notes ? [{
+        timestamp: new Date().toISOString(),
+        note: notes,
+        author: req.user?.id
+      }] : []
     });
 
+    console.log('\nLead created successfully:', lead?.toJSON());
     res.status(201).json(lead);
   } catch (error) {
-    console.error('Error creating lead:', error);
-    res.status(500).json({ error: 'Failed to create lead' });
-  }
-};
-
-export const updateLead = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { status, notes } = req.body;
-
-    const lead = await Lead.findByPk(id);
-    if (!lead) {
-      return res.status(404).json({ error: 'Lead not found' });
-    }
-
-    await lead.update({ status, notes });
-    res.json(lead);
-  } catch (error) {
-    console.error('Error updating lead:', error);
-    res.status(500).json({ error: 'Failed to update lead' });
-  }
-};
-
-export const reassignLead = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { newAssigneeId } = req.body;
-
-    const lead = await Lead.findByPk(id);
-    if (!lead) {
-      return res.status(404).json({ error: 'Lead not found' });
-    }
-
-    await lead.reassign(newAssigneeId, req.user.id);
-    res.json(lead);
-  } catch (error) {
-    console.error('Error reassigning lead:', error);
-    res.status(500).json({ error: 'Failed to reassign lead' });
+    console.error('\nError in createLead:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    res.status(500).json({ 
+      error: 'Failed to create lead',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 
 export const getLeads = async (req: AuthRequest, res: Response) => {
   try {
-    const { teamId } = req.params;
-    const { status } = req.query;
-
-    const whereClause: any = { assignedTo: teamId };
-    if (status) {
-      whereClause.status = status;
+    const { status, assignedTo, page = 0, limit = 10, searchTerm } = req.query;
+    
+    const where: any = {};
+    
+    // Admin can see all leads, others can only see assigned leads
+    if (req.user.role !== 'admin') {
+      if (req.salesTeam) {
+        where.assignedTo = req.salesTeam.id;
+      } else {
+        where.assignedTo = req.user.id;
+      }
+    }
+    
+    // Apply filters
+    if (status) where.status = status;
+    if (assignedTo && req.user.role === 'admin') where.assignedTo = assignedTo;
+    if (searchTerm) {
+      where[Op.or] = [
+        { customerName: { [Op.iLike]: `%${searchTerm}%` } },
+        { phoneNumber: { [Op.iLike]: `%${searchTerm}%` } },
+        { location: { [Op.iLike]: `%${searchTerm}%` } }
+      ];
     }
 
-    const leads = await Lead.findAll({
-      where: whereClause,
+    const { rows: leads, count } = await Lead.findAndCountAll({
+      where,
       order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset: Number(page) * Number(limit),
+      include: [{
+        model: SalesTeam,
+        as: 'assignee',
+        attributes: ['id', 'role', 'userId'],
+        include: [{
+          model: User,
+          attributes: ['firstName', 'lastName', 'id']
+        }]
+      }]
     });
 
+    res.setHeader('X-Total-Count', count);
     res.json(leads);
   } catch (error) {
     console.error('Error fetching leads:', error);
@@ -357,19 +404,16 @@ export const getLeadDetails = async (req: AuthRequest, res: Response) => {
     const lead = await Lead.findByPk(id, {
       include: [
         {
-          model: SalesTeam,
+          model: User,
           as: 'assignee',
-          include: [{
-            model: User,
-            attributes: ['id', 'username', 'email'],
-          }],
+          attributes: ['id', 'firstName', 'lastName']
         },
         {
           model: User,
           as: 'assigner',
-          attributes: ['id', 'username', 'email'],
-        },
-      ],
+          attributes: ['id', 'firstName', 'lastName']
+        }
+      ]
     });
 
     if (!lead) {
@@ -380,6 +424,109 @@ export const getLeadDetails = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error fetching lead details:', error);
     res.status(500).json({ error: 'Failed to fetch lead details' });
+  }
+};
+
+export const updateLead = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status, notes, ...updateData } = req.body;
+
+    const lead = await Lead.findByPk(id);
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    if (notes) {
+      const noteEntry = {
+        timestamp: new Date().toISOString(),
+        note: notes,
+        author: req.user.id
+      };
+      updateData.notesHistory = [...(lead.notesHistory || []), noteEntry];
+    }
+
+    await lead.update({
+      ...updateData,
+      status: status || lead.status
+    });
+
+    res.json(lead);
+  } catch (error) {
+    console.error('Error updating lead:', error);
+    res.status(500).json({ error: 'Failed to update lead' });
+  }
+};
+
+export const deleteLead = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const lead = await Lead.findByPk(id);
+    
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    await lead.destroy();
+    res.json({ message: 'Lead deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting lead:', error);
+    res.status(500).json({ error: 'Failed to delete lead' });
+  }
+};
+
+export const reassignLead = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { assignedTo, notes } = req.body;
+
+    const lead = await Lead.findByPk(id);
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    const noteEntry = {
+      timestamp: new Date().toISOString(),
+      note: `Reassigned to new team member. ${notes || ''}`,
+      author: req.user.id
+    };
+
+    await lead.update({
+      assignedTo,
+      notesHistory: [...(lead.notesHistory || []), noteEntry]
+    });
+
+    res.json(lead);
+  } catch (error) {
+    console.error('Error reassigning lead:', error);
+    res.status(500).json({ error: 'Failed to reassign lead' });
+  }
+};
+
+export const addLeadNote = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+
+    const lead = await Lead.findByPk(id);
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    const noteEntry = {
+      timestamp: new Date().toISOString(),
+      note,
+      author: req.user.id
+    };
+
+    await lead.update({
+      notesHistory: [...(lead.notesHistory || []), noteEntry]
+    });
+
+    res.json(lead);
+  } catch (error) {
+    console.error('Error adding note to lead:', error);
+    res.status(500).json({ error: 'Failed to add note' });
   }
 };
 
@@ -736,30 +883,67 @@ export const getAllSalesTeam = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getTeamMembers = async (req: Request, res: Response) => {
+export const getTeamMembers = async (req: AuthRequest, res: Response) => {
   try {
-    const role = req.query.role as SalesRole;
-    
-    if (!role || !['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
+    console.log('=== getTeamMembers Debug ===');
+    console.log('User:', {
+      id: req.user?.id,
+      role: req.user?.role
+    });
+
+    if (!req.user) {
+      return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    const members = await SalesTeam.findAll({
-      where: { role: role },
-      include: [{
-        model: User,
-        attributes: ['firstName', 'lastName']
-      }]
-    }) as SalesTeamInstance[];
+    const userRole = req.user.role.toLowerCase();
+    console.log('User role (lowercase):', userRole);
+
+    let members;
+    
+    if (userRole === 'admin') {
+      console.log('Processing admin request');
+      members = await SalesTeam.findAll({
+        include: [{
+          model: User,
+          attributes: ['id', 'firstName', 'lastName', 'role']
+        }]
+      });
+    } else {
+      // For non-admin users, only show their team
+      if (!req.salesTeam?.id) {
+        return res.status(403).json({ error: 'Sales team access required' });
+      }
+      
+      members = await SalesTeam.findAll({
+        where: {
+          [Op.or]: [
+            { id: req.salesTeam.id },
+            { reportingTo: req.salesTeam.id }
+          ]
+        },
+        include: [{
+          model: User,
+          attributes: ['id', 'firstName', 'lastName', 'role']
+        }]
+      });
+    }
 
     const formattedMembers = members.map(member => ({
       id: member.id,
-      name: `${member.User?.firstName} ${member.User?.lastName}`
+      name: member.User 
+        ? `${member.User.firstName} ${member.User.lastName}`
+        : 'Unknown',
+      role: member.User?.role || member.role,
+      territory: member.territory || '',
+      targetQuarter: member.targetQuarter,
+      targetYear: member.targetYear,
+      targetAmount: member.targetAmount
     }));
 
-    res.json(formattedMembers);
+    console.log('Returning formatted members:', formattedMembers.length);
+    return res.json(formattedMembers);
   } catch (error) {
-    console.error('Error fetching team members:', error);
+    console.error('Error in getTeamMembers:', error);
     res.status(500).json({ error: 'Failed to fetch team members' });
   }
 }; 

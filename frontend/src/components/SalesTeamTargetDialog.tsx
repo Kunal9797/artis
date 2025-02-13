@@ -38,14 +38,19 @@ const SalesTeamTargetDialog: React.FC<SalesTeamTargetDialogProps> = ({
     targetAmount: member.targetAmount || 0
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    setLoading(true);
     try {
       await salesApi.updateTeamMember(member.id, targetData);
       onUpdate();
       onClose();
     } catch (err) {
+      console.error('Failed to update target:', err);
       setError('Failed to update target');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -101,8 +106,8 @@ const SalesTeamTargetDialog: React.FC<SalesTeamTargetDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" color="primary">
-          Save Target
+        <Button onClick={handleSubmit} variant="contained" color="primary" disabled={loading}>
+          {loading ? 'Saving...' : 'Save Target'}
         </Button>
       </DialogActions>
     </Dialog>
