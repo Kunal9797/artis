@@ -3,21 +3,41 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     try {
-      // First set the column to accept NULL temporarily
-      await queryInterface.sequelize.query(
-        `ALTER TABLE "Leads" ALTER COLUMN "status_new" DROP NOT NULL;`
-      );
+      // 1. Create the new enum type
+      await queryInterface.sequelize.query(`
+        CREATE TYPE enum_leads_status_new AS ENUM ('NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'CLOSED_WON', 'CLOSED_LOST');
+      `);
 
-      // Then alter the column type with explicit USING clause
-      await queryInterface.sequelize.query(
-        `ALTER TABLE "Leads" ALTER COLUMN "status_new" TYPE enum_Leads_status_new USING status_new::enum_Leads_status_new;`
-      );
+      // 2. Add new column with new enum type
+      await queryInterface.addColumn('Leads', 'status_updated', {
+        type: 'enum_leads_status_new',
+        allowNull: true
+      });
 
-      // Finally set NOT NULL and default
-      await queryInterface.sequelize.query(
-        `ALTER TABLE "Leads" ALTER COLUMN "status_new" SET NOT NULL;
-         ALTER TABLE "Leads" ALTER COLUMN "status_new" SET DEFAULT 'NEW';`
-      );
+      // 3. Map old values to new values
+      await queryInterface.sequelize.query(`
+        UPDATE "Leads"
+        SET status_updated = CASE status
+          WHEN 'NEW' THEN 'NEW'::enum_leads_status_new
+          WHEN 'IN_PROGRESS' THEN 'CONTACTED'::enum_leads_status_new
+          WHEN 'COMPLETED' THEN 'CLOSED_WON'::enum_leads_status_new
+          WHEN 'LOST' THEN 'CLOSED_LOST'::enum_leads_status_new
+          ELSE 'NEW'::enum_leads_status_new
+        END;
+      `);
+
+      // 4. Drop old column
+      await queryInterface.removeColumn('Leads', 'status');
+
+      // 5. Rename new column to old name
+      await queryInterface.renameColumn('Leads', 'status_updated', 'status');
+
+      // 6. Set constraints
+      await queryInterface.changeColumn('Leads', 'status', {
+        type: 'enum_leads_status_new',
+        allowNull: false,
+        defaultValue: 'NEW'
+      });
 
     } catch (error) {
       console.error('Migration error:', error);
@@ -27,54 +47,50 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     try {
-      // 1. Clean up any existing old enum type
+      // 1. Create old enum type
       await queryInterface.sequelize.query(`
-        DO $$
-        BEGIN
-          IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'enum_leads_status_old') THEN
-            DROP TYPE IF EXISTS "enum_Leads_status_old" CASCADE;
-          END IF;
-        END
-        $$;
+        CREATE TYPE enum_leads_status_old AS ENUM ('NEW', 'IN_PROGRESS', 'COMPLETED', 'LOST');
       `);
 
-      // 2. Create old enum type
-      await queryInterface.sequelize.query(`
-        CREATE TYPE "enum_Leads_status_old" AS ENUM ('NEW', 'IN_PROGRESS', 'COMPLETED', 'LOST');
-      `);
-
-      // 3. Add temporary column
+      // 2. Add temporary column
       await queryInterface.addColumn('Leads', 'status_old', {
-        type: 'enum_Leads_status_old',
+        type: 'enum_leads_status_old',
         allowNull: true
       });
 
-      // 4. Copy and convert data back
+      // 3. Map new values back to old values
       await queryInterface.sequelize.query(`
         UPDATE "Leads"
-        SET status_old = CASE 
-          WHEN status::text = 'FOLLOWUP' THEN 'IN_PROGRESS'::enum_Leads_status_old
-          WHEN status::text = 'NEGOTIATION' THEN 'IN_PROGRESS'::enum_Leads_status_old
-          WHEN status::text = 'CLOSED' THEN 'COMPLETED'::enum_Leads_status_old
-          WHEN status::text = 'NEW' THEN 'NEW'::enum_Leads_status_old
-          END;
+        SET status_old = CASE status
+          WHEN 'NEW' THEN 'NEW'::enum_leads_status_old
+          WHEN 'CONTACTED' THEN 'IN_PROGRESS'::enum_leads_status_old
+          WHEN 'QUALIFIED' THEN 'IN_PROGRESS'::enum_leads_status_old
+          WHEN 'PROPOSAL' THEN 'IN_PROGRESS'::enum_leads_status_old
+          WHEN 'NEGOTIATION' THEN 'IN_PROGRESS'::enum_leads_status_old
+          WHEN 'CLOSED_WON' THEN 'COMPLETED'::enum_leads_status_old
+          WHEN 'CLOSED_LOST' THEN 'LOST'::enum_leads_status_old
+          ELSE 'NEW'::enum_leads_status_old
+        END;
       `);
 
-      // 5. Drop new column
+      // 4. Drop new column
       await queryInterface.removeColumn('Leads', 'status');
 
-      // 6. Rename old column
+      // 5. Rename old column back
       await queryInterface.renameColumn('Leads', 'status_old', 'status');
 
-      // 7. Set not null constraint and default value
+      // 6. Set constraints
       await queryInterface.changeColumn('Leads', 'status', {
-        type: 'enum_Leads_status_old',
+        type: 'enum_leads_status_old',
         allowNull: false,
         defaultValue: 'NEW'
       });
 
+      // 7. Drop new enum type
+      await queryInterface.sequelize.query(`DROP TYPE enum_leads_status_new;`);
+
     } catch (error) {
-      console.error('Migration rollback failed:', error);
+      console.error('Migration rollback error:', error);
       throw error;
     }
   }
