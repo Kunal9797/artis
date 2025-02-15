@@ -1,10 +1,23 @@
 const path = require('path');
 const { override } = require('customize-cra');
+const webpack = require('webpack');
 
 module.exports = override(
   (config) => {
-    // Enable verbose logging
-    config.stats = 'verbose';
+    // Add resolve plugin to trace module resolution
+    config.plugins = [
+      ...config.plugins,
+      new webpack.ResolverPlugin({
+        plugins: [
+          function() {
+            this.plugin('resolve', function(context, callback) {
+              console.log('Resolving:', context.request);
+              callback();
+            });
+          }
+        ]
+      })
+    ];
 
     // Explicitly exclude problematic paths
     config.resolve = {
