@@ -52,6 +52,11 @@ interface ChartData {
 }
 
 const aggregateMonthlyConsumption = (transactions: Transaction[]) => {
+  const monthOrder: { [key: string]: number } = {
+    'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+    'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+  };
+
   const monthlyData = transactions.reduce((acc: Record<string, number>, t: Transaction) => {
     if (t.type === 'OUT') {
       const month = new Date(t.date).toLocaleDateString('en-US', { 
@@ -63,17 +68,25 @@ const aggregateMonthlyConsumption = (transactions: Transaction[]) => {
     return acc;
   }, {});
 
+  // Convert to array and sort using month order
   const sortedEntries = Object.entries(monthlyData)
+    .map(([month, amount]) => ({
+      month,
+      amount,
+      date: new Date(month)
+    }))
     .sort((a, b) => {
-      const dateA = new Date(a[0]);
-      const dateB = new Date(b[0]);
-      // Sort from past to future (ascending)
-      if (dateA.getFullYear() !== dateB.getFullYear()) {
-        return dateA.getFullYear() - dateB.getFullYear();
+      const [monthA, yearA] = a.month.split(' ');
+      const [monthB, yearB] = b.month.split(' ');
+      
+      if (yearA !== yearB) {
+        return Number(yearA) - Number(yearB);
       }
-      return dateA.getMonth() - dateB.getMonth();
-    });
-  
+      
+      return monthOrder[monthA as keyof typeof monthOrder] - monthOrder[monthB as keyof typeof monthOrder];
+    })
+    .map(({ month, amount }) => [month, amount]);
+
   const monthlyValues = Object.values(monthlyData);
   const averageConsumption = monthlyValues.length > 0 
     ? monthlyValues.reduce((a, b) => a + b, 0) / monthlyValues.length 
