@@ -1,25 +1,15 @@
 const path = require('path');
 const { override } = require('customize-cra');
-const webpack = require('webpack');
 
 module.exports = override(
   (config) => {
-    // Add resolve plugin to trace module resolution
-    config.plugins = [
-      ...config.plugins,
-      new webpack.ResolverPlugin({
-        plugins: [
-          function() {
-            this.plugin('resolve', function(context, callback) {
-              console.log('Resolving:', context.request);
-              callback();
-            });
-          }
-        ]
-      })
-    ];
+    // Enable full logging
+    config.infrastructureLogging = {
+      level: 'verbose',
+      debug: /webpack/
+    };
 
-    // Explicitly exclude problematic paths
+    // Add resolve logging
     config.resolve = {
       ...config.resolve,
       modules: [
@@ -46,7 +36,13 @@ module.exports = override(
           path.resolve(__dirname, '../tools'),
           path.resolve(__dirname, 'scripts')
         ],
-        use: 'ts-loader'
+        use: {
+          loader: 'ts-loader',
+          options: {
+            logLevel: 'info',
+            logInfoToStdOut: true
+          }
+        }
       }
     ];
 
