@@ -280,13 +280,19 @@ const ProductCatalog: React.FC = () => {
   const handleDeleteAll = async () => {
     try {
       setIsDeleting(true);
-      await productApi.deleteAllProducts();
+      const response = await productApi.deleteAllProducts();
       fetchProducts();
       setDeleteDialogOpen(false);
       enqueueSnackbar('All products deleted successfully', { variant: 'success' });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting products:', error);
-      enqueueSnackbar('Failed to delete products', { variant: 'error' });
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          'Failed to delete products. Please check your permissions.';
+      enqueueSnackbar(errorMessage, { 
+        variant: 'error',
+        autoHideDuration: 5000
+      });
     } finally {
       setIsDeleting(false);
     }

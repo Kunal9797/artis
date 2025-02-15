@@ -1,50 +1,55 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { Suspense } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider as CustomThemeProvider } from './context/ThemeContext';
-import { CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
+import { CssBaseline } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import ProtectedRoute from './components/ProtectedRoute';
+import DashboardRouter from './components/DashboardRouter';
+import RoleRoute from './components/RoleRoute';
+import Unauthorized from './components/Unauthorized';
 import UserManagement from './components/Users/UserManagement';
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const token = localStorage.getItem('token');
-  const location = useLocation();
-
-  if (!token) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return <>{children}</>;
-};
-
 const App: React.FC = () => {
-  console.log('App component rendering');
-  
-  React.useEffect(() => {
-    console.log('Current route:', window.location.pathname);
-  }, []);
-
   return (
     <AuthProvider>
       <CustomThemeProvider>
         <BrowserRouter>
           <CssBaseline />
           <Routes>
-            <Route path="/login" element={
-              <>
-                <Login />
-              </>
-            } />
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/*" element={
-              <>
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              </>
-            } />
+            <Route path="/login" element={<Login />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Admin Routes */}
+            <Route 
+              path="/users" 
+              element={
+                <RoleRoute allowedRoles={['admin']}>
+                  <UserManagement />
+                </RoleRoute>
+              } 
+            />
+
+            {/* Dashboard Routes */}
+            <Route 
+              path="/*" 
+              element={
+                <Suspense fallback={
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '100vh' 
+                  }}>
+                    <CircularProgress />
+                  </div>
+                }>
+                  <RoleRoute allowedRoles={['admin', 'user', 'SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD']}>
+                    <DashboardRouter />
+                  </RoleRoute>
+                </Suspense>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </CustomThemeProvider>

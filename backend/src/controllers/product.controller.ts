@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import sequelize from '../config/sequelize';
 import { Op } from 'sequelize';
 import Transaction from '../models/Transaction';
+import { UserRole } from '../models/User';
 
 interface ExcelRow {
   NAME?: string;
@@ -15,6 +16,14 @@ interface ExcelRow {
   GSM?: string;
   TEXTURE?: string;
   THICKNESS?: string;
+}
+
+interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    role: UserRole;
+    salesTeamId?: string;
+  };
 }
 
 export const getAllProducts = async (req: Request, res: Response) => {
@@ -371,20 +380,27 @@ export const searchProducts = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteAllProducts = async (req: Request, res: Response) => {
+export const deleteAllProducts = async (req: AuthRequest, res: Response) => {
+  console.log('Delete All Products - Request received');
+  console.log('User info:', req.user);
+  
   const t = await sequelize.transaction();
   
   try {
-    await Product.destroy({ 
+    console.log('Starting product deletion');
+    const result = await Product.destroy({ 
       where: {},
+      truncate: true,
+      cascade: true,
       transaction: t 
     });
     
+    console.log('Products deleted successfully, count:', result);
     await t.commit();
-    res.json({ message: 'All products deleted successfully' });
+    res.json({ message: 'All products deleted successfully', count: result });
   } catch (error) {
+    console.error('Error in deleteAllProducts:', error);
     await t.rollback();
-    console.error('Error deleting all products:', error);
     res.status(500).json({ error: 'Error deleting all products' });
   }
 };

@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models';
+import { User, SalesTeam } from '../models';
 import bcrypt from 'bcrypt';
+import sequelize from '../config/sequelize';
 
 // Add this interface for typing the request with user
 interface AuthRequest extends Request {
@@ -10,29 +11,38 @@ interface AuthRequest extends Request {
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, role, firstName, lastName, phoneNumber } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      where: {
-        email,
-      },
+    // Check if username already exists
+    const existingUsername = await User.findOne({
+      where: { username },
     });
 
-    if (existingUser) {
+    if (existingUsername) {
+      return res.status(400).json({ error: 'Username already taken' });
+    }
+
+    // Check if email already exists
+    const existingEmail = await User.findOne({
+      where: { email },
+    });
+
+    if (existingEmail) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    // Create new user
+    // Create new user with required fields
     const user = await User.create({
       username,
       email,
       password,
-      role: 'user',
+      role,
+      firstName,
+      lastName,
+      phoneNumber,
       version: 1
     });
 
-    // Generate token
     const token = jwt.sign(
       { id: user.id },
       process.env.JWT_SECRET || 'your-secret-key',
@@ -47,27 +57,49 @@ export const register = async (req: Request, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber
       },
     });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Error registering user' });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ where: { email } });
+    const { username, password } = req.body;
+    console.log('Login attempt for username:', username);
+    
+    const user = await User.findOne({ 
+      where: { username }
+    });
 
-    if (!user || !(await user.validatePassword(password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) {
+      console.log('User not found:', username);
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    console.log('Password validation:', isValidPassword ? 'success' : 'failed');
+
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
     const token = jwt.sign(
-      { id: user.id, version: user.version },
+      { 
+        id: user.id, 
+        role: user.role,
+        version: user.version 
+      },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );
+
+    console.log('Login successful for user:', user.id);
 
     res.json({
       message: 'Login successful',
@@ -77,6 +109,9 @@ export const login = async (req: Request, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
         version: user.version
       },
     });
@@ -89,7 +124,16 @@ export const login = async (req: Request, res: Response) => {
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.findAll({
-      attributes: ['id', 'username', 'email', 'role', 'createdAt'],
+      attributes: [
+        'id', 
+        'username', 
+        'email', 
+        'role', 
+        'firstName',
+        'lastName',
+        'phoneNumber',
+        'createdAt'
+      ],
       order: [['createdAt', 'DESC']]
     });
     res.json(users);
@@ -102,38 +146,75 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
     const { userId } = req.params;
-    const { username, email, password, role } = req.body;
-    const requestingUser = req.user; // Now TypeScript knows about req.user
+    const { 
+      username, 
+      email, 
+      password, 
+      role, 
+      firstName, 
+      lastName, 
+      phoneNumber 
+    } = req.body;
+    const requestingUser = req.user;
+
+    console.log('Starting user update for ID:', userId);
 
     const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Allow admins to update their own details
-    if (userId === requestingUser.id) {
-      // Don't allow role change for self
-      if (role && role !== requestingUser.role) {
+    // Create update object
+    const updates: any = {};
+    
+    if (username && username !== user.username) {
+      const existingUsername = await User.findOne({ where: { username } });
+      if (existingUsername) {
+        return res.status(400).json({ error: 'Username already taken' });
+      }
+      updates.username = username;
+    }
+
+    if (email && email !== user.email) {
+      const existingEmail = await User.findOne({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+      updates.email = email;
+    }
+
+    // Handle other fields
+    if (firstName) updates.firstName = firstName;
+    if (lastName) updates.lastName = lastName;
+    if (phoneNumber) updates.phoneNumber = phoneNumber;
+    if (role && role !== user.role) {
+      if (userId === requestingUser.id) {
         return res.status(403).json({ error: 'Cannot change your own role' });
       }
+      updates.role = role;
     }
 
-    // Update basic fields if provided
-    if (username) user.username = username;
-    if (email) user.email = email;
-    if (role) user.role = role;
-
-    // Handle password update
+    // Handle password separately to avoid double hashing
     if (password && password.trim() !== '') {
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-      user.password = hashedPassword;
+      // Hash password manually here instead of relying on hooks
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updates.password = hashedPassword;
+      console.log('Password updated with new hash');
     }
 
-    // Increment version to invalidate existing tokens
-    user.version = (user.version || 1) + 1;
+    // Increment version
+    updates.version = (user.version || 1) + 1;
     
-    await user.save();
+    // Update user with all changes at once
+    await user.update(updates, { 
+      hooks: false // Disable hooks to prevent double hashing
+    });
+
+    console.log('User updated successfully:', {
+      id: user.id,
+      username: user.username,
+      version: user.version
+    });
 
     res.json({
       message: 'User updated successfully',
@@ -142,6 +223,9 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
         version: user.version
       }
     });
@@ -152,18 +236,221 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  
   try {
     const { userId } = req.params;
     
+    console.log('\n=== Delete User Debug ===');
+    console.log('1. Attempting to delete user:', userId);
+
+    // First, find the user
     const user = await User.findByPk(userId);
     if (!user) {
+      await t.rollback();
       return res.status(404).json({ error: 'User not found' });
     }
 
-    await user.destroy();
+    console.log('2. Found user:', {
+      id: user.id,
+      role: user.role
+    });
+
+    // Check if user has a sales team entry
+    const salesTeam = await SalesTeam.findOne({
+      where: { userId },
+      transaction: t
+    });
+
+    console.log('3. Sales team entry:', salesTeam ? 'Found' : 'Not found');
+
+    // If sales team entry exists, delete it first
+    if (salesTeam) {
+      await salesTeam.destroy({ transaction: t });
+      console.log('4. Deleted sales team entry');
+    }
+
+    // Now delete the user
+    await user.destroy({ transaction: t });
+    console.log('5. Deleted user');
+
+    await t.commit();
+    console.log('6. Transaction committed successfully');
+
     res.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting user:', error);
+  } catch (error: any) {
+    await t.rollback();
+    console.error('\n=== Delete User Error ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error?.stack);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+};
+
+export const registerWithSalesTeam = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  
+  try {
+    const userData = req.body.user;
+    const salesTeamData = req.body.salesTeam;
+
+    // Create user
+    const user = await User.create(userData, { transaction: t });
+
+    // Create sales team entry
+    if (['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(user.role)) {
+      await SalesTeam.create({
+        userId: user.id,
+        role: user.role,
+        ...salesTeamData
+      }, { transaction: t });
+    }
+
+    await t.commit();
+    res.status(201).json(user);
+  } catch (error) {
+    await t.rollback();
+    console.error('Error in registerWithSalesTeam:', error);
+    res.status(400).json({ error: 'Failed to create user with sales team' });
+  }
+};
+
+export const updateUserWithSalesTeam = async (req: AuthRequest, res: Response) => {
+  const t = await sequelize.transaction();
+  
+  try {
+    const { userId } = req.params;
+    const userData = req.body.user;
+    const salesTeamData = req.body.salesTeam;
+
+    console.log('\n=== Update User With Sales Team Debug ===');
+    console.log('1. Request Data:', {
+      userId,
+      userData,
+      salesTeamData
+    });
+
+    // Find user
+    const user = await User.findByPk(userId);
+    console.log('2. Found User:', user ? {
+      id: user.id,
+      currentRole: user.role,
+      newRole: userData.role
+    } : 'User not found');
+
+    if (!user) {
+      await t.rollback();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update user
+    await user.update(userData, { transaction: t });
+    console.log('3. Updated User Role:', {
+      from: user.role,
+      to: userData.role
+    });
+
+    // Handle sales team data
+    const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(userData.role);
+    console.log('4. Is Sales Role:', isSalesRole);
+    
+    // Find existing sales team entry
+    let salesTeam = await SalesTeam.findOne({ 
+      where: { userId: user.id },
+      transaction: t 
+    });
+
+    console.log('5. Existing Sales Team:', salesTeam ? {
+      id: salesTeam.id,
+      currentRole: salesTeam.role,
+      newRole: userData.role
+    } : 'No existing sales team entry');
+
+    if (isSalesRole) {
+      const updateData = {
+        role: userData.role,
+        territory: salesTeamData.territory || (salesTeam?.territory || ''),
+        reportingTo: salesTeamData.reportingTo || null,
+        targetQuarter: salesTeamData.targetQuarter || (salesTeam?.targetQuarter || 1),
+        targetYear: salesTeamData.targetYear || (salesTeam?.targetYear || new Date().getFullYear()),
+        targetAmount: salesTeamData.targetAmount || (salesTeam?.targetAmount || 0)
+      };
+
+      console.log('6. Update/Create Data:', updateData);
+
+      if (salesTeam) {
+        // Update existing entry with new role and data
+        await salesTeam.update(updateData, { transaction: t });
+        console.log('7. Updated existing sales team entry');
+      } else {
+        // Create new sales team entry
+        salesTeam = await SalesTeam.create({
+          userId: user.id,
+          ...updateData
+        }, { transaction: t });
+        console.log('7. Created new sales team entry');
+      }
+    } else if (salesTeam) {
+      // If user is no longer in a sales role but has a sales team entry, remove it
+      await salesTeam.destroy({ transaction: t });
+      console.log('7. Removed sales team entry (no longer sales role)');
+    }
+
+    await t.commit();
+    console.log('8. Transaction committed successfully');
+
+    res.json({ 
+      message: 'User updated successfully',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber
+      }
+    });
+  } catch (error: any) {
+    await t.rollback();
+    console.error('\n=== Update User With Sales Team Error ===');
+    console.error('Error details:', error);
+    console.error('Stack trace:', error?.stack);
+    res.status(500).json({ error: 'Failed to update user with sales team' });
+  }
+};
+
+export const getSalesTeamMembers = async (req: Request, res: Response) => {
+  try {
+    const salesTeamMembers = await SalesTeam.findAll({
+      include: [{
+        model: User,
+        attributes: ['firstName', 'lastName', 'role'],
+        required: true  // This ensures User exists
+      }],
+      where: {
+        role: ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD']
+      }
+    });
+
+    const formattedMembers = salesTeamMembers.map(member => {
+      if (!member.User) {
+        console.warn(`Sales team member ${member.id} has no associated user`);
+        return null;
+      }
+
+      return {
+        id: member.id,
+        userId: member.userId,
+        name: `${member.User.firstName} ${member.User.lastName}`,
+        role: member.role
+      };
+    }).filter((member): member is NonNullable<typeof member> => member !== null);
+
+    console.log('Fetched sales team members:', formattedMembers);
+    res.json(formattedMembers);
+  } catch (error) {
+    console.error('Error fetching sales team members:', error);
+    res.status(500).json({ error: 'Failed to fetch sales team members' });
   }
 }; 

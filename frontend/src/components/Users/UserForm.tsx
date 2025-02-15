@@ -10,11 +10,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Box,
-  Alert
+  Grid,
+  Alert,
 } from '@mui/material';
 import { authApi } from '../../services/api';
-import { User } from '../../types/user';
+import { salesApi } from '../../services/salesApi';
+import { User, UserFormData, ROLE_LABELS } from '../../types/user';
 
 interface UserFormProps {
   open: boolean;
@@ -24,13 +25,18 @@ interface UserFormProps {
 }
 
 const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     username: '',
     email: '',
     password: '',
-    role: 'user'
+    role: 'user',
+    firstName: '',
+    lastName: '',
+    phoneNumber: ''
   });
+
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -38,83 +44,160 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
         username: user.username,
         email: user.email,
         password: '',
-        role: user.role
-      });
-    } else {
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        role: 'user'
+        role: user.role,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phoneNumber: user.phoneNumber || ''
       });
     }
   }, [user]);
 
+  const handleChange = (field: keyof UserFormData) => (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
+    setLoading(true);
     try {
-      if (user) {
-        const updateData = {
-          ...formData,
-          ...(formData.password ? { password: formData.password } : {})
-        };
-        await authApi.updateUser(user.id, updateData);
-      } else {
-        await authApi.register(formData);
+      const response = user 
+        ? await authApi.updateUser(user.id, formData)
+        : await authApi.register(formData);
+
+      // Create sales team member in two cases:
+      // 1. New user with sales role
+      // 2. Existing user being updated to a sales role
+      const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
+      const wasNotSalesRole = user && !['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(user.role);
+      
+      if (isSalesRole && (!user || wasNotSalesRole)) {
+        try {
+          const userId = user ? user.id : response.data.user.id;
+          console.log('Creating sales team member for:', userId);
+          await salesApi.createSalesTeamMember({
+            userId,
+            territory: '',
+            targetQuarter: new Date().getMonth() < 3 ? 1 : 
+                          new Date().getMonth() < 6 ? 2 : 
+                          new Date().getMonth() < 9 ? 3 : 4,
+            targetYear: new Date().getFullYear(),
+            targetAmount: 0,
+            reportingTo: null
+          });
+        } catch (err) {
+          console.error('Error creating sales team member:', err);
+          setError('User updated but failed to set up sales team member');
+          return;
+        }
       }
+
+      setError('');
       onSubmit();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save user');
+      console.error('Error submitting form:', err);
+      setError(err.response?.data?.error || 'Failed to submit form');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{user ? 'Edit User' : 'Create New User'}</DialogTitle>
+        <DialogTitle>{user ? 'Edit User' : 'Create User'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            {error && <Alert severity="error">{error}</Alert>}
-            <TextField
-              required
-              label="Username"
-              value={formData.username}
-              onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-            />
-            <TextField
-              required
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-              required={!user}
-              helperText={user ? "Leave blank to keep current password" : "Required for new user"}
-            />
-            <FormControl>
-              <InputLabel>Role</InputLabel>
-              <Select
-                value={formData.role}
-                label="Role"
-                onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
-              >
-                <MenuItem value="user">User</MenuItem>
-                <MenuItem value="admin">Admin</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="First Name"
+                value={formData.firstName}
+                onChange={handleChange('firstName')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="Last Name"
+                value={formData.lastName}
+                onChange={handleChange('lastName')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="Username"
+                value={formData.username}
+                onChange={handleChange('username')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                required
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange('email')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange('password')}
+                required={!user}
+                fullWidth
+                helperText={user ? "Leave blank to keep current password" : "Required for new user"}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Phone Number"
+                value={formData.phoneNumber}
+                onChange={handleChange('phoneNumber')}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Role</InputLabel>
+                <Select
+                  value={formData.role}
+                  onChange={handleChange('role') as any}
+                  label="Role"
+                >
+                  {Object.entries(ROLE_LABELS).map(([role, label]) => (
+                    <MenuItem key={role} value={role}>{label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained">
-            {user ? 'Save Changes' : 'Create User'}
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="contained" 
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : user ? 'Update' : 'Create'}
           </Button>
         </DialogActions>
       </form>

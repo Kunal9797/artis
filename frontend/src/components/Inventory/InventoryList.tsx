@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo, useMemo } from 'react';
+import React, { useEffect, useState, memo, useMemo, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -60,6 +60,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import TuneIcon from '@mui/icons-material/Tune';
 import AppsIcon from '@mui/icons-material/Apps';
 import SettingsIcon from '@mui/icons-material/Settings';
+import debounce from 'lodash/debounce';
 
 export interface InventoryItem {
   id: string;
@@ -117,6 +118,15 @@ const InventoryList: React.FC = () => {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMobileSort, setShowMobileSort] = useState(false);
   const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  
+  // Move useCallback to top level, before any conditional returns
+  const debouncedSetSearch = useCallback(
+    debounce((value: string) => {
+      setSearchQuery(value);
+    }, 300),
+    []
+  );
 
   const uniqueCatalogs = useMemo(() => 
     Array.from(new Set(inventory.flatMap(item => item.catalogs || [])))
@@ -423,7 +433,11 @@ const InventoryList: React.FC = () => {
     >
       <DialogContent sx={{ p: 2 }}>
         <List sx={{ py: 0 }}>
-          {['artisCodes', 'currentStock', 'avgConsumption'].map((field) => (
+          {[
+            { field: 'artisCodes', label: 'Artis Code' },
+            { field: 'currentStock', label: 'Current Stock' },
+            { field: 'avgConsumption', label: 'Consumption' }
+          ].map(({ field, label }) => (
             <ListItem
               key={field}
               sx={{
@@ -431,9 +445,14 @@ const InventoryList: React.FC = () => {
                 mb: 1,
                 bgcolor: sortField === field 
                   ? theme => theme.palette.mode === 'dark' 
-                    ? 'rgba(255,255,255,0.08)'
+                    ? 'rgba(25, 118, 210, 0.12)'
+                    : 'rgba(25, 118, 210, 0.08)'
+                  : 'transparent',
+                '&:hover': {
+                  bgcolor: theme => theme.palette.mode === 'dark' 
+                    ? 'rgba(255,255,255,0.05)'
                     : 'rgba(0,0,0,0.04)'
-                  : 'transparent'
+                }
               }}
               onClick={() => {
                 setSortField(field as keyof InventoryItem);
@@ -441,11 +460,12 @@ const InventoryList: React.FC = () => {
               }}
             >
               <ListItemText 
-                primary={field.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                primary={label}
                 sx={{ 
                   '& .MuiTypography-root': { 
                     fontWeight: sortField === field ? 600 : 400,
-                    fontSize: '0.9rem'
+                    fontSize: '0.9rem',
+                    color: sortField === field ? '#1976d2' : 'inherit'
                   }
                 }}
               />
@@ -456,7 +476,7 @@ const InventoryList: React.FC = () => {
                     e.stopPropagation();
                     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
                   }}
-                  sx={{ color: theme => theme.palette.primary.main }}
+                  sx={{ color: '#1976d2' }}
                 >
                   {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
                 </IconButton>
@@ -468,7 +488,7 @@ const InventoryList: React.FC = () => {
     </Dialog>
   );
 
-  // Mobile Filter Dialog
+  // Enhanced Mobile Filter Dialog
   const MobileFilterDialog = () => (
     <Dialog
       open={showMobileFilter}
@@ -492,23 +512,56 @@ const InventoryList: React.FC = () => {
           { label: 'Category', value: categoryFilter, setter: setCategoryFilter, options: Array.from(new Set(inventory.map(item => item.category))).filter(Boolean).sort() },
           { label: 'Catalog', value: catalogFilter, setter: setCatalogFilter, options: uniqueCatalogs }
         ].map(({ label, value, setter, options }) => (
-          <FormControl key={label} size="small" variant="outlined">
-            <InputLabel>{label}</InputLabel>
+          <FormControl key={label} variant="outlined" size="small">
+            <InputLabel 
+              sx={{ 
+                color: value ? '#1976d2' : 'inherit',
+                '&.Mui-focused': {
+                  color: '#1976d2'
+                }
+              }}
+            >
+              {label}
+            </InputLabel>
             <Select
               value={value}
               onChange={(e) => setter(e.target.value)}
               label={label}
               sx={{
+                borderRadius: 2,
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: theme => theme.palette.mode === 'dark' 
-                    ? 'rgba(255,255,255,0.15)'
-                    : 'rgba(0,0,0,0.15)'
-                }
+                  borderColor: value ? '#1976d2' : theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#1976d2'
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#1976d2'
+                },
+                bgcolor: value ? theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)' : 'transparent'
               }}
             >
-              <MenuItem value="">All {label}s</MenuItem>
+              <MenuItem value="">
+                <Typography sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                  All {label}s
+                </Typography>
+              </MenuItem>
               {options.map(option => (
-                <MenuItem key={option} value={option}>
+                <MenuItem 
+                  key={option} 
+                  value={option}
+                  sx={{
+                    borderRadius: 1,
+                    mx: 0.5,
+                    my: 0.25,
+                    '&.Mui-selected': {
+                      bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.15)' : 'rgba(25, 118, 210, 0.08)',
+                      '&:hover': {
+                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.25)' : 'rgba(25, 118, 210, 0.12)'
+                      }
+                    }
+                  }}
+                >
                   {option}
                 </MenuItem>
               ))}
@@ -577,612 +630,746 @@ const InventoryList: React.FC = () => {
     <Box sx={{ 
       bgcolor: theme => theme.palette.mode === 'dark' ? '#121212' : '#f8fafc',
       minHeight: '100vh',
-      p: 3,
       position: 'relative'
     }}>
-      {/* Desktop Controls */}
-      {!isMobile && (
-        <>
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setDialogState(prev => ({ ...prev, transaction: true }))}
-            >
-              Add Transaction
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<UploadIcon />}
-              onClick={() => setDialogState(prev => ({ ...prev, bulkUpload: true }))}
-            >
-              Bulk Upload
-            </Button>
-          </Box>
-
-          {/* Desktop Filter Controls */}
+      {/* Sticky Mobile Controls */}
+      {isMobile && (
+        <Box sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          background: theme => theme.palette.mode === 'dark' 
+            ? 'rgba(18, 18, 18, 0.7)'  // Much more transparent dark
+            : 'rgba(255, 255, 255, 0.7)', // Much more transparent light
+          backdropFilter: 'blur(20px)', // Increased blur effect
+          WebkitBackdropFilter: 'blur(20px)', // For Safari support
+          borderBottom: '1px solid',
+          borderColor: theme => theme.palette.mode === 'dark' 
+            ? 'rgba(255, 255, 255, 0.05)' 
+            : 'rgba(0, 0, 0, 0.05)',
+          px: 2,
+          py: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0.5,
+          boxShadow: theme => theme.palette.mode === 'dark'
+            ? '0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.05)'
+            : '0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
+        }}>
           <Box sx={{ 
-            mb: 3, 
             display: 'flex', 
-            alignItems: 'center', 
-            gap: 2, 
-            flexWrap: 'wrap',
-            width: '100%',
-            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-            borderRadius: 1,
-            p: 2
+            gap: 1,
+            position: 'relative',
+            height: 32
           }}>
-            <Box sx={{ 
-              display: 'flex',
-              gap: 2,
-              flexGrow: 1,
-              flexWrap: 'wrap'
-            }}>
+            {isSearchExpanded ? (
               <TextField
+                autoFocus
+                fullWidth
+                defaultValue={searchQuery}
+                onChange={(e) => debouncedSetSearch(e.target.value)}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setIsSearchExpanded(false);
+                  }, 100);
+                }}
+                placeholder="Search by Artis code, supplier code..."
+                variant="outlined"
                 size="small"
-                placeholder="Search inventory..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon />
+                      <SearchIcon sx={{ color: searchQuery ? '#1976d2' : 'inherit' }} />
                     </InputAdornment>
-                  )
-                }}
-                sx={{ 
-                  minWidth: { xs: '100%', sm: 250 },
-                  flexGrow: { sm: 1 },
-                  maxWidth: { sm: 400 }
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton 
+                        size="small" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsSearchExpanded(false);
+                          setSearchQuery('');
+                        }}
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    height: 32,
+                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2'
+                    }
+                  }
                 }}
               />
-
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-                <InputLabel>Supplier</InputLabel>
-                <Select
-                  value={supplierFilter}
-                  onChange={(e) => setSupplierFilter(e.target.value)}
-                  label="Supplier"
-                >
-                  <MenuItem value="">All</MenuItem>
-                  {Array.from(new Set(inventory.map(item => item.supplier)))
-                    .filter(Boolean)
-                    .sort()
-                    .map(supplier => (
-                      <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
-                    ))
-                  }
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  label="Category"
-                >
-                  <MenuItem value="">All</MenuItem>
-                  {Array.from(new Set(inventory.map(item => item.category)))
-                    .filter(Boolean)
-                    .sort()
-                    .map(category => (
-                      <MenuItem key={category} value={category}>{category}</MenuItem>
-                    ))
-                  }
-                </Select>
-              </FormControl>
-
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-                <InputLabel>Sort By</InputLabel>
-                <Select
-                  value={sortField}
-                  onChange={(e) => setSortField(e.target.value as keyof InventoryItem)}
-                  label="Sort By"
-                >
-                  <MenuItem value="artisCodes">Artis Codes</MenuItem>
-                  <MenuItem value="currentStock">Current Stock</MenuItem>
-                  <MenuItem value="avgConsumption">Avg. Consumption</MenuItem>
-                </Select>
-              </FormControl>
-
-              <IconButton onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
-                {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
-              </IconButton>
-            </Box>
-          </Box>
-        </>
-      )}
-
-      {/* Main content */}
-      {effectiveViewMode === 'list' ? (
-        <TableContainer component={Paper} sx={{ 
-          maxHeight: 'calc(100vh - 250px)', 
-          overflow: 'auto',
-          boxShadow: theme => theme.palette.mode === 'dark' 
-            ? '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
-            : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-          borderRadius: '8px',
-          bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
-          border: theme => theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
-          
-          // Mobile responsive styles
-          '& .MuiTable-root': {
-            minWidth: { xs: 650, sm: 750, md: 900 }, // Adjust minimum widths
-          },
-          '& .MuiTableCell-root': {
-            px: { xs: 1, sm: 2 }, // Reduce padding on mobile
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            maxWidth: {
-              xs: '100px',
-              sm: '150px',
-              md: '200px'
-            }
-          }
-        }}>
-          <Table 
-            stickyHeader 
-            size="small" 
-            sx={{
-              '& .MuiTableCell-root': {
-                py: 1  // Reduce vertical padding
-              }
-            }}
-          >
-            <TableHead>
-              <TableRow sx={{ 
-                '& th': {
-                  backgroundColor: theme => theme.palette.mode === 'dark' ? '#22272e' : '#f8fafc',
-                  borderBottom: theme => `2px solid ${theme.palette.mode === 'dark' ? '#444d56' : '#e2e8f0'}`,
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  color: theme => theme.palette.mode === 'dark' ? '#e6edf3' : 'inherit'
-                }
-              }}>
-                <TableCell align="center" sx={{ fontWeight: 'bold', width: '50px' }}>#</TableCell>
-                <TableCell 
-                  align="center" 
-                  sx={{ fontWeight: 'bold', minWidth: '200px', cursor: 'pointer' }}
-                  onClick={() => handleSort('artisCodes')}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                    Artis Codes
-                    {sortField === 'artisCodes' && (
-                      <span style={{ 
-                        fontSize: '1.6rem', 
-                        color: '#1976d2',
-                        fontWeight: 900,
-                        lineHeight: 0.7,
-                        WebkitTextStroke: '2px currentColor'
-                      }}>
-                        {sortOrder === 'desc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', minWidth: '200px' }}>Supplier Info</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', minWidth: '120px' }}>Category</TableCell>
-                <TableCell 
-                  align="right" 
-                  sx={{ fontWeight: 'bold', minWidth: '150px', cursor: 'pointer' }}
-                  onClick={() => handleSort('currentStock')}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                    Current Stock
-                    {sortField === 'currentStock' && (
-                      <span style={{ 
-                        fontSize: '1.6rem', 
-                        color: '#1976d2',
-                        fontWeight: 900,
-                        lineHeight: 0.7,
-                        WebkitTextStroke: '2px currentColor'
-                      }}>
-                        {sortOrder === 'desc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell 
-                  align="right" 
-                  sx={{ fontWeight: 'bold', minWidth: '150px', cursor: 'pointer' }}
-                  onClick={() => handleSort('avgConsumption')}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                    Avg. Consumption
-                    {sortField === 'avgConsumption' && (
-                      <span style={{ 
-                        fontSize: '1.6rem', 
-                        color: '#1976d2',
-                        fontWeight: 900,
-                        lineHeight: 0.7,
-                        WebkitTextStroke: '2px currentColor'
-                      }}>
-                        {sortOrder === 'desc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', width: '80px' }}>Details</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody sx={{ 
-              transition: 'opacity 0.2s ease-in-out',
-              opacity: loading ? 0.5 : 1 
-            }}>
-              {filteredItems.map((item: InventoryItem, index: number) => (
-                <TableRow 
-                  key={item.id} 
-                  hover
+            ) : (
+              <>
+                <Button
+                  startIcon={<SearchIcon />}
+                  onClick={() => setIsSearchExpanded(true)}
+                  variant="outlined"
+                  size="small"
                   sx={{
-                    '&:nth-of-type(odd)': {
-                      backgroundColor: theme => theme.palette.mode === 'dark' 
-                        ? 'rgba(255, 255, 255, 0.03)'
-                        : 'rgba(0, 0, 0, 0.03)'
-                    },
+                    flex: 1,
+                    justifyContent: 'flex-start',
+                    borderRadius: 2,
+                    height: 32,
+                    borderColor: theme => theme.palette.mode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.3)' 
+                      : 'rgba(0, 0, 0, 0.23)',
+                    color: searchQuery ? '#1976d2' : theme => theme.palette.mode === 'dark' ? '#fff' : 'inherit',
+                    bgcolor: searchQuery 
+                      ? theme => theme.palette.mode === 'dark' 
+                        ? 'rgba(25, 118, 210, 0.15)' 
+                        : 'rgba(25, 118, 210, 0.12)'
+                      : 'transparent',
                     '&:hover': {
-                      backgroundColor: theme => theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.05) !important'
-                        : 'rgba(0, 0, 0, 0.05) !important'
-                    },
-                    '& td': {
-                      color: theme => theme.palette.mode === 'dark' ? '#e6edf3' : 'inherit',
-                      borderBottom: theme => `1px solid ${theme.palette.mode === 'dark' ? '#444d56' : '#e2e8f0'}`
+                      borderColor: '#1976d2',
+                      bgcolor: theme => theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.08)'
+                        : 'rgba(0, 0, 0, 0.08)',
+                      transform: 'translateY(-1px)',
+                      transition: 'all 0.2s',
                     }
                   }}
                 >
-                  <TableCell align="center">{index + 1}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {item.artisCodes.map((code) => (
-                          <Chip
-                            key={code}
-                            label={code}
-                            size="small"
-                            sx={{ 
-                              height: '24px',
-                              '& .MuiChip-label': {
-                                px: 1,
-                                fontSize: '0.85rem',
-                                fontWeight: 500
-                              }
-                            }}
-                          />
-                        ))}
-                      </Box>
-                      {item.name && (
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                            fontSize: '0.85rem',
-                            fontStyle: 'italic'
-                          }}
-                        >
-                          {item.name}
-                        </Typography>
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Typography sx={{ 
-                        fontSize: '0.9rem', 
-                        fontWeight: 500,
-                        lineHeight: 1.2
-                      }}>
-                        {item.supplier}
-                      </Typography>
-                      {item.supplierCode && (
-                        <Typography sx={{
-                          fontSize: '0.85rem',
-                          color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2',
-                          lineHeight: 1.2
-                        }}>
-                          {item.supplierCode}
-                        </Typography>
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>{item.category}</TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                      <Typography sx={{
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
-                      }}>
-                        {item.currentStock}
-                      </Typography>
-                      <Typography sx={{
-                        fontSize: '0.75rem',
-                        ml: 0.5,
-                        color: theme => theme.palette.mode === 'dark' ? '#fff' : '#000',
-                      }}>
-                        kgs
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                      <Typography sx={{
-                        fontSize: '1.1rem',
-                        fontWeight: 600,
-                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
-                      }}>
-                        {Number(item.avgConsumption).toFixed(2)}
-                      </Typography>
-                      <Typography sx={{
-                        fontSize: '0.75rem',
-                        ml: 0.5,
-                        color: theme => theme.palette.mode === 'dark' ? '#fff' : '#000',
-                      }}>
-                        kgs
-                      </Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleOpenDetails(item.id)}>
-                      <InfoIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <Grid container spacing={2}>
-          {filteredItems.map((item: InventoryItem, index: number) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
-              {isMobile ? (
-                <MobileInventoryCard
-                  item={item}
-                  onDetailsClick={handleOpenDetails}
-                  index={index}
+                  {searchQuery || 'Search'}
+                </Button>
+                <Button
+                  startIcon={<FilterListIcon />}
+                  onClick={() => setShowMobileFilter(true)}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    minWidth: '90px',
+                    height: 32,
+                    borderRadius: 2,
+                    borderColor: theme => theme.palette.mode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.3)' 
+                      : 'rgba(0, 0, 0, 0.23)',
+                    color: (supplierFilter || categoryFilter || catalogFilter) ? '#1976d2' : theme => theme.palette.mode === 'dark' ? '#fff' : 'inherit',
+                    bgcolor: (supplierFilter || categoryFilter || catalogFilter)
+                      ? theme => theme.palette.mode === 'dark'
+                        ? 'rgba(25, 118, 210, 0.15)'
+                        : 'rgba(25, 118, 210, 0.12)'
+                      : 'transparent',
+                    '&:hover': {
+                      borderColor: '#1976d2',
+                      bgcolor: theme => theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.08)'
+                        : 'rgba(0, 0, 0, 0.08)',
+                      transform: 'translateY(-1px)',
+                      transition: 'all 0.2s',
+                    }
+                  }}
+                >
+                  Filter {(supplierFilter || categoryFilter || catalogFilter) && '•'}
+                </Button>
+                <Button
+                  startIcon={<SortIcon />}
+                  onClick={() => setShowMobileSort(true)}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    minWidth: '90px',
+                    height: 32,
+                    borderRadius: 2,
+                    borderColor: theme => theme.palette.mode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.3)' 
+                      : 'rgba(0, 0, 0, 0.23)',
+                    color: theme => theme.palette.mode === 'dark' ? '#fff' : 'inherit',
+                    '&:hover': {
+                      borderColor: '#1976d2',
+                      bgcolor: theme => theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.08)'
+                        : 'rgba(0, 0, 0, 0.08)',
+                      transform: 'translateY(-1px)',
+                      transition: 'all 0.2s',
+                    }
+                  }}
+                >
+                  {sortField === 'currentStock' ? 'Stock' : 
+                   sortField === 'avgConsumption' ? 'Cons.' : 
+                   'Code'} {sortOrder === 'asc' ? '↑' : '↓'}
+                </Button>
+              </>
+            )}
+          </Box>
+          
+          {(searchQuery || supplierFilter || categoryFilter || catalogFilter) && (
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 0.5,
+              overflowX: 'auto',
+              py: 0.25,
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': {
+                display: 'none'
+              }
+            }}>
+              {supplierFilter && (
+                <Chip
+                  label={`${supplierFilter}`}
+                  onDelete={() => setSupplierFilter('')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.08)',
+                    borderRadius: 1.5,
+                    height: 24
+                  }}
                 />
-              ) : (
-                <Card sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
-                  borderRadius: '8px',
-                  boxShadow: theme => theme.palette.mode === 'dark' 
-                    ? '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
-                    : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                  transition: 'transform 0.2s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-2px)'
+              )}
+              {categoryFilter && (
+                <Chip
+                  label={`${categoryFilter}`}
+                  onDelete={() => setCategoryFilter('')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.08)',
+                    borderRadius: 1.5,
+                    height: 24
+                  }}
+                />
+              )}
+              {catalogFilter && (
+                <Chip
+                  label={`${catalogFilter}`}
+                  onDelete={() => setCatalogFilter('')}
+                  size="small"
+                  sx={{ 
+                    bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.08)',
+                    borderRadius: 1.5,
+                    height: 24
+                  }}
+                />
+              )}
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Main content with padding */}
+      <Box sx={{ p: 3 }}>
+        {/* Desktop Controls */}
+        {!isMobile && (
+          <>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setDialogState(prev => ({ ...prev, transaction: true }))}
+              >
+                Add Transaction
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<UploadIcon />}
+                onClick={() => setDialogState(prev => ({ ...prev, bulkUpload: true }))}
+              >
+                Bulk Upload
+              </Button>
+            </Box>
+
+            {/* Desktop Filter Controls */}
+            <Box sx={{ 
+              mb: 3, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2, 
+              flexWrap: 'wrap',
+              width: '100%',
+              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              borderRadius: 1,
+              p: 2
+            }}>
+              <Box sx={{ 
+                display: 'flex',
+                gap: 2,
+                flexGrow: 1,
+                flexWrap: 'wrap'
+              }}>
+                <TextField
+                  size="small"
+                  placeholder="Search inventory..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    )
+                  }}
+                  sx={{ 
+                    minWidth: { xs: '100%', sm: 250 },
+                    flexGrow: { sm: 1 },
+                    maxWidth: { sm: 400 }
+                  }}
+                />
+
+                <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+                  <InputLabel>Supplier</InputLabel>
+                  <Select
+                    value={supplierFilter}
+                    onChange={(e) => setSupplierFilter(e.target.value)}
+                    label="Supplier"
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    {Array.from(new Set(inventory.map(item => item.supplier)))
+                      .filter(Boolean)
+                      .sort()
+                      .map(supplier => (
+                        <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
+                      ))
+                    }
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    label="Category"
+                  >
+                    <MenuItem value="">All</MenuItem>
+                    {Array.from(new Set(inventory.map(item => item.category)))
+                      .filter(Boolean)
+                      .sort()
+                      .map(category => (
+                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                      ))
+                    }
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+                  <InputLabel>Sort By</InputLabel>
+                  <Select
+                    value={sortField}
+                    onChange={(e) => setSortField(e.target.value as keyof InventoryItem)}
+                    label="Sort By"
+                  >
+                    <MenuItem value="artisCodes">Artis Codes</MenuItem>
+                    <MenuItem value="currentStock">Current Stock</MenuItem>
+                    <MenuItem value="avgConsumption">Avg. Consumption</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <IconButton onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+                  {sortOrder === 'asc' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />}
+                </IconButton>
+              </Box>
+            </Box>
+          </>
+        )}
+
+        {/* Main inventory content */}
+        {effectiveViewMode === 'list' ? (
+          <TableContainer component={Paper} sx={{ 
+            maxHeight: 'calc(100vh - 250px)', 
+            overflow: 'auto',
+            boxShadow: theme => theme.palette.mode === 'dark' 
+              ? '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
+              : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+            borderRadius: '8px',
+            bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+            border: theme => theme.palette.mode === 'dark' ? '1px solid #333' : 'none',
+            
+            // Mobile responsive styles
+            '& .MuiTable-root': {
+              minWidth: { xs: 650, sm: 750, md: 900 }, // Adjust minimum widths
+            },
+            '& .MuiTableCell-root': {
+              px: { xs: 1, sm: 2 }, // Reduce padding on mobile
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: {
+                xs: '100px',
+                sm: '150px',
+                md: '200px'
+              }
+            }
+          }}>
+            <Table 
+              stickyHeader 
+              size="small" 
+              sx={{
+                '& .MuiTableCell-root': {
+                  py: 1  // Reduce vertical padding
+                }
+              }}
+            >
+              <TableHead>
+                <TableRow sx={{ 
+                  '& th': {
+                    backgroundColor: theme => theme.palette.mode === 'dark' ? '#22272e' : '#f8fafc',
+                    borderBottom: theme => `2px solid ${theme.palette.mode === 'dark' ? '#444d56' : '#e2e8f0'}`,
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    color: theme => theme.palette.mode === 'dark' ? '#e6edf3' : 'inherit'
                   }
                 }}>
-                  <Box sx={{ p: 2 }}>
-                    <Box sx={{ mb: 2 }}>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-                        {item.artisCodes.map((code) => (
-                          <Chip
-                            key={code}
-                            label={code}
-                            size="small"
-                            sx={{ 
-                              height: '24px',
-                              '& .MuiChip-label': {
-                                px: 1,
-                                fontSize: '0.85rem'
-                              }
-                            }}
-                          />
-                        ))}
-                      </Box>
-                      <Typography variant="body2" sx={{ 
-                        color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                        mt: 1
-                      }}>
-                        {item.name}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 2 }}>
-                      <Typography sx={{ fontWeight: 500 }}>
-                        {item.supplier}
-                      </Typography>
-                      {item.supplierCode && (
-                        <Typography variant="body2" sx={{
-                          color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2'
+                  <TableCell align="center" sx={{ fontWeight: 'bold', width: '50px' }}>#</TableCell>
+                  <TableCell 
+                    align="center" 
+                    sx={{ fontWeight: 'bold', minWidth: '200px', cursor: 'pointer' }}
+                    onClick={() => handleSort('artisCodes')}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                      Artis Codes
+                      {sortField === 'artisCodes' && (
+                        <span style={{ 
+                          fontSize: '1.6rem', 
+                          color: '#1976d2',
+                          fontWeight: 900,
+                          lineHeight: 0.7,
+                          WebkitTextStroke: '2px currentColor'
                         }}>
-                          {item.supplierCode}
-                        </Typography>
+                          {sortOrder === 'desc' ? '↑' : '↓'}
+                        </span>
                       )}
                     </Box>
-
-                    <Chip
-                      label={item.category}
-                      size="small"
-                      sx={{
-                        mb: 2,
-                        bgcolor: theme => theme.palette.mode === 'dark' ? '#1f6feb20' : '#e3f2fd',
-                        color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2'
-                      }}
-                    />
-
-                    <Grid container spacing={2} sx={{ mt: 'auto' }}>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="textSecondary">
-                          Current Stock
-                        </Typography>
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold', minWidth: '200px' }}>Supplier Info</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold', minWidth: '120px' }}>Category</TableCell>
+                  <TableCell 
+                    align="right" 
+                    sx={{ fontWeight: 'bold', minWidth: '150px', cursor: 'pointer' }}
+                    onClick={() => handleSort('currentStock')}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                      Current Stock
+                      {sortField === 'currentStock' && (
+                        <span style={{ 
+                          fontSize: '1.6rem', 
+                          color: '#1976d2',
+                          fontWeight: 900,
+                          lineHeight: 0.7,
+                          WebkitTextStroke: '2px currentColor'
+                        }}>
+                          {sortOrder === 'desc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell 
+                    align="right" 
+                    sx={{ fontWeight: 'bold', minWidth: '150px', cursor: 'pointer' }}
+                    onClick={() => handleSort('avgConsumption')}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                      Avg. Consumption
+                      {sortField === 'avgConsumption' && (
+                        <span style={{ 
+                          fontSize: '1.6rem', 
+                          color: '#1976d2',
+                          fontWeight: 900,
+                          lineHeight: 0.7,
+                          WebkitTextStroke: '2px currentColor'
+                        }}>
+                          {sortOrder === 'desc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 'bold', width: '80px' }}>Details</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody sx={{ 
+                transition: 'opacity 0.2s ease-in-out',
+                opacity: loading ? 0.5 : 1 
+              }}>
+                {filteredItems.map((item: InventoryItem, index: number) => (
+                  <TableRow 
+                    key={item.id} 
+                    hover
+                    sx={{
+                      '&:nth-of-type(odd)': {
+                        backgroundColor: theme => theme.palette.mode === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.03)'
+                          : 'rgba(0, 0, 0, 0.03)'
+                      },
+                      '&:hover': {
+                        backgroundColor: theme => theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.05) !important'
+                          : 'rgba(0, 0, 0, 0.05) !important'
+                      },
+                      '& td': {
+                        color: theme => theme.palette.mode === 'dark' ? '#e6edf3' : 'inherit',
+                        borderBottom: theme => `1px solid ${theme.palette.mode === 'dark' ? '#444d56' : '#e2e8f0'}`
+                      }
+                    }}
+                  >
+                    <TableCell align="center">{index + 1}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {item.artisCodes.map((code) => (
+                            <Chip
+                              key={code}
+                              label={code}
+                              size="small"
+                              sx={{ 
+                                height: '24px',
+                                '& .MuiChip-label': {
+                                  px: 1,
+                                  fontSize: '0.85rem',
+                                  fontWeight: 500
+                                }
+                              }}
+                            />
+                          ))}
+                        </Box>
+                        {item.name && (
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                              fontSize: '0.85rem',
+                              fontStyle: 'italic'
+                            }}
+                          >
+                            {item.name}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <Typography sx={{ 
-                          fontSize: '1.2rem', 
+                          fontSize: '0.9rem', 
+                          fontWeight: 500,
+                          lineHeight: 1.2
+                        }}>
+                          {item.supplier}
+                        </Typography>
+                        {item.supplierCode && (
+                          <Typography sx={{
+                            fontSize: '0.85rem',
+                            color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2',
+                            lineHeight: 1.2
+                          }}>
+                            {item.supplierCode}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <Typography sx={{
+                          fontSize: '1.1rem',
                           fontWeight: 600,
                           color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
                         }}>
                           {item.currentStock}
-                          <Typography component="span" sx={{
-                            fontSize: '0.75rem',
-                            ml: 0.5,
-                            color: 'text.secondary'
-                          }}>
-                            kgs
-                          </Typography>
                         </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="body2" color="textSecondary" align="right">
-                          Avg. Consumption
+                        <Typography sx={{
+                          fontSize: '0.75rem',
+                          ml: 0.5,
+                          color: theme => theme.palette.mode === 'dark' ? '#fff' : '#000',
+                        }}>
+                          kgs
                         </Typography>
-                        <Typography sx={{ 
-                          fontSize: '1.2rem', 
+                      </Box>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                        <Typography sx={{
+                          fontSize: '1.1rem',
                           fontWeight: 600,
-                          textAlign: 'right',
                           color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
                         }}>
                           {Number(item.avgConsumption).toFixed(2)}
-                          <Typography component="span" sx={{
-                            fontSize: '0.75rem',
-                            ml: 0.5,
-                            color: 'text.secondary'
-                          }}>
-                            kgs
-                          </Typography>
                         </Typography>
+                        <Typography sx={{
+                          fontSize: '0.75rem',
+                          ml: 0.5,
+                          color: theme => theme.palette.mode === 'dark' ? '#fff' : '#000',
+                        }}>
+                          kgs
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <IconButton onClick={() => handleOpenDetails(item.id)}>
+                        <InfoIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Grid container spacing={2}>
+            {filteredItems.map((item: InventoryItem, index: number) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
+                {isMobile ? (
+                  <MobileInventoryCard
+                    item={item}
+                    onDetailsClick={handleOpenDetails}
+                    index={index}
+                  />
+                ) : (
+                  <Card sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    bgcolor: theme => theme.palette.mode === 'dark' ? '#1e1e1e' : '#fff',
+                    borderRadius: '8px',
+                    boxShadow: theme => theme.palette.mode === 'dark' 
+                      ? '0 4px 6px -1px rgba(0, 0, 0, 0.4)'
+                      : '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                    transition: 'transform 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-2px)'
+                    }
+                  }}>
+                    <Box sx={{ p: 2 }}>
+                      <Box sx={{ mb: 2 }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+                          {item.artisCodes.map((code) => (
+                            <Chip
+                              key={code}
+                              label={code}
+                              size="small"
+                              sx={{ 
+                                height: '24px',
+                                '& .MuiChip-label': {
+                                  px: 1,
+                                  fontSize: '0.85rem'
+                                }
+                              }}
+                            />
+                          ))}
+                        </Box>
+                        <Typography variant="body2" sx={{ 
+                          color: theme => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                          mt: 1
+                        }}>
+                          {item.name}
+                        </Typography>
+                      </Box>
+
+                      <Box sx={{ mb: 2 }}>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {item.supplier}
+                        </Typography>
+                        {item.supplierCode && (
+                          <Typography variant="body2" sx={{
+                            color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2'
+                          }}>
+                            {item.supplierCode}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Chip
+                        label={item.category}
+                        size="small"
+                        sx={{
+                          mb: 2,
+                          bgcolor: theme => theme.palette.mode === 'dark' ? '#1f6feb20' : '#e3f2fd',
+                          color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2'
+                        }}
+                      />
+
+                      <Grid container spacing={2} sx={{ mt: 'auto' }}>
+                        <Grid item xs={6}>
+                          <Typography variant="body2" color="textSecondary">
+                            Current Stock
+                          </Typography>
+                          <Typography sx={{ 
+                            fontSize: '1.2rem', 
+                            fontWeight: 600,
+                            color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
+                          }}>
+                            {item.currentStock}
+                            <Typography component="span" sx={{
+                              fontSize: '0.75rem',
+                              ml: 0.5,
+                              color: 'text.secondary'
+                            }}>
+                              kgs
+                            </Typography>
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="body2" color="textSecondary" align="right">
+                            Avg. Consumption
+                          </Typography>
+                          <Typography sx={{ 
+                            fontSize: '1.2rem', 
+                            fontWeight: 600,
+                            textAlign: 'right',
+                            color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#0d47a1'
+                          }}>
+                            {Number(item.avgConsumption).toFixed(2)}
+                            <Typography component="span" sx={{
+                              fontSize: '0.75rem',
+                              ml: 0.5,
+                              color: 'text.secondary'
+                            }}>
+                              kgs
+                            </Typography>
+                          </Typography>
+                        </Grid>
                       </Grid>
-                    </Grid>
 
-                    <Button
-                      fullWidth
-                      startIcon={<InfoIcon />}
-                      onClick={() => handleOpenDetails(item.id)}
-                      sx={{ mt: 2 }}
-                    >
-                      Details
-                    </Button>
-                  </Box>
-                </Card>
-              )}
-            </Grid>
-          ))}
-        </Grid>
-      )}
+                      <Button
+                        fullWidth
+                        startIcon={<InfoIcon />}
+                        onClick={() => handleOpenDetails(item.id)}
+                        sx={{ mt: 2 }}
+                      >
+                        Details
+                      </Button>
+                    </Box>
+                  </Card>
+                )}
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
-      {/* Mobile Speed Dial */}
-      {isMobile && (
-        <SpeedDial
-          ariaLabel="Quick actions"
-          sx={{ 
-            position: 'fixed', 
-            bottom: 16, 
-            right: 16,
-            '& .MuiSpeedDial-actions': {
-              gap: 1,
-              paddingRight: 1
-            }
-          }}
-          icon={<TuneIcon />}
-          open={mobileMenuOpen}
-          onOpen={() => setMobileMenuOpen(true)}
-          onClose={() => setMobileMenuOpen(false)}
-          direction="up"
-        >
-          {actions.map((action) => (
-            <SpeedDialAction
-              key={action.name}
-              icon={action.icon}
-              sx={{
-                position: 'relative',
-                '&::before': action.name !== 'Search' ? {
-                  content: `"${action.name}"`,
-                  position: 'absolute',
-                  right: '100%',
-                  marginRight: '8px',
-                  color: theme => theme.palette.text.primary,
-                  fontSize: '0.875rem',
-                  whiteSpace: 'nowrap',
-                  fontFamily: theme => theme.typography.fontFamily
-                } : undefined
-              }}
-              onClick={action.onClick}
-            />
-          ))}
-        </SpeedDial>
-      )}
+        {/* Dialogs */}
+        <TransactionDialog
+          open={dialogState.transaction}
+          onClose={() => setDialogState(prev => ({ ...prev, transaction: false }))}
+          productId={selectedProduct || ''}
+          onSuccess={fetchInventory}
+        />
 
-      {/* Mobile Search Dialog */}
-      <Dialog
-        open={showMobileSearch}
-        onClose={() => setShowMobileSearch(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search inventory..."
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+        <ProductDetailsDialog
+          open={dialogState.details}
+          onClose={() => setDialogState(prev => ({ ...prev, details: false }))}
+          productId={selectedProduct || ''}
+        />
 
-      {/* Mobile Sort Dialog */}
-      <MobileSortDialog />
-
-      {/* Mobile Filter Dialog */}
-      <MobileFilterDialog />
-
-      <TransactionDialog
-        open={dialogState.transaction}
-        onClose={() => setDialogState(prev => ({ ...prev, transaction: false }))}
-        productId={selectedProduct || ''}
-        onSuccess={fetchInventory}
-      />
-
-      <ProductDetailsDialog
-        open={dialogState.details}
-        onClose={() => setDialogState(prev => ({ ...prev, details: false }))}
-        productId={selectedProduct || ''}
-      />
-
-      <BulkUploadDialog
-        open={dialogState.bulkUpload}
-        onClose={() => setDialogState(prev => ({ ...prev, bulkUpload: false }))}
-        onSuccess={fetchInventory}
-      />
-
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        mt: 4, 
-        borderTop: '1px solid',
-        borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
-        pt: 2
-      }}>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={handleClearInventory}
-          sx={{ 
-            bgcolor: '#d32f2f',
-            '&:hover': { 
-              bgcolor: '#b71c1c'
-            },
-            fontWeight: 'bold',
-            px: 4
-          }}
-        >
-          Clear All
-        </Button>
+        <BulkUploadDialog
+          open={dialogState.bulkUpload}
+          onClose={() => setDialogState(prev => ({ ...prev, bulkUpload: false }))}
+          onSuccess={fetchInventory}
+        />
+        
+        {/* Mobile dialogs */}
+        <MobileSortDialog />
+        <MobileFilterDialog />
       </Box>
-
-      {isMobile && <ActiveFilters />}
     </Box>
   );
 };

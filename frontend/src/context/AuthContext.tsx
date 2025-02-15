@@ -3,7 +3,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 interface User {
   id: string;
   username: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD';
 }
 
 interface AuthContextType {
@@ -36,9 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (token: string, user: User) => {
-    localStorage.setItem('token', token);
+    const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+    localStorage.setItem('token', formattedToken);
     localStorage.setItem('user', JSON.stringify(user));
-    setToken(token);
+    setToken(formattedToken);
     setUser(user);
     setIsAuthenticated(true);
   };

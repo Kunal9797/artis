@@ -1,12 +1,14 @@
 const { override } = require('customize-cra');
 
-module.exports = override(
-  (config) => {
-    config.module.rules.push({
-      test: /\.geojson$/,
-      loader: 'json-loader',
-      type: 'javascript/auto'
-    });
-    return config;
-  }
-);
+module.exports = override((config) => {
+  // Disable optimization temporarily
+  config.optimization = {
+    minimize: false,
+    splitChunks: false,
+  };
+  
+  // Add more logging
+  config.stats = 'verbose';
+  
+  return config;
+});

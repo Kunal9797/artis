@@ -1,12 +1,17 @@
 import express from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import specs from './config/swagger';
 import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import distributorRoutes from './routes/distributor.routes';
+import salesRoutes from './routes/sales.routes';
+import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 
 const app = express();
 
+// Middleware
 app.use(cors({
   origin: ['https://artis-rust.vercel.app', 'http://localhost:3000'],
   credentials: true,
@@ -16,10 +21,19 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Swagger documentation route (must be before rate limiters)
+app.use('/api-docs', swaggerUi.serve);
+app.get('/api-docs', swaggerUi.setup(specs));
+
+// Apply rate limiting
+app.use('/api/auth', authLimiter);
+app.use('/api', apiLimiter);
+
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/distributors', distributorRoutes);
-
+app.use('/api/sales', salesRoutes);
 
 export default app; 

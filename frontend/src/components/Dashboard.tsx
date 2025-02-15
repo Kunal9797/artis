@@ -29,6 +29,8 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import DistributorsMap from './DistributorsMap';
 import InfoIcon from '@mui/icons-material/Info';
 import UserManagement from './Users/UserManagement';
+import SalesTeamManagement from './SalesTeamManagement';
+import LeadManagement from './Leads/LeadManagement';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -66,7 +68,11 @@ const Dashboard: React.FC = () => {
       case 'distributors':
         return 'Distributors';
       case 'users':
-        return 'User Management';
+        return isMobile ? 'Users' : 'User Management';
+      case 'salesTeam':
+        return 'Sales Team Management';
+      case 'leads':
+        return 'Lead Management';
       default: 
         return 'Dashboard';
     }
@@ -78,7 +84,9 @@ const Dashboard: React.FC = () => {
     { label: 'Orders', value: 'orders' },
     { label: 'Inventory', value: 'inventory' },
     { label: 'Distributors', value: 'distributors' },
-    { label: 'User Management', value: 'users', adminOnly: true }
+    { label: 'User Management', value: 'users', adminOnly: true },
+    { label: 'Sales Team', value: 'salesTeam', adminOnly: true },
+    { label: 'Lead Management', value: 'leads', adminOnly: true }
   ];
 
   const renderContent = () => {
@@ -97,6 +105,10 @@ const Dashboard: React.FC = () => {
         return <InfoPage />;
       case 'users':
         return <UserManagement />;
+      case 'salesTeam':
+        return isAdmin() ? <SalesTeamManagement /> : null;
+      case 'leads':
+        return isAdmin() ? <LeadManagement /> : null;
       default:
         return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
@@ -219,6 +231,12 @@ const Dashboard: React.FC = () => {
             <MenuItem onClick={() => handlePageChange('distributors')}>Distributors</MenuItem>
             {isAdmin() && (
               <MenuItem onClick={() => handlePageChange('users')}>User Management</MenuItem>
+            )}
+            {isAdmin() && (
+              <MenuItem onClick={() => handlePageChange('salesTeam')}>Sales Team Management</MenuItem>
+            )}
+            {isAdmin() && (
+              <MenuItem onClick={() => handlePageChange('leads')}>Lead Management</MenuItem>
             )}
           </Menu>
 

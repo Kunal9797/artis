@@ -7,6 +7,7 @@ import {
   Paper,
   Container,
   Alert,
+  Divider
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../assets/artislogo.png';
@@ -26,10 +27,14 @@ const Login: React.FC = () => {
     setError('');
     
     try {
+      if (!username.trim()) {
+        setError('Username is required');
+        return;
+      }
+      
       const result = await authApi.login(username, password);
       const { token, user } = result.data;
       
-      // Validate user data
       if (!user || !user.role) {
         throw new Error('Invalid user data received');
       }
@@ -38,7 +43,7 @@ const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.error || 'Invalid credentials');
+      setError(err.response?.data?.error || 'Invalid username or password');
     }
   };
 
@@ -59,6 +64,8 @@ const Login: React.FC = () => {
             width: '100%',
             borderRadius: 2,
             overflow: 'hidden',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            bgcolor: '#fff',
           }}
         >
           <Box 
@@ -68,6 +75,8 @@ const Login: React.FC = () => {
               alignItems: 'center', 
               flexDirection: 'column',
               backgroundColor: '#2b2a29',
+              position: 'relative',
+              zIndex: 1
             }}
           >
             <img 
@@ -84,20 +93,44 @@ const Login: React.FC = () => {
               alt="Artis Laminate Text"
               style={{
                 height: '40px',
-                marginBottom: '8px',
+                marginBottom: '12px',
                 filter: 'brightness(1.2) contrast(1.2)'
               }}
             />
+            <Divider sx={{ width: '80%', bgcolor: 'rgba(255,255,255,0.1)', my: 2 }} />
             <Typography 
-              variant="subtitle1" 
+              variant="h6" 
+              component="div"
               sx={{ 
-                color: '#ffffff !important',
-                mt: 1,
-                fontWeight: 500,
-                letterSpacing: '0.5px'
+                color: '#FFD700 !important',
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+                textAlign: 'center',
+                mb: 1,
+                position: 'relative',
+                zIndex: 2,
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+                '& span': {
+                  color: '#FFD700 !important'
+                }
               }}
             >
-              Inventory Management Portal
+              <span>Sales & Inventory Management</span>
+            </Typography>
+            <Typography 
+              variant="subtitle2" 
+              component="div"
+              sx={{ 
+                color: '#FFFFFF !important',
+                mt: 1,
+                fontWeight: 400,
+                letterSpacing: '0.5px',
+                textAlign: 'center',
+                position: 'relative',
+                zIndex: 2
+              }}
+            >
+              Track Sales • Manage Inventory • Monitor Performance
             </Typography>
           </Box>
 
@@ -110,7 +143,16 @@ const Login: React.FC = () => {
             }}
           >
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 2,
+                  borderRadius: 1,
+                  '& .MuiAlert-icon': {
+                    color: 'error.main'
+                  }
+                }}
+              >
                 {error}
               </Alert>
             )}
@@ -121,7 +163,14 @@ const Login: React.FC = () => {
               label="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'primary.main',
+                  },
+                }
+              }}
             />
             <TextField
               margin="normal"
@@ -131,7 +180,14 @@ const Login: React.FC = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 3 }}
+              sx={{ 
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  '&:hover fieldset': {
+                    borderColor: 'primary.main',
+                  },
+                }
+              }}
             />
             <Button
               type="submit"
@@ -144,7 +200,9 @@ const Login: React.FC = () => {
                   backgroundColor: '#404040'
                 },
                 fontWeight: 600,
-                letterSpacing: '0.5px'
+                letterSpacing: '0.5px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transition: 'all 0.3s ease'
               }}
             >
               Sign In
