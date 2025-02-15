@@ -3,32 +3,24 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     try {
-      // Log initial state
-      const [columns] = await queryInterface.sequelize.query(`
-        SELECT column_name, data_type, udt_name
-        FROM information_schema.columns
-        WHERE table_name = 'Leads';
-      `);
-      console.log('Current table structure:', columns);
+      // First set the column to accept NULL temporarily
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "Leads" ALTER COLUMN "status_new" DROP NOT NULL;`
+      );
 
-      // Check current data
-      const [data] = await queryInterface.sequelize.query(`
-        SELECT status_new, COUNT(*) as count
-        FROM "Leads"
-        GROUP BY status_new;
-      `);
-      console.log('Current data distribution:', data);
+      // Then alter the column type with explicit USING clause
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "Leads" ALTER COLUMN "status_new" TYPE enum_Leads_status_new USING status_new::enum_Leads_status_new;`
+      );
 
-      // Just need to set the constraints since the column already exists
-      await queryInterface.changeColumn('Leads', 'status_new', {
-        type: 'enum_Leads_status_new',
-        allowNull: false,
-        defaultValue: 'NEW'
-      });
-      console.log('Updated constraints on status_new column');
+      // Finally set NOT NULL and default
+      await queryInterface.sequelize.query(
+        `ALTER TABLE "Leads" ALTER COLUMN "status_new" SET NOT NULL;
+         ALTER TABLE "Leads" ALTER COLUMN "status_new" SET DEFAULT 'NEW';`
+      );
 
     } catch (error) {
-      console.error('Migration failed:', error);
+      console.error('Migration error:', error);
       throw error;
     }
   },
