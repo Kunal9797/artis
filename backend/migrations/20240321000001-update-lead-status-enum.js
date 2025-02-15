@@ -3,18 +3,21 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     try {
-      // 1. Create a temporary column with the new enum type
+      // 1. Drop the existing enum type if it exists (cleanup from previous failed migrations)
+      await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_Leads_status_new";`);
+
+      // 2. Create new enum type
       await queryInterface.sequelize.query(`
         CREATE TYPE "enum_Leads_status_new" AS ENUM ('NEW', 'FOLLOWUP', 'NEGOTIATION', 'CLOSED');
       `);
 
-      // 2. Add temporary column with new enum
+      // 3. Add temporary column with new enum
       await queryInterface.addColumn('Leads', 'status_new', {
         type: 'enum_Leads_status_new',
         allowNull: true
       });
 
-      // 3. Copy and convert data
+      // 4. Copy and convert data
       await queryInterface.sequelize.query(`
         UPDATE "Leads"
         SET status_new = CASE 
@@ -25,16 +28,16 @@ module.exports = {
         END;
       `);
 
-      // 4. Drop old column and type
+      // 5. Drop old column and type
       await queryInterface.removeColumn('Leads', 'status');
-      await queryInterface.sequelize.query(`DROP TYPE "enum_Leads_status";`);
+      await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_Leads_status";`);
 
-      // 5. Rename new type to old name
+      // 6. Rename new type to old name
       await queryInterface.sequelize.query(`
         ALTER TYPE "enum_Leads_status_new" RENAME TO "enum_Leads_status";
       `);
 
-      // 6. Rename column and set constraints
+      // 7. Rename column and set constraints
       await queryInterface.renameColumn('Leads', 'status_new', 'status');
       await queryInterface.changeColumn('Leads', 'status', {
         type: 'enum_Leads_status',
@@ -74,7 +77,7 @@ module.exports = {
 
       // 4. Drop new column and type
       await queryInterface.removeColumn('Leads', 'status');
-      await queryInterface.sequelize.query(`DROP TYPE "enum_Leads_status";`);
+      await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_Leads_status";`);
 
       // 5. Rename old type
       await queryInterface.sequelize.query(`
