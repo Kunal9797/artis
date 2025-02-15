@@ -83,11 +83,6 @@
     "source-map-explorer": "^2.5.3"
   },
   "jest": {
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
-    },
-    "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
-    }
+    "config": "./jest.config.ts"
   }
 }
