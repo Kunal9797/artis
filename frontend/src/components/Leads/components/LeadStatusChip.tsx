@@ -2,7 +2,7 @@ import React from 'react';
 import { Chip, useTheme } from '@mui/material';
 
 interface LeadStatusChipProps {
-  status: 'new' | 'followup' | 'negotiation' | 'closed';
+  status: 'NEW' | 'FOLLOWUP' | 'NEGOTIATION' | 'CLOSED';
   size?: 'small' | 'medium';
 }
 
@@ -11,31 +11,16 @@ const LeadStatusChip: React.FC<LeadStatusChipProps> = ({ status, size = 'small' 
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new':
-        return {
-          main: theme.palette.info.main,
-          light: theme.palette.info.light
-        };
-      case 'followup':
-        return {
-          main: theme.palette.warning.main,
-          light: theme.palette.warning.light
-        };
-      case 'negotiation':
-        return {
-          main: theme.palette.success.main,
-          light: theme.palette.success.light
-        };
-      case 'closed':
-        return {
-          main: theme.palette.grey[500],
-          light: theme.palette.grey[200]
-        };
+      case 'NEW':
+        return theme.palette.info.main;
+      case 'FOLLOWUP':
+        return theme.palette.warning.main;
+      case 'NEGOTIATION':
+        return theme.palette.primary.main;
+      case 'CLOSED':
+        return theme.palette.success.main;
       default:
-        return {
-          main: theme.palette.grey[500],
-          light: theme.palette.grey[200]
-        };
+        return theme.palette.grey[500];
     }
   };
 
@@ -50,10 +35,10 @@ const LeadStatusChip: React.FC<LeadStatusChipProps> = ({ status, size = 'small' 
       label={getStatusLabel(status)}
       size={size}
       sx={{
-        bgcolor: `${colors.main}15`,
-        color: colors.main,
+        bgcolor: `${colors}15`,
+        color: colors,
         '&:hover': {
-          bgcolor: `${colors.main}25`,
+          bgcolor: `${colors}25`,
         },
       }}
     />

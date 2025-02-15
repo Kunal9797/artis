@@ -23,9 +23,12 @@ const LeadManagement: React.FC = () => {
   const { user } = useAuth();
   const [leads, setLeads] = useState<ILead[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [filters, setFilters] = useState<ILeadFilters>({});
+  const [filters, setFilters] = useState<ILeadFilters>({
+    page: 0,
+    limit: 10,
+    status: undefined,
+    searchTerm: undefined
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -39,17 +42,13 @@ const LeadManagement: React.FC = () => {
     console.log('Current user:', user);
     console.log('User role:', user?.role);
     fetchLeads();
-  }, [page, rowsPerPage, filters]);
+  }, [filters]);
 
   const fetchLeads = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await leadApi.getLeads({
-        ...filters,
-        page,
-        limit: rowsPerPage
-      });
+      const response = await leadApi.getLeads(filters);
       setLeads(response.data);
       setTotalCount(parseInt(response.headers['x-total-count'] || '0', 10));
     } catch (err) {
@@ -127,6 +126,14 @@ const LeadManagement: React.FC = () => {
     setFormError(null);
   };
 
+  const handleFilterChange = (newFilters: Partial<ILeadFilters>) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters,
+      page: newFilters.page ?? 0
+    }));
+  };
+
   if (!user?.role) {
     return (
       <Alert severity="error">
@@ -164,12 +171,13 @@ const LeadManagement: React.FC = () => {
           onEdit={handleEdit}
           onDelete={handleDeleteLead}
           filters={filters}
-          onFilterChange={setFilters}
+          onFilterChange={handleFilterChange}
           totalCount={totalCount}
-          page={page}
-          onPageChange={setPage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={setRowsPerPage}
+          page={filters.page || 0}
+          onPageChange={(newPage) => handleFilterChange({ page: newPage })}
+          rowsPerPage={filters.limit || 10}
+          onRowsPerPageChange={(newLimit) => 
+            handleFilterChange({ limit: newLimit, page: 0 })}
         />
       )}
 

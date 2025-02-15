@@ -409,3 +409,48 @@ Key migrations:
    - Check role permissions
    - Validate territory access
    - Ensure data completeness
+
+## Next Phase: Sales Dashboard Implementation
+
+### Planned Features
+1. **Attendance System**
+   - Daily attendance marking
+   - Location tracking
+   - Attendance history view
+   - Reports generation
+
+2. **Personal Dashboard**
+   - Sales team member profile
+   - Assigned leads view
+   - Sales targets display
+   - Current sales progress
+   - Performance metrics
+
+3. **Dealer Visit Management**
+   - Visit entry form
+   - Sales amount recording
+   - Visit history
+   - Location tracking
+
+### Key Files to Create/Modify
+- @frontend/src/components/Sales/Dashboard/SalesDashboard.tsx
+- @frontend/src/components/Sales/Attendance/AttendanceMarking.tsx
+- @frontend/src/components/Sales/DealerVisit/DealerVisitForm.tsx
+- @backend/src/controllers/attendance.controller.ts
+- @backend/src/controllers/dealerVisit.controller.ts
+
+### Data Flow
+1. Attendance System
+   - Daily check-in/check-out
+   - Location verification
+   - Status tracking
+
+2. Sales Recording
+   - Dealer visit entry
+   - Sales amount validation
+   - Target progress calculation
+
+3. Dashboard Data
+   - Personal metrics
+   - Lead status updates
+   - Performance calculations

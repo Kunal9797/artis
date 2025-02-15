@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Table,
@@ -20,11 +20,13 @@ import {
   SelectChangeEvent,
   Chip,
   Avatar,
-  Typography
+  Typography,
+  InputAdornment
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
+  Search as SearchIcon
 } from '@mui/icons-material';
 import { ILead, ILeadFilters } from '../../../types/sales';
 import LeadStatusChip from './LeadStatusChip';
@@ -43,6 +45,13 @@ interface LeadListProps {
   onRowsPerPageChange: (rowsPerPage: number) => void;
 }
 
+const LEAD_STATUSES = {
+  NEW: 'NEW',
+  FOLLOWUP: 'FOLLOWUP',
+  NEGOTIATION: 'NEGOTIATION',
+  CLOSED: 'CLOSED'
+} as const;
+
 const LeadList: React.FC<LeadListProps> = ({
   leads,
   onEdit,
@@ -55,18 +64,32 @@ const LeadList: React.FC<LeadListProps> = ({
   rowsPerPage,
   onRowsPerPageChange
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  // Create refs at the top of the component
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value;
+    
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Set new timeout
+    searchTimeoutRef.current = setTimeout(() => {
+      onFilterChange({
+        ...filters,
+        searchTerm: newValue || undefined
+      });
+    }, 500);
+  };
 
   const handleStatusFilterChange = (event: SelectChangeEvent<string>) => {
     onFilterChange({
       ...filters,
-      status: event.target.value
+      status: event.target.value || undefined
     });
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    // Implement debounced search if needed
   };
 
   const handlePageChange = (event: unknown, newPage: number) => {
@@ -101,31 +124,72 @@ const LeadList: React.FC<LeadListProps> = ({
     });
   });
 
+  // Clean up timeout on unmount - moved inside component
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Box>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
+            inputRef={searchInputRef}
             label="Search Leads"
-            value={searchTerm}
+            defaultValue={filters.searchTerm || ''}
             onChange={handleSearchChange}
             placeholder="Search by customer name or phone"
+            autoComplete="off"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            onBlur={() => {
+              // Restore focus after a short delay if needed
+              setTimeout(() => {
+                if (document.activeElement !== searchInputRef.current) {
+                  searchInputRef.current?.focus();
+                }
+              }, 0);
+            }}
           />
         </Grid>
         <Grid item xs={12} md={4}>
           <FormControl fullWidth>
-            <InputLabel>Status Filter</InputLabel>
+            <InputLabel id="status-filter-label">Status Filter</InputLabel>
             <Select
+              labelId="status-filter-label"
+              id="status-filter"
               value={filters.status || ''}
               onChange={handleStatusFilterChange}
               label="Status Filter"
+              sx={{
+                minWidth: 120,
+                '& .MuiSelect-select': {
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }
+              }}
             >
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="new">New</MenuItem>
-              <MenuItem value="followup">Follow Up</MenuItem>
-              <MenuItem value="negotiation">Negotiation</MenuItem>
-              <MenuItem value="closed">Closed</MenuItem>
+              <MenuItem value="">
+                <Typography>All Status</Typography>
+              </MenuItem>
+              {Object.entries(LEAD_STATUSES).map(([key, value]) => (
+                <MenuItem key={key} value={value}>
+                  <Typography>
+                    {key.charAt(0) + key.slice(1).toLowerCase()}
+                  </Typography>
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>

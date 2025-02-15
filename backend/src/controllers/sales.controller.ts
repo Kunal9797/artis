@@ -363,8 +363,18 @@ export const getLeads = async (req: AuthRequest, res: Response) => {
       }
     }
     
-    // Apply filters
-    if (status) where.status = status;
+    // Apply filters with validation
+    if (status) {
+      // Validate status value
+      if (!Object.values(LeadStatus).includes(status as LeadStatus)) {
+        return res.status(400).json({ 
+          error: 'Invalid status value',
+          validValues: Object.values(LeadStatus)
+        });
+      }
+      where.status = status;
+    }
+    
     if (assignedTo && req.user.role === 'admin') where.assignedTo = assignedTo;
     if (searchTerm) {
       where[Op.or] = [
@@ -394,7 +404,10 @@ export const getLeads = async (req: AuthRequest, res: Response) => {
     res.json(leads);
   } catch (error) {
     console.error('Error fetching leads:', error);
-    res.status(500).json({ error: 'Failed to fetch leads' });
+    res.status(500).json({ 
+      error: 'Failed to fetch leads',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 

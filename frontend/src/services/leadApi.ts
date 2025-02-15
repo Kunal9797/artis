@@ -11,12 +11,26 @@ export const leadApi = {
     }),
 
   // Get all leads with optional filters
-  getLeads: (filters?: { 
-    status?: string,
-    page?: number,
-    limit?: number,
-    assignedTo?: string
-  }) => api.get<ILead[]>('/api/sales/leads', { params: filters }),
+  getLeads: (filters?: ILeadFilters) => {
+    const params: Record<string, string | number | undefined> = {
+      status: filters?.status,
+      page: filters?.page,
+      limit: filters?.limit,
+      assignedTo: filters?.assignedTo,
+      searchTerm: filters?.searchTerm,
+      startDate: filters?.dateRange?.start,
+      endDate: filters?.dateRange?.end
+    };
+    
+    // Remove undefined values
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined) {
+        delete params[key];
+      }
+    });
+    
+    return api.get<ILead[]>('/api/sales/leads', { params });
+  },
 
   // Get single lead details
   getLead: (id: string) => 

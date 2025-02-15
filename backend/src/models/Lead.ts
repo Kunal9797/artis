@@ -5,9 +5,9 @@ import SalesTeam from './SalesTeam';
 
 export enum LeadStatus {
   NEW = 'NEW',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  LOST = 'LOST',
+  FOLLOWUP = 'FOLLOWUP',
+  NEGOTIATION = 'NEGOTIATION',
+  CLOSED = 'CLOSED'
 }
 
 interface NoteEntry {

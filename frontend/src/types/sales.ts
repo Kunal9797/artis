@@ -92,7 +92,7 @@ export interface ILeadFormData {
 
 export interface ILead extends ILeadFormData {
   id: string;
-  status: 'new' | 'followup' | 'negotiation' | 'closed';
+  status: 'NEW' | 'FOLLOWUP' | 'NEGOTIATION' | 'CLOSED';
   createdAt: string;
   updatedAt: string;
   assignedBy: string;
