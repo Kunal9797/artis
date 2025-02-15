@@ -3,54 +3,38 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     try {
-      // 1. Cleanup from previous failed migrations
-      await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_Leads_status_new";`);
-      await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_leads_status_new";`); // lowercase version
+      // 1. First drop the column that depends on the enum
+      await queryInterface.removeColumn('Leads', 'status_new');
       
-      try {
-        await queryInterface.removeColumn('Leads', 'status_new');
-      } catch (error) {
-        // Column might not exist, that's okay
-      }
-
-      // 2. Create new enum type with correct case
+      // 2. Now we can safely drop the enum type
+      await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_Leads_status_new";`);
+      
+      // 3. Create the new enum type
       await queryInterface.sequelize.query(`
-        CREATE TYPE "enum_leads_status_new" AS ENUM ('NEW', 'FOLLOWUP', 'NEGOTIATION', 'CLOSED');
+        CREATE TYPE "enum_Leads_status_new" AS ENUM ('NEW', 'FOLLOWUP', 'NEGOTIATION', 'CLOSED');
       `);
-
-      // 3. Add temporary column with new enum
+      
+      // 4. Add the new column with the new enum type
       await queryInterface.addColumn('Leads', 'status_new', {
-        type: Sequelize.ENUM('NEW', 'FOLLOWUP', 'NEGOTIATION', 'CLOSED'),
-        allowNull: true
-      });
-
-      // 4. Copy and convert data
-      await queryInterface.sequelize.query(`
-        UPDATE "Leads"
-        SET status_new = CASE 
-          WHEN status::text = 'IN_PROGRESS' THEN 'FOLLOWUP'
-          WHEN status::text = 'COMPLETED' THEN 'CLOSED'
-          WHEN status::text = 'LOST' THEN 'CLOSED'
-          ELSE status::text
-        END;
-      `);
-
-      // 5. Drop old column and type
-      await queryInterface.removeColumn('Leads', 'status');
-      await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_leads_status";`);
-
-      // 6. Rename new type to old name
-      await queryInterface.sequelize.query(`
-        ALTER TYPE "enum_leads_status_new" RENAME TO "enum_leads_status";
-      `);
-
-      // 7. Rename column and set constraints
-      await queryInterface.renameColumn('Leads', 'status_new', 'status');
-      await queryInterface.changeColumn('Leads', 'status', {
         type: Sequelize.ENUM('NEW', 'FOLLOWUP', 'NEGOTIATION', 'CLOSED'),
         allowNull: false,
         defaultValue: 'NEW'
       });
+
+      // 5. Update the data
+      await queryInterface.sequelize.query(`
+        UPDATE "Leads"
+        SET status_new = CASE 
+          WHEN status = 'IN_PROGRESS' THEN 'FOLLOWUP'
+          WHEN status = 'COMPLETED' THEN 'CLOSED'
+          WHEN status = 'LOST' THEN 'CLOSED'
+          ELSE status
+        END;
+      `);
+
+      // 6. Drop old column and rename new one
+      await queryInterface.removeColumn('Leads', 'status');
+      await queryInterface.renameColumn('Leads', 'status_new', 'status');
 
     } catch (error) {
       console.error('Migration failed:', error);
