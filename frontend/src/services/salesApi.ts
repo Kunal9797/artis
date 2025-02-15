@@ -1,6 +1,12 @@
 import api from './api';
-import { PerformanceMetric, DealerVisit, Lead, Activity, ISalesTeamMember } from '../types/sales';
-import { SalesTeamAttributes } from '../../../backend/src/models/SalesTeam';
+import { 
+  PerformanceMetric, 
+  DealerVisit, 
+  Lead, 
+  Activity, 
+  ISalesTeamMember,
+  SalesTeamAttributes  // Import from local types instead
+} from '../types/sales';
 
 export const salesApi = {
   // Performance Metrics

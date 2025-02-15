@@ -127,4 +127,15 @@ export interface ILeadAssignment {
   leadId: string;
   assignedTo: string;
   notes?: string;
+}
+
+export interface SalesTeamAttributes {
+  id: string;
+  userId: string;
+  role: 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD';
+  territory: string;
+  reportingTo: string | null;
+  targetQuarter: number;
+  targetYear: number;
+  targetAmount: number;
 } 
