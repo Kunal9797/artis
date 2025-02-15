@@ -4,7 +4,8 @@
     "frontend"
   ],
   "scripts": {
-    "build": "cd frontend && npm install && npm run build"
+    "build": "cd frontend && npm install && npm run build",
+    "generate-templates": "cd tools && ts-node scripts/create-consumption-template.ts && ts-node scripts/create-purchase-template.ts && ts-node scripts/create-inventory-template.ts"
   },
   "dependencies": {
     "@types/node": "^22.10.2",

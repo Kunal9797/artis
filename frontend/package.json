@@ -41,7 +41,6 @@
     "build": "GENERATE_SOURCEMAP=false react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject",
-    "generate-templates": "ts-node scripts/create-consumption-template.ts && ts-node scripts/create-purchase-template.ts && ts-node scripts/create-inventory-template.ts",
     "analyze": "source-map-explorer 'build/static/js/*.js'"
   },
   "eslintConfig": {
