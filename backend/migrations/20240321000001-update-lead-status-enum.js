@@ -3,8 +3,15 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     try {
-      // 1. Drop the existing enum type if it exists (cleanup from previous failed migrations)
+      // 1. Cleanup from previous failed migrations
       await queryInterface.sequelize.query(`DROP TYPE IF EXISTS "enum_Leads_status_new";`);
+      
+      // Try to remove status_new column if it exists from a previous failed migration
+      try {
+        await queryInterface.removeColumn('Leads', 'status_new');
+      } catch (error) {
+        // Column might not exist, that's okay
+      }
 
       // 2. Create new enum type
       await queryInterface.sequelize.query(`
