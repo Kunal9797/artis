@@ -11,6 +11,8 @@ import Unauthorized from './components/Unauthorized';
 import UserManagement from './components/Users/UserManagement';
 
 const App: React.FC = () => {
+  console.log('App - Rendering with path:', window.location.pathname);
+  
   return (
     <AuthProvider>
       <CustomThemeProvider>

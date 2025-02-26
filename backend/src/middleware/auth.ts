@@ -162,11 +162,40 @@ export const zonalHeadAuth = async (req: AuthRequest, res: Response, next: NextF
 };
 
 export const salesExecutiveAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  const userRole = req.user?.role?.toLowerCase();
-  if (!userRole || !['sales_executive', 'zonal_head', 'country_head', 'admin'].includes(userRole)) {
-    return res.status(403).json({ error: 'Sales executive access required' });
+  try {
+    console.log('\n=== salesExecutiveAuth Debug ===');
+    const userRole = req.user?.role?.toLowerCase();
+    
+    if (!userRole || !['sales_executive', 'zonal_head', 'country_head', 'admin'].includes(userRole)) {
+      console.log('Invalid role:', userRole);
+      return res.status(403).json({ error: 'Sales team access required' });
+    }
+
+    // Fetch the sales team data
+    if (!req.user) {
+      console.log('User object is undefined');
+      return res.status(403).json({ error: 'User object is undefined' });
+    }
+    const salesTeam = await SalesTeam.findOne({
+      where: { userId: req.user.id }
+    });
+
+    console.log('Found sales team:', salesTeam?.toJSON());
+
+    if (!salesTeam) {
+      console.log('No sales team found for user:', req.user.id);
+      return res.status(403).json({ error: 'Sales team not found' });
+    }
+
+    // Attach sales team to request
+    req.salesTeam = salesTeam;
+    console.log('Attached sales team to request');
+    
+    next();
+  } catch (error) {
+    console.error('Error in salesExecutiveAuth:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
-  next();
 };
 
 // Add this new middleware

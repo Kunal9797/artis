@@ -111,6 +111,42 @@
    - Shows assignee information
    - Shows territory and role data
 
+### Dealer Visit Management Flow
+1. Entry Point: frontend/src/components/Sales/Dashboard/SalesHome.tsx
+   - Shows daily visit summary
+   - Provides quick access to new visit form
+   - Displays visit history
+
+2. Form Component: frontend/src/components/Sales/DealerVisit/DealerVisitForm.tsx
+   - Handles product-specific sales entry
+   - Supports multiple dealer selection
+   - Validates same-day entries
+   - Manages location data
+
+3. Data Structure:
+   - Product Categories:
+     - liner
+     - artvio08
+     - woodrica08
+     - artis1
+   - Visit Details:
+     - Multiple dealer names
+     - Location tracking
+     - Notes field
+     - Photo upload (optional)
+
+4. API Flow:
+   - Create: POST /api/sales/dealer-visits
+   - Update: PUT /api/sales/dealer-visits/:id
+   - List: GET /api/sales/dealer-visits
+   - Analytics: GET /api/sales/dealer-visits/analytics
+
+5. Validation Rules:
+   - Same-day editing only
+   - Required fields: dealerNames, sales data
+   - Valid product quantities (non-negative)
+   - Location data required
+
 ## Data Models
 
 ### User & Authentication

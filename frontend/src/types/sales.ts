@@ -44,11 +44,21 @@ export interface Activity {
 
 export interface DealerVisit {
   id: string;
-  dealer: string;
-  time: string;
-  status: 'completed' | 'upcoming' | 'pending';
-  location: string;
+  dealerNames: string[];
+  visitDate: string;
+  location: {
+    address: string;
+    lat?: number;
+    lng?: number;
+  };
+  sales: {
+    liner: number;
+    artvio08: number;
+    woodrica08: number;
+    artis1: number;
+  };
   notes?: string;
+  photoUrl?: string;
 }
 
 export interface Lead {

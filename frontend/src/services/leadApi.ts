@@ -53,7 +53,14 @@ export const leadApi = {
 
   // Add note to lead
   addNote: (id: string, note: string) => 
-    api.post<ILead>(`/api/sales/leads/${id}/notes`, { note }),
+    api.post<ILead>(`/api/sales/leads/${id}/notes`, { 
+      note,
+      timestamp: new Date().toISOString()
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }),
 
   // Delete lead
   deleteLead: (id: string) => 

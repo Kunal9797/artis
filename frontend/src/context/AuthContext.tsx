@@ -3,7 +3,11 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 interface User {
   id: string;
   username: string;
+  email: string;
   role: 'admin' | 'user' | 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD';
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
 }
 
 interface AuthContextType {
@@ -27,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
+    console.log('AuthContext initial load:', { storedToken, storedUser });
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
@@ -36,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (token: string, user: User) => {
+    console.log('AuthContext login called with user:', user);
     const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
     localStorage.setItem('token', formattedToken);
     localStorage.setItem('user', JSON.stringify(user));

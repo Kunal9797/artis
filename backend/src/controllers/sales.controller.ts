@@ -168,52 +168,83 @@ export const getTeamHierarchy = async (req: AuthRequest, res: Response) => {
 export const recordDealerVisit = async (req: AuthRequest, res: Response) => {
   try {
     const {
-      dealerName,
-      location,
-      visitDate,
+      dealerNames,
+      sales,
       notes,
-      salesAmount,
-      isOfflineEntry,
+      location,
+      isOfflineEntry = false,
       offlineId,
     } = req.body;
 
-    const photoUrl = req.file?.path || '';
+    // Validate sales data
+    if (!sales || typeof sales !== 'object') {
+      return res.status(400).json({ error: 'Invalid sales data' });
+    }
 
-    const dealerVisit = await DealerVisit.create({
+    // Create dealer visit with optional photo
+    const visit = await DealerVisit.create({
       salesTeamId: req.salesTeam.id,
-      dealerName,
+      dealerNames,
       location,
-      visitDate,
-      photoUrl,
+      visitDate: new Date(),
+      photoUrl: req.file?.path, // Add photo URL if file was uploaded
       notes,
-      salesAmount,
+      sales,
       isOfflineEntry,
       offlineId,
     });
 
-    res.status(201).json(dealerVisit);
+    res.status(201).json(visit);
   } catch (error) {
     console.error('Error recording dealer visit:', error);
-    res.status(500).json({ error: 'Failed to record dealer visit' });
+    res.status(500).json({ 
+      error: 'Failed to record dealer visit',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 
 export const getDealerVisits = async (req: AuthRequest, res: Response) => {
   try {
-    const { teamId } = req.params;
-    const dateRange = getDateRange(req.query as DateRangeQuery);
+    const { startDate, endDate } = req.query;
+    const teamId = req.params.teamId || req.salesTeam.id;
 
-    const where = {
+    const whereClause: any = {
       salesTeamId: teamId,
-      ...createDateWhereClause(dateRange, 'visitDate'),
     };
 
+    // Add date filtering if provided
+    if (startDate && endDate) {
+      whereClause.visitDate = {
+        [Op.between]: [new Date(startDate as string), new Date(endDate as string)]
+      };
+    }
+
     const visits = await DealerVisit.findAll({
-      where,
+      where: whereClause,
       order: [['visitDate', 'DESC']],
+      include: [{
+        model: SalesTeam,
+        include: [{
+          model: User,
+          attributes: ['firstName', 'lastName']
+        }]
+      }]
     });
 
-    res.json(visits);
+    // Calculate totals
+    const totals = visits.reduce((acc, visit) => {
+      Object.entries(visit.sales).forEach(([key, value]) => {
+        acc[key] = (acc[key] || 0) + value;
+      });
+      return acc;
+    }, {} as Record<string, number>);
+
+    res.json({
+      visits,
+      totals,
+      totalVisits: visits.length
+    });
   } catch (error) {
     console.error('Error fetching dealer visits:', error);
     res.status(500).json({ error: 'Failed to fetch dealer visits' });
@@ -249,22 +280,20 @@ export const syncOfflineVisits = async (req: AuthRequest, res: Response) => {
 export const updateDealerVisit = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { dealerName, location, visitDate, notes, salesAmount } = req.body;
-
     const visit = await DealerVisit.findByPk(id);
+
     if (!visit) {
       return res.status(404).json({ error: 'Visit not found' });
     }
 
-    await visit.update({
-      dealerName,
-      location,
-      visitDate,
-      notes,
-      salesAmount,
-    });
+    // Check if edit is allowed (same day only)
+    if (!visit.canEdit()) {
+      return res.status(403).json({ error: 'Visits can only be edited on the same day' });
+    }
 
-    res.json(visit);
+    // Update visit
+    const updatedVisit = await visit.update(req.body);
+    res.json(updatedVisit);
   } catch (error) {
     console.error('Error updating dealer visit:', error);
     res.status(500).json({ error: 'Failed to update dealer visit' });
@@ -520,26 +549,51 @@ export const addLeadNote = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { note } = req.body;
+    
+    console.log('\n=== Add Lead Note Debug ===');
+    console.log('Lead ID:', id);
+    console.log('Note:', note);
+    console.log('User:', req.user);
 
-    const lead = await Lead.findByPk(id);
+    const lead = await Lead.findByPk(id, {
+      include: [{
+        model: SalesTeam,
+        as: 'assignee',
+        include: [{
+          model: User,
+          attributes: ['id', 'firstName', 'lastName']
+        }]
+      }]
+    });
+    
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
     }
 
+    // Create new note entry
     const noteEntry = {
       timestamp: new Date().toISOString(),
       note,
-      author: req.user.id
+      author: req.user?.id
     };
 
+    // Update the notesHistory array
+    const updatedNotesHistory = [...(lead.notesHistory || []), noteEntry];
+    
+    // Update the lead with new note
     await lead.update({
-      notesHistory: [...(lead.notesHistory || []), noteEntry]
+      notesHistory: updatedNotesHistory,
+      notes: note // Update the main notes field as well
     });
 
+    // Return the updated lead directly
     res.json(lead);
   } catch (error) {
     console.error('Error adding note to lead:', error);
-    res.status(500).json({ error: 'Failed to add note' });
+    res.status(500).json({ 
+      error: 'Failed to add note to lead',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 
@@ -548,17 +602,34 @@ export const markAttendance = async (req: AuthRequest, res: Response) => {
   try {
     const { date, location, status } = req.body;
 
+    // Check for existing attendance
+    const existingAttendance = await Attendance.findOne({
+      where: {
+        salesTeamId: req.salesTeam.id,
+        date: date
+      }
+    });
+
+    if (existingAttendance) {
+      return res.status(400).json({ 
+        error: 'Attendance already marked for today'
+      });
+    }
+
     const attendance = await Attendance.create({
       salesTeamId: req.salesTeam.id,
       date,
       location,
-      status,
+      status: status || 'PRESENT'
     });
 
     res.status(201).json(attendance);
   } catch (error) {
     console.error('Error marking attendance:', error);
-    res.status(500).json({ error: 'Failed to mark attendance' });
+    res.status(500).json({ 
+      error: 'Failed to mark attendance',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 
@@ -581,6 +652,30 @@ export const getTeamAttendance = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error fetching team attendance:', error);
     res.status(500).json({ error: 'Failed to fetch team attendance' });
+  }
+};
+
+export const getCurrentUserAttendance = async (req: AuthRequest, res: Response) => {
+  try {
+    const dateRange = getDateRange(req.query as DateRangeQuery);
+    if (!dateRange) {
+      return res.status(400).json({ error: 'Valid start date and end date are required' });
+    }
+
+    const where = {
+      salesTeamId: req.salesTeam.id,
+      ...createDateWhereClause(dateRange, 'date'),
+    };
+
+    const attendance = await Attendance.findAll({
+      where,
+      order: [['date', 'DESC']],
+    });
+
+    res.json(attendance);
+  } catch (error) {
+    console.error('Error fetching user attendance:', error);
+    res.status(500).json({ error: 'Failed to fetch attendance history' });
   }
 };
 
@@ -700,8 +795,18 @@ export const getSalesReport = async (req: AuthRequest, res: Response) => {
     const visits = await DealerVisit.findAll({
       where,
       attributes: [
-        [sequelize.fn('sum', sequelize.col('salesAmount')), 'totalSales'],
         [sequelize.fn('count', sequelize.col('id')), 'totalVisits'],
+        [
+          sequelize.literal(`
+            SUM(
+              CAST(sales->>'liner' AS INTEGER) +
+              CAST(sales->>'artvio08' AS INTEGER) +
+              CAST(sales->>'woodrica08' AS INTEGER) +
+              CAST(sales->>'artis1' AS INTEGER)
+            )
+          `),
+          'totalSheets'
+        ],
       ],
     });
 
@@ -746,62 +851,60 @@ export const getTeamPerformance = async (req: AuthRequest, res: Response) => {
       });
 
       // Calculate metrics
-      const currentSales = currentVisits.reduce((sum, visit) => sum + Number(visit.salesAmount || 0), 0);
-      const previousSales = previousVisits.reduce((sum, visit) => sum + Number(visit.salesAmount || 0), 0);
+      const currentTotalSheets = currentVisits.reduce((sum, visit) => {
+        const totalSheets = Object.values(visit.sales).reduce((a, b) => a + b, 0);
+        return sum + totalSheets;
+      }, 0);
+
+      const previousTotalSheets = previousVisits.reduce((sum, visit) => {
+        const totalSheets = Object.values(visit.sales).reduce((a, b) => a + b, 0);
+        return sum + totalSheets;
+      }, 0);
       
       const currentVisitsCount = currentVisits.length;
       const previousVisitsCount = previousVisits.length;
       
-      const avgDealSize = currentVisitsCount > 0 ? currentSales / currentVisitsCount : 0;
-      const previousAvgDealSize = previousVisitsCount > 0 ? previousSales / previousVisitsCount : 0;
+      const avgSheetsPerVisit = currentVisitsCount > 0 ? currentTotalSheets / currentVisitsCount : 0;
+      const previousAvgSheetsPerVisit = previousVisitsCount > 0 ? previousTotalSheets / previousVisitsCount : 0;
 
       // Get sales target
       const salesTeam = await SalesTeam.findByPk(salesTeamId);
       const targetAmount = salesTeam?.targetAmount || 0;
 
       // Calculate trends
-      const salesTrend = previousSales > 0 
-        ? ((currentSales - previousSales) / previousSales * 100).toFixed(1) + '%'
-        : '0.0%';
-        
-      const visitsTrend = previousVisitsCount > 0
-        ? ((currentVisitsCount - previousVisitsCount) / previousVisitsCount * 100).toFixed(1) + '%'
-        : '0.0%';
-        
-      const dealSizeTrend = previousAvgDealSize > 0
-        ? ((avgDealSize - previousAvgDealSize) / previousAvgDealSize * 100).toFixed(1) + '%'
-        : '0.0%';
+      const sheetsTrend = previousTotalSheets > 0 
+        ? ((currentTotalSheets - previousTotalSheets) / previousTotalSheets) * 100 
+        : 0;
 
-      // Format response
-      const response = {
-        timeSeriesData: currentVisits.map(visit => ({
-          date: visit.visitDate,
-          sales: Number(visit.salesAmount || 0)
-        })),
-        comparisonData: [{
-          name: 'Current Period',
-          current: currentSales,
-          target: targetAmount
-        }],
-        metrics: {
-          targetAchievement: targetAmount > 0 ? (currentSales / targetAmount * 100) : 0,
-          targetAchievementTrend: salesTrend,
-          visitsCompleted: currentVisitsCount,
-          visitsCompletedTrend: visitsTrend,
-          avgDealSize,
-          avgDealSizeTrend: dealSizeTrend
-        }
-      };
+      const visitsTrend = previousVisitsCount > 0 
+        ? ((currentVisitsCount - previousVisitsCount) / previousVisitsCount) * 100 
+        : 0;
 
-      return res.json(response);
+      res.json({
+        currentPeriod: {
+          totalSheets: currentTotalSheets,
+          totalVisits: currentVisitsCount,
+          avgSheetsPerVisit
+        },
+        previousPeriod: {
+          totalSheets: previousTotalSheets,
+          totalVisits: previousVisitsCount,
+          avgSheetsPerVisit: previousAvgSheetsPerVisit
+        },
+        trends: {
+          sheets: sheetsTrend,
+          visits: visitsTrend
+        },
+        target: targetAmount
+      });
     }
 
     // Zone/Country views will be implemented later
     return res.status(400).json({ error: 'Zone and country views not yet implemented' });
 
   } catch (error) {
-    console.error('Error fetching performance metrics:', error);
-    res.status(500).json({ error: 'Failed to fetch performance metrics' });
+    console.error('Error calculating team performance:', error);
+    res.status(500).json({ error: 'Failed to calculate team performance' });
   }
 };
 
@@ -958,5 +1061,23 @@ export const getTeamMembers = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error in getTeamMembers:', error);
     res.status(500).json({ error: 'Failed to fetch team members' });
+  }
+};
+
+export const getAttendanceStatus = async (req: AuthRequest, res: Response) => {
+  try {
+    const date = req.query.date as string;
+    
+    const attendance = await Attendance.findOne({
+      where: {
+        salesTeamId: req.salesTeam.id,
+        date: date
+      }
+    });
+
+    res.json(attendance);
+  } catch (error) {
+    console.error('Error getting attendance status:', error);
+    res.status(500).json({ error: 'Failed to get attendance status' });
   }
 }; 

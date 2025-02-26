@@ -8,6 +8,28 @@ import {
   SalesTeamAttributes  // Import from local types instead
 } from '../types/sales';
 
+interface ProductSales {
+  liner: number;
+  artvio08: number;
+  woodrica08: number;
+  artis1: number;
+}
+
+interface DealerVisitData {
+  dealerNames: string[];
+  location: {
+    lat: number;
+    lng: number;
+    address: string;
+  };
+  visitDate: string;
+  notes?: string;
+  sales: ProductSales;
+  isOfflineEntry?: boolean;
+  offlineId?: string;
+  photo?: File;
+}
+
 export const salesApi = {
   // Performance Metrics
   getPerformanceMetrics: (params: { 
@@ -45,31 +67,22 @@ export const salesApi = {
   getDealerVisits: (params?: { 
     startDate?: string, 
     endDate?: string 
-  }) => api.get<DealerVisit[]>('/api/sales/visits', { params }),
-
-  recordDealerVisit: (data: {
-    dealerName: string,
-    location: string,
-    visitDate: string,
-    notes?: string,
-    salesAmount: number,
-    isOfflineEntry?: boolean,
-    offlineId?: string,
-    photo?: File
   }) => {
+    return api.get<DealerVisit[]>('/api/sales/visits', { params });
+  },
+
+  recordDealerVisit: (data: DealerVisitData) => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined) {
-        if (value instanceof File) {
-          formData.append(key, value);
-        } else if (typeof value === 'number' || typeof value === 'boolean') {
-          formData.append(key, value.toString());
+        if (typeof value === 'object') {
+          formData.append(key, JSON.stringify(value));
         } else {
           formData.append(key, value);
         }
       }
     });
-    return api.post<DealerVisit>('/api/sales/visits', formData);
+    return api.post('/api/sales/visits', formData);
   },
 
   syncOfflineVisits: (visits: DealerVisit[]) => 
@@ -77,6 +90,18 @@ export const salesApi = {
 
   updateVisitStatus: (visitId: string, status: 'completed' | 'pending' | 'cancelled') => {
     return api.put(`/api/sales/visits/${visitId}/status`, { status });
+  },
+
+  updateDealerVisit: (visitId: string, data: Partial<DealerVisitData>) => {
+    const formData = new FormData();
+    
+    if (data.dealerNames) formData.append('dealerNames', JSON.stringify(data.dealerNames));
+    if (data.location) formData.append('location', JSON.stringify(data.location));
+    if (data.sales) formData.append('sales', JSON.stringify(data.sales));
+    if (data.notes) formData.append('notes', data.notes);
+    if (data.photo) formData.append('photo', data.photo);
+
+    return api.put<DealerVisit>(`/api/sales/visits/${visitId}`, formData);
   },
 
   // Leads

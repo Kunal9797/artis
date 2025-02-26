@@ -29,6 +29,7 @@ import {
   markAttendance,
   getTeamAttendance,
   getAttendanceReport,
+  getCurrentUserAttendance,
   
   // Messaging
   sendMessage,
@@ -40,6 +41,7 @@ import {
   getTeamPerformance,
   getVisitMetrics,
   getTeamMembers,
+  getAttendanceStatus,
 } from '../controllers/sales.controller';
 
 import {
@@ -161,6 +163,7 @@ router.delete('/team/:id', adminAuth, deleteSalesTeam);
 
 // Dealer Visit Routes
 router.post('/visits', salesExecutiveAuth, upload.single('photo'), recordDealerVisit);
+router.get('/visits', salesExecutiveAuth, getDealerVisits);
 router.get('/teams/:teamId/visits', salesAuth, getDealerVisits);
 router.post('/visits/sync', salesExecutiveAuth, syncOfflineVisits);
 router.put('/visits/:id', salesExecutiveAuth, updateDealerVisit);
@@ -179,6 +182,9 @@ router.post('/leads/:id/notes', salesAuth, addLeadNote);
 router.post('/attendance', salesExecutiveAuth, markAttendance);
 router.get('/teams/:teamId/attendance', zonalHeadAuth, getTeamAttendance);
 router.get('/attendance/report', countryHeadAuth, getAttendanceReport);
+router.get('/attendance/status', salesExecutiveAuth, getAttendanceStatus);
+router.get('/attendance/history', auth, salesExecutiveAuth, getCurrentUserAttendance);
+router.get('/attendance/team/:teamId', auth, adminAuth, getTeamAttendance);
 
 // Messaging Routes
 router.post('/messages', salesAuth, sendMessage);

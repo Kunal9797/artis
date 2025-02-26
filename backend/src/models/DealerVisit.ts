@@ -7,15 +7,22 @@ interface Location {
   longitude: number;
 }
 
+interface ProductSales {
+  liner: number;
+  artvio08: number;
+  woodrica08: number;
+  artis1: number;
+}
+
 interface DealerVisitAttributes {
   id: string;
   salesTeamId: string;
-  dealerName: string;
+  dealerNames: string[];
   location: Location;
   visitDate: Date;
-  photoUrl: string;
+  photoUrl?: string;
   notes: string;
-  salesAmount: number;
+  sales: ProductSales;
   isOfflineEntry: boolean;
   offlineId?: string;
   syncedAt?: Date;
@@ -26,12 +33,12 @@ interface DealerVisitCreationAttributes extends Omit<DealerVisitAttributes, 'id'
 class DealerVisit extends Model<DealerVisitAttributes, DealerVisitCreationAttributes> {
   public id!: string;
   public salesTeamId!: string;
-  public dealerName!: string;
+  public dealerNames!: string[];
   public location!: Location;
   public visitDate!: Date;
   public photoUrl!: string;
   public notes!: string;
-  public salesAmount!: number;
+  public sales!: ProductSales;
   public isOfflineEntry!: boolean;
   public offlineId?: string;
   public syncedAt?: Date;
@@ -58,6 +65,18 @@ class DealerVisit extends Model<DealerVisitAttributes, DealerVisitCreationAttrib
       } as any // Type assertion to avoid TypeScript error with Op.is
     });
   }
+
+  // Helper method to get total sheets
+  public getTotalSheets(): number {
+    return Object.values(this.sales).reduce((sum, count) => sum + count, 0);
+  }
+
+  // Helper method to validate same-day edit
+  public canEdit(): boolean {
+    const today = new Date();
+    const visitDate = new Date(this.visitDate);
+    return today.toDateString() === visitDate.toDateString();
+  }
 }
 
 DealerVisit.init(
@@ -75,9 +94,10 @@ DealerVisit.init(
         key: 'id',
       },
     },
-    dealerName: {
-      type: DataTypes.STRING,
+    dealerNames: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
+      defaultValue: [],
     },
     location: {
       type: DataTypes.JSON,
@@ -108,13 +128,27 @@ DealerVisit.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    salesAmount: {
-      type: DataTypes.DECIMAL(10, 2),
+    sales: {
+      type: DataTypes.JSON,
       allowNull: false,
-      defaultValue: 0,
-      validate: {
-        min: 0,
+      defaultValue: {
+        liner: 0,
+        artvio08: 0,
+        woodrica08: 0,
+        artis1: 0
       },
+      validate: {
+        isValidSales(value: ProductSales) {
+          if (!value) throw new Error('Sales data is required');
+          
+          const validKeys = ['liner', 'artvio08', 'woodrica08', 'artis1'];
+          for (const key of validKeys) {
+            if (typeof value[key as keyof ProductSales] !== 'number' || value[key as keyof ProductSales] < 0) {
+              throw new Error(`Invalid sales value for ${key}`);
+            }
+          }
+        }
+      }
     },
     isOfflineEntry: {
       type: DataTypes.BOOLEAN,
