@@ -11,6 +11,7 @@ import { aggregateMonthlyConsumption } from '../../utils/consumption';
 import { Transaction } from '../../types/transaction';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { Distributor } from '../../types/distributor';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 interface QuickStatsProps {
   inventory: InventoryItem[];
@@ -29,6 +30,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const [timeFrame, setTimeFrame] = useState('all');
   const [supplierData, setSupplierData] = useState<Record<string, number>>({});
+  const [supplierChartView, setSupplierChartView] = useState<'consumption' | 'purchases'>('consumption');
 
   // Get unique suppliers and categories
   const suppliers = useMemo(() => 
@@ -185,7 +187,62 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     return topSuppliers;
   };
 
+  const getSupplierPurchases = (topCount: number = 7) => {
+    const allSupplierData: Record<string, number> = {};
+    
+    filteredInventory.forEach(item => {
+      if (!item.supplier || !item.transactions) return;
+      
+      const purchases = item.transactions
+        .filter(t => {
+          if (t.type !== 'IN') return false;
+          if (timeFrame === 'all') return true;
+          const transactionDate = new Date(t.date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short' 
+          });
+          return transactionDate === timeFrame;
+        })
+        .reduce((sum, t) => sum + Number(t.quantity), 0);
+      
+      if (purchases > 0) {
+        const shortName = item.supplier.split(' ')[0];
+        allSupplierData[shortName] = (allSupplierData[shortName] || 0) + purchases;
+      }
+    });
+
+    const sortedData = Object.entries(allSupplierData)
+      .map(([name, value]) => ({
+        name,
+        value: Number(value.toFixed(2))
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    const topSuppliers = sortedData.slice(0, topCount);
+    const othersSuppliers = sortedData.slice(topCount);
+    const othersValue = othersSuppliers.reduce((sum, item) => sum + item.value, 0);
+    
+    if (othersValue > 0) {
+      topSuppliers.push({
+        name: 'Others',
+        value: Number(othersValue.toFixed(2))
+      });
+      // Store all others suppliers data
+      setSupplierData(Object.fromEntries(
+        othersSuppliers.map(({name, value}) => [name, value])
+      ));
+    }
+    
+    return topSuppliers;
+  };
+
   const memoizedSupplierConsumption = useMemo(() => getSupplierConsumption(7), [filteredInventory, timeFrame]);
+  const memoizedSupplierPurchases = useMemo(() => getSupplierPurchases(7), [filteredInventory, timeFrame]);
+
+  const activeSupplierData = useMemo(() => 
+    supplierChartView === 'consumption' ? memoizedSupplierConsumption : memoizedSupplierPurchases, 
+    [memoizedSupplierConsumption, memoizedSupplierPurchases, supplierChartView]
+  );
 
   const StatBox = ({ icon, value, unit, label }: { icon: React.ReactNode, value: string | number, unit?: string, label: string }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1090,27 +1147,80 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
               <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
                 {`Top Suppliers of ${timeFrame === 'all' ? 'All Time' : timeFrame}`}
               </Typography>
-              <FormControl size="small" sx={{ minWidth: 180 }}>
-                <InputLabel>Time Frame</InputLabel>
-                <Select
-                  value={timeFrame}
-                  onChange={(e) => setTimeFrame(e.target.value)}
-                  label="Time Frame"
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                <FormControl 
+                  size="small" 
+                  sx={{ 
+                    width: '180px',
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 28,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontWeight: 500,
+                    },
+                    '& .MuiSelect-select': {
+                      py: 1,
+                    }
+                  }}
                 >
-                  {timeFrameOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  <InputLabel>Time Frame</InputLabel>
+                  <Select
+                    value={timeFrame}
+                    onChange={(e) => setTimeFrame(e.target.value)}
+                    label="Time Frame"
+                  >
+                    {timeFrameOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => setSupplierChartView(prev => 
+                    prev === 'consumption' ? 'purchases' : 'consumption'
+                  )}
+                  startIcon={<BarChartIcon />}
+                  sx={{
+                    borderRadius: 28,
+                    px: 2,
+                    py: 0.75,
+                    width: '180px',
+                    backgroundColor: supplierChartView === 'consumption' 
+                      ? (isDarkMode ? '#7E57C2' : '#5E35B1') 
+                      : (isDarkMode ? '#4CAF50' : '#2E7D32'),
+                    '&:hover': {
+                      backgroundColor: supplierChartView === 'consumption' 
+                        ? (isDarkMode ? '#6A1B9A' : '#4527A0') 
+                        : (isDarkMode ? '#388E3C' : '#1B5E20'),
+                    },
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    transition: 'all 0.3s ease',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  {supplierChartView === 'consumption' ? 'CONSUMPTION' : 'PURCHASES'}
+                </Button>
+              </Box>
             </Stack>
 
             {/* Mobile View */}
             <Box sx={{ 
               display: { xs: 'block', md: 'none' } // Show only on mobile
             }}>
-              <MobilePieChart data={memoizedSupplierConsumption} />
+              <MobilePieChart data={activeSupplierData} />
             </Box>
 
             {/* Desktop View */}
@@ -1128,7 +1238,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
                       <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
                     </linearGradient>
-                    {memoizedSupplierConsumption.map((_, index) => (
+                    {activeSupplierData.map((_, index) => (
                       <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
                         <stop offset="0%" stopColor={`hsl(${200 + index * 25}, 70%, 55%)`} />
                         <stop offset="100%" stopColor={`hsl(${200 + index * 25}, 80%, 35%)`} />
@@ -1136,7 +1246,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     ))}
                   </defs>
                   <Pie
-                    data={memoizedSupplierConsumption}
+                    data={activeSupplierData}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
@@ -1277,7 +1387,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       );
                     }}
                   >
-                    {memoizedSupplierConsumption.map((entry, index) => (
+                    {activeSupplierData.map((entry, index) => (
                       <Cell 
                         key={`cell-${index}`}
                         fill={entry.name === 'Others' 
@@ -1331,7 +1441,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       fontWeight="500"
                       textAnchor="middle"
                     >
-                      Total Consumption
+                      Total {supplierChartView === 'consumption' ? 'Consumption' : 'Purchases'}
                     </tspan>
                     <tspan
                       x="50%"
@@ -1340,15 +1450,15 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       fontWeight="600"
                       textAnchor="middle"
                     >
-                      {`${memoizedSupplierConsumption.reduce((sum, item) => sum + item.value, 0).toLocaleString()} kgs`}
+                      {`${activeSupplierData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} kgs`}
                     </tspan>
                   </text>
                   <Legend
                     content={() => {
-                      const othersData = memoizedSupplierConsumption.find(item => item.name === 'Others');
+                      const othersData = activeSupplierData.find(item => item.name === 'Others');
                       if (!othersData) return null;
                       
-                      const total = memoizedSupplierConsumption.reduce((sum, item) => sum + item.value, 0);
+                      const total = activeSupplierData.reduce((sum, item) => sum + item.value, 0);
                       const othersSuppliers = Object.entries(supplierData)
                         .sort((a, b) => b[1] - a[1])
                         .map(([name, value]) => ({
@@ -1359,8 +1469,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
 
                       // Calculate Others segment position
                       const RADIAN = Math.PI / 180;
-                      const othersIndex = memoizedSupplierConsumption.findIndex(item => item.name === 'Others');
-                      const startAngle = othersIndex * (360 / memoizedSupplierConsumption.length) * RADIAN;
+                      const othersIndex = activeSupplierData.findIndex(item => item.name === 'Others');
+                      const startAngle = othersIndex * (360 / activeSupplierData.length) * RADIAN;
                       const x = 250 + 160 * Math.cos(-startAngle - (RADIAN * 15));
                       const y = 200 + 160 * Math.sin(-startAngle - (RADIAN * 15));
 
