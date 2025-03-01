@@ -191,6 +191,7 @@ const MobileConsumptionChart: React.FC<{ data: any[] }> = ({ data }) => {
 const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => {
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<ProductDetails | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const { isDarkMode } = useTheme();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
@@ -225,6 +226,9 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
         inventoryApi.getProductTransactions(productId)
       ]);
       
+      // Store the full product data
+      setProduct(productResponse.data);
+      
       setDetails({
         supplierCode: productResponse.data.supplierCode || '',
         supplier: productResponse.data.supplier || '',
@@ -235,6 +239,7 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
     } catch (error) {
       console.error('Error fetching product details:', error);
       setDetails(null);
+      setProduct(null);
     } finally {
       setLoading(false);
     }
@@ -340,7 +345,7 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
                               variant="h5"
                               sx={{ fontWeight: 600 }}
                             >
-                              {aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
+                              {product ? Number(product.avgConsumption).toFixed(2) : '0.00'}
                               <Typography 
                                 component="span" 
                                 variant="caption"
@@ -392,7 +397,7 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
                         color={isDarkMode ? 'grey.400' : 'text.secondary'}
                         sx={{ mt: 2 }}
                       >
-                        Avg Consumption: {aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0} kgs/month
+                        Avg Consumption: {product ? Number(product.avgConsumption).toFixed(2) : '0.00'} kgs/month
                       </Typography>
                     </CardContent>
                   </Card>
@@ -462,7 +467,7 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
                                   color={isDarkMode ? '#fff' : 'inherit'}
                                   sx={{ fontWeight: 600 }}
                                 >
-                                  {aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
+                                  {product ? Number(product.avgConsumption).toFixed(2) : '0.00'}
                                   <Typography 
                                     component="span" 
                                     variant="caption"
@@ -532,11 +537,11 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
                               }}
                             />
                             <ReferenceLine
-                              y={aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0}
+                              y={product ? Number(product.avgConsumption) : 0}
                               stroke="#FF7043"
                               strokeDasharray="5 5"
                               label={{
-                                value: `Avg: ${aggregateMonthlyConsumption(details?.transactions || [])[0]?.average || 0} kgs`,
+                                value: `Avg: ${product ? Number(product.avgConsumption).toFixed(2) : '0.00'} kgs`,
                                 position: 'right',
                                 fill: '#FF7043',
                                 fontSize: 14

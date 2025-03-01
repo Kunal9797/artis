@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Box, Card, CardContent, Grid, Typography, FormControl, InputLabel, Select, MenuItem, Button, Stack } from '@mui/material';
+import { Box, Card, CardContent, Grid, Typography, FormControl, InputLabel, Select, MenuItem, Button, Stack, IconButton } from '@mui/material';
 import { InventoryItem } from '../Inventory/InventoryList';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -372,7 +372,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
 
   const MobilePieChart: React.FC<{ data: any[] }> = ({ data }) => {
     const { isDarkMode } = useTheme();
-    const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
+    const [activeIndex, setActiveIndex] = useState(0); // Start with first segment focused
 
     // Take top 5 suppliers and combine rest into Others
     const topSuppliers = data.slice(0, 5);
@@ -384,156 +384,345 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     const total = chartData.reduce((sum, item) => sum + item.value, 0);
     const otherSuppliers = data.slice(5);
 
-    const renderActiveShape = (props: any) => {
-      const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent } = props;
-      
-      return (
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 10}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-        />
-      );
+    // Convert kg to tons with 2 decimal places
+    const kgToTons = (kg: number) => (kg / 1000).toFixed(2);
+
+    // Get active segment data
+    const activeSegment = chartData[activeIndex];
+    const activePercentage = ((activeSegment?.value || 0) / total * 100).toFixed(1);
+    const activeTons = kgToTons(activeSegment?.value || 0);
+
+    // Get active segment color
+    const getSegmentColor = (index: number, name: string) => {
+      if (name === 'Others') {
+        return isDarkMode ? '#9C27B0' : '#7B1FA2';
+      }
+      return `hsl(${200 + index * 25}, 70%, 55%)`;
+    };
+    
+    const activeColor = getSegmentColor(activeIndex, activeSegment?.name || '');
+
+    // Handle navigation between segments
+    const goToNextSegment = () => {
+      setActiveIndex((prev) => (prev + 1) % chartData.length);
+    };
+
+    const goToPrevSegment = () => {
+      setActiveIndex((prev) => (prev - 1 + chartData.length) % chartData.length);
     };
 
     return (
-      <Box sx={{ position: 'relative', width: '100%', height: 500 }}>
-        <ResponsiveContainer height={300}>
-          <PieChart>
-            <defs>
-              <linearGradient id="othersGradientMobile" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
-                <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
-                <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
-                <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
-                <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
-                <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
-              </linearGradient>
-            </defs>
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={2}
-              strokeWidth={0}
-              activeIndex={activeIndex}
-              activeShape={renderActiveShape}
-              onMouseEnter={(_, index) => setActiveIndex(index)}
-              onClick={(_, index) => setActiveIndex(index === activeIndex ? undefined : index)}
-              label={({
-                cx,
-                cy,
-                midAngle,
-                innerRadius,
-                outerRadius,
-                percent,
-                name,
-                value,
-                index
-              }) => {
-                const RADIAN = Math.PI / 180;
-                const radius = outerRadius * 1.2;
-                const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                const sin = Math.sin(-midAngle * RADIAN);
-                const cos = Math.cos(-midAngle * RADIAN);
-                const textAnchor = cos >= 0 ? 'start' : 'end';
-                
-                return (
-                  <text
-                    x={x}
-                    y={y}
-                    textAnchor={textAnchor}
-                    fill={name === 'Others' 
-                      ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
-                      : `hsl(${200 + index * 25}, 70%, 55%)`}
-                    fontSize={index === activeIndex ? "13" : "11"}
-                    fontWeight={index === activeIndex ? "600" : "500"}
-                    style={{
-                      transition: 'all 0.3s ease'
-                    }}
-                  >
-                    <tspan x={x} dy="0">{name}</tspan>
-                    <tspan x={x} dy="18">{`${(percent * 100).toFixed(1)}%`}</tspan>
-                  </text>
-                );
-              }}
-            >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.name === 'Others' 
-                    ? 'url(#othersGradientMobile)'
-                    : `hsl(${200 + index * 25}, 70%, 55%)`}
-                  opacity={0.85}
-                />
-              ))}
-            </Pie>
-            <text
-              x="50%"
-              y="50%"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={isDarkMode ? '#fff' : '#333'}
-              style={{
-                pointerEvents: 'none'
-              }}
-            >
-              <tspan
-                x="50%"
-                dy="-12"
-                fontSize="12"
-                fontWeight="500"
-                textAnchor="middle"
-              >
-                Consumption
-              </tspan>
-              <tspan
-                x="50%"
-                dy="24"
-                fontSize="14"
-                fontWeight="600"
-                textAnchor="middle"
-              >
-                {`${total.toLocaleString()} kgs`}
-              </tspan>
-            </text>
-          </PieChart>
-        </ResponsiveContainer>
-
-        {/* Others Breakdown Box */}
-        {otherSuppliers.length > 0 && (
+      <Box sx={{ position: 'relative', width: '100%', height: 'auto' }}>
+        {/* Navigation box with full "Tons" text */}
+        <Box sx={{ 
+          mx: 'auto', 
+          maxWidth: '90%',
+          mb: 2,
+          position: 'relative'
+        }}>
           <Box sx={{
-            mt: 2,
             p: 1.5,
-            borderRadius: 1.5,
-            bgcolor: isDarkMode ? 'rgba(30,30,30,0.95)' : 'rgba(250,250,250,0.97)',
-            border: 1,
+            borderRadius: 2,
+            backgroundColor: isDarkMode ? 'rgba(30,30,30,0.9)' : 'rgba(255,255,255,0.9)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            border: '1px solid',
             borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-            maxHeight: 200,
-            overflowY: 'auto',
-            boxShadow: isDarkMode 
-              ? '0 2px 8px rgba(0,0,0,0.3)' 
-              : '0 2px 8px rgba(0,0,0,0.08)'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            transition: 'all 0.3s ease',
           }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ 
-              background: 'linear-gradient(45deg, #FFD700, #FF8C00, #FF4500, #4169E1, #8A2BE2)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 600,
-              mb: 0.5
+            <IconButton 
+              onClick={goToPrevSegment}
+              size="small"
+              sx={{ 
+                color: activeColor,
+                p: 0.5
+              }}
+            >
+              <Box component="span" sx={{ fontSize: '1.2rem' }}>←</Box>
+            </IconButton>
+            
+            <Box sx={{ textAlign: 'center', flexGrow: 1 }}>
+              <Typography 
+                variant="subtitle1" 
+                sx={{ 
+                  fontWeight: 600,
+                  color: activeColor,
+                  mb: 0.5
+                }}
+              >
+                {activeSegment?.name || 'Loading...'}
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ fontWeight: 600, color: activeColor }}
+                >
+                  {activePercentage}%
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  sx={{ fontWeight: 600, color: activeColor }}
+                >
+                  {activeTons} Tons
+                </Typography>
+              </Box>
+            </Box>
+            
+            <IconButton 
+              onClick={goToNextSegment}
+              size="small"
+              sx={{ 
+                color: activeColor,
+                p: 0.5
+              }}
+            >
+              <Box component="span" sx={{ fontSize: '1.2rem' }}>→</Box>
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* Pie chart with pulled-out active segment - MADE LARGER */}
+        <Box sx={{ height: 300, width: '100%', position: 'relative' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <defs>
+                <linearGradient id="othersGradientMobile" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
+                  <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
+                  <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
+                  <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
+                  <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
+                  <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
+                </linearGradient>
+                {chartData.map((_, index) => (
+                  <filter key={`shadow-${index}`} id={`shadow-${index}`} x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow 
+                      dx="0" 
+                      dy="0" 
+                      stdDeviation={activeIndex === index ? "3" : "0"}
+                      floodColor={isDarkMode ? "#ffffff" : "#000000"}
+                      floodOpacity={activeIndex === index ? "0.3" : "0"}
+                    />
+                  </filter>
+                ))}
+              </defs>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={70}
+                outerRadius={120}
+                paddingAngle={2}
+                strokeWidth={0}
+                activeIndex={activeIndex}
+                activeShape={(props: any) => {
+                  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+                  
+                  // Calculate position for pulled-out segment
+                  const midAngle = (startAngle + endAngle) / 2;
+                  const RADIAN = Math.PI / 180;
+                  const sin = Math.sin(-midAngle * RADIAN);
+                  const cos = Math.cos(-midAngle * RADIAN);
+                  const offsetX = cos * 15;
+                  const offsetY = sin * 15;
+                  
+                  return (
+                    <g>
+                      <Sector
+                        cx={cx + offsetX}
+                        cy={cy + offsetY}
+                        innerRadius={innerRadius}
+                        outerRadius={outerRadius + 5}
+                        startAngle={startAngle}
+                        endAngle={endAngle}
+                        fill={fill}
+                        filter={`url(#shadow-${activeIndex})`}
+                      />
+                    </g>
+                  );
+                }}
+                onClick={(_, index) => setActiveIndex(index)}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.name === 'Others' 
+                      ? 'url(#othersGradientMobile)'
+                      : `hsl(${200 + index * 25}, 70%, 55%)`}
+                    opacity={activeIndex === index ? 1 : 0.7}
+                  />
+                ))}
+              </Pie>
+              <text
+                x="50%"
+                y="50%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill={isDarkMode ? '#fff' : '#333'}
+                style={{
+                  pointerEvents: 'none'
+                }}
+              >
+                <tspan
+                  x="50%"
+                  dy="-12"
+                  fontSize="14"
+                  fontWeight="500"
+                  textAnchor="middle"
+                >
+                  Consumption
+                </tspan>
+                <tspan
+                  x="50%"
+                  dy="28"
+                  fontSize="16"
+                  fontWeight="600"
+                  textAnchor="middle"
+                >
+                  {`${total.toLocaleString()} kgs`}
+                </tspan>
+              </text>
+            </PieChart>
+          </ResponsiveContainer>
+        </Box>
+
+        {/* Compact overview of all segments - with "T" instead of "Tons" */}
+        {activeSegment?.name !== 'Others' && (
+          <Box sx={{ 
+            mx: 'auto', 
+            maxWidth: '90%',
+            mb: 1
+          }}>
+            <Box sx={{
+              p: 1,
+              borderRadius: 2,
+              backgroundColor: isDarkMode ? 'rgba(20,20,20,0.8)' : 'rgba(245,245,245,0.9)',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
             }}>
-              Others Breakdown:
-            </Typography>
-            <Grid container spacing={0.5}>
+              {chartData.map((entry, index) => {
+                const percent = (entry.value / total * 100).toFixed(1);
+                const tons = kgToTons(entry.value);
+                const color = getSegmentColor(index, entry.name);
+                  
+                return (
+                  <Box 
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      py: 0.5,
+                      px: 1,
+                      borderRadius: 1,
+                      mb: 0.5,
+                      backgroundColor: activeIndex === index 
+                        ? (isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)')
+                        : 'transparent',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                      },
+                      borderLeft: '3px solid',
+                      borderLeftColor: color
+                    }}
+                    onClick={() => setActiveIndex(index)}
+                  >
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      overflow: 'hidden',
+                      width: '50%'
+                    }}>
+                      <Box 
+                        sx={{ 
+                          width: 8, 
+                          height: 8, 
+                          borderRadius: '50%', 
+                          backgroundColor: color,
+                          flexShrink: 0,
+                          mr: 1
+                        }} 
+                      />
+                      <Typography 
+                        sx={{ 
+                          fontWeight: 500,
+                          fontSize: '0.8rem',
+                          color: isDarkMode ? '#fff' : '#333',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {entry.name}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 2,
+                      justifyContent: 'flex-end',
+                      width: '50%'
+                    }}>
+                      <Typography 
+                        sx={{ 
+                          fontWeight: 500,
+                          fontSize: '0.8rem',
+                          color: color,
+                          textAlign: 'right',
+                          width: '40%'
+                        }}
+                      >
+                        {percent}%
+                      </Typography>
+                      <Typography 
+                        sx={{ 
+                          fontWeight: 500,
+                          fontSize: '0.8rem',
+                          color: color,
+                          textAlign: 'right',
+                          width: '40%'
+                        }}
+                      >
+                        {tons}T
+                      </Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+        )}
+
+        {/* Others Breakdown Box - with "T" instead of "Tons" */}
+        {activeSegment?.name === 'Others' && otherSuppliers.length > 0 && (
+          <Box sx={{ 
+            mx: 'auto', 
+            maxWidth: '90%',
+            mb: 1
+          }}>
+            <Box sx={{
+              p: 1.5,
+              borderRadius: 2,
+              backgroundColor: isDarkMode ? 'rgba(20,20,20,0.8)' : 'rgba(245,245,245,0.9)',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+            }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ 
+                background: 'linear-gradient(45deg, #FFD700, #FF8C00, #FF4500, #4169E1, #8A2BE2)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 600,
+                mb: 0.5
+              }}>
+                Others Breakdown:
+              </Typography>
+              
+              {/* Display other suppliers with "T" instead of "Tons" */}
               {[
                 ...memoizedSupplierConsumption.slice(5, 7),
                 ...Object.entries(supplierData)
@@ -541,43 +730,93 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                   .filter(supplier => supplier.name !== 'Others')
               ]
                 .sort((a, b) => b.value - a.value)
-                .map((supplier) => {
-                  const percentage = (supplier.value / total * 100).toFixed(1);
+                .map((supplier, index) => {
+                  const percent = (supplier.value / total * 100).toFixed(1);
+                  const tons = kgToTons(supplier.value);
+                  const color = `hsl(${280 + index * 15}, 70%, 55%)`;
+                    
                   return (
-                    <Grid item xs={6} key={supplier.name}>
-                      <Typography 
-                        variant="caption" 
-                        display="block" 
-                        sx={{ 
-                          p: 0.25,
-                          borderRadius: 0.5,
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                            transform: 'translateX(2px)'
-                          }
-                        }}
-                      >
-                        <Box component="span" sx={{ 
-                          color: isDarkMode ? '#fff' : '#555',
-                          fontWeight: isDarkMode ? 400 : 500,
-                          opacity: isDarkMode ? 0.9 : 1
-                        }}>
-                          {supplier.name}:&nbsp;
-                        </Box>
-                        <Box component="span" sx={{ 
-                          background: 'linear-gradient(45deg, #FFD700, #FF8C00)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          fontWeight: 600
-                        }}>
-                          {percentage}%
-                        </Box>
-                      </Typography>
-                    </Grid>
+                    <Box 
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        py: 0.5,
+                        px: 1,
+                        borderRadius: 1,
+                        mb: 0.5,
+                        backgroundColor: 'transparent',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                        },
+                        borderLeft: '3px solid',
+                        borderLeftColor: color
+                      }}
+                    >
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        overflow: 'hidden',
+                        width: '50%'
+                      }}>
+                        <Box 
+                          sx={{ 
+                            width: 8, 
+                            height: 8, 
+                            borderRadius: '50%', 
+                            backgroundColor: color,
+                            flexShrink: 0,
+                            mr: 1
+                          }} 
+                        />
+                        <Typography 
+                          sx={{ 
+                            fontWeight: 500,
+                            fontSize: '0.8rem',
+                            color: isDarkMode ? '#fff' : '#333',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
+                          {supplier.name}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        gap: 2,
+                        justifyContent: 'flex-end',
+                        width: '50%'
+                      }}>
+                        <Typography 
+                          sx={{ 
+                            fontWeight: 500,
+                            fontSize: '0.8rem',
+                            color: color,
+                            textAlign: 'right',
+                            width: '40%'
+                          }}
+                        >
+                          {percent}%
+                        </Typography>
+                        <Typography 
+                          sx={{ 
+                            fontWeight: 500,
+                            fontSize: '0.8rem',
+                            color: color,
+                            textAlign: 'right',
+                            width: '40%'
+                          }}
+                        >
+                          {tons}T
+                        </Typography>
+                      </Box>
+                    </Box>
                   );
                 })}
-            </Grid>
+            </Box>
           </Box>
         )}
       </Box>

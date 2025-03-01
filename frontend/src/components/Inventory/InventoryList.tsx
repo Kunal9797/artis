@@ -61,6 +61,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import AppsIcon from '@mui/icons-material/Apps';
 import SettingsIcon from '@mui/icons-material/Settings';
 import debounce from 'lodash/debounce';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export interface InventoryItem {
   id: string;
@@ -232,131 +233,18 @@ const InventoryList: React.FC = () => {
     setDialogState(prev => ({ ...prev, bulkUpload: true }));
   };
 
-  const FilterControls = () => {
-    return (
-      <Box sx={{ 
-        mb: 3, 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 2, 
-        flexWrap: 'wrap',
-        width: '100%',
-        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-        borderRadius: 1,
-        p: 2
-      }}>
-        <Box sx={{ 
-          display: 'flex',
-          gap: 2,
-          flexGrow: 1,
-          flexWrap: 'wrap'
-        }}>
-          <TextField
-            size="small"
-            placeholder="Search inventory..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              )
-            }}
-            sx={{ 
-              minWidth: { xs: '100%', sm: 250 },
-              flexGrow: { sm: 1 },
-              maxWidth: { sm: 400 }
-            }}
-          />
-
-          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-            <InputLabel>Supplier</InputLabel>
-            <Select
-              value={supplierFilter}
-              onChange={(e) => setSupplierFilter(e.target.value)}
-              label="Supplier"
-            >
-              <MenuItem value="">All</MenuItem>
-              {Array.from(new Set(inventory.map(item => item.supplier)))
-                .filter(Boolean)
-                .sort()
-                .map(supplier => (
-                  <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
-                ))
-              }
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-            <InputLabel>Category</InputLabel>
-            <Select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              label="Category"
-            >
-              <MenuItem value="">All</MenuItem>
-              {Array.from(new Set(inventory.map(item => item.category)))
-                .filter(Boolean)
-                .sort()
-                .map(category => (
-                  <MenuItem key={category} value={category}>{category}</MenuItem>
-                ))
-              }
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
-            <InputLabel>Catalog</InputLabel>
-            <Select
-              value={catalogFilter}
-              onChange={(e) => setCatalogFilter(e.target.value)}
-              label="Catalog"
-            >
-              <MenuItem value="">All</MenuItem>
-              {uniqueCatalogs.map(catalog => (
-                <MenuItem key={catalog} value={catalog}>
-                  {catalog}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2,
-          flexWrap: 'wrap',
-          minWidth: { xs: '100%', sm: 'auto' }
-        }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddTransaction}
-            sx={{ flex: { xs: 1, sm: 'none' } }}
-          >
-            Add Transaction
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<UploadIcon />}
-            onClick={handleBulkUpload}
-            sx={{ flex: { xs: 1, sm: 'none' } }}
-          >
-            Bulk Upload
-          </Button>
-        </Box>
-      </Box>
-    );
-  };
-
   const handleClearInventory = async () => {
-    if (window.confirm('Are you sure you want to clear all inventory?')) {
+    if (window.confirm('Are you sure you want to clear all inventory? This will delete ALL transactions and reset stock levels to zero.')) {
       try {
+        setLoading(true);
         await inventoryApi.clearInventory();
         fetchInventory();
+        // Optional: Show success message
       } catch (error) {
+        console.error('Error clearing inventory:', error);
         setError('Failed to clear inventory');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -410,6 +298,11 @@ const InventoryList: React.FC = () => {
       icon: <FilterListIcon />,
       name: 'Filter',
       onClick: () => setShowMobileFilter(true)
+    },
+    { 
+      icon: <DeleteIcon />, 
+      name: 'Clear Inventory',
+      onClick: handleClearInventory
     },
   ];
 
@@ -878,6 +771,14 @@ const InventoryList: React.FC = () => {
                 onClick={() => setDialogState(prev => ({ ...prev, bulkUpload: true }))}
               >
                 Bulk Upload
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleClearInventory}
+                sx={{ ml: 'auto' }}
+              >
+                Clear All Inventory
               </Button>
             </Box>
 
