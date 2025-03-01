@@ -27,7 +27,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     purchases: true
   });
   const [activeGraph, setActiveGraph] = useState<'combined' | 'consumption'>('combined');
-  const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
   const [timeFrame, setTimeFrame] = useState('all');
   const [supplierData, setSupplierData] = useState<Record<string, number>>({});
   const [supplierChartView, setSupplierChartView] = useState<'consumption' | 'purchases'>('consumption');
@@ -459,100 +459,21 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     
     const activeColor = getSegmentColor(activeIndex, activeSegment?.name || '');
 
-    // Handle navigation between segments
-    const goToNextSegment = () => {
-      setActiveIndex((prev) => (prev + 1) % chartData.length);
-    };
-
-    const goToPrevSegment = () => {
-      setActiveIndex((prev) => (prev - 1 + chartData.length) % chartData.length);
-    };
-
     return (
       <Box sx={{ position: 'relative', width: '100%', height: 'auto' }}>
-        {/* Navigation box with full "Tons" text */}
-        <Box sx={{ 
-          mx: 'auto', 
-          maxWidth: '90%',
-          mb: 2,
-          position: 'relative'
-        }}>
-          <Box sx={{
-            p: 1.5,
-            borderRadius: 2,
-            backgroundColor: isDarkMode ? 'rgba(30,30,30,0.9)' : 'rgba(255,255,255,0.9)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-            border: '1px solid',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            transition: 'all 0.3s ease',
-          }}>
-            <IconButton 
-              onClick={goToPrevSegment}
-              size="small"
-              sx={{ 
-                color: activeColor,
-                p: 0.5
-              }}
-            >
-              <Box component="span" sx={{ fontSize: '1.2rem' }}>←</Box>
-            </IconButton>
-            
-            <Box sx={{ textAlign: 'center', flexGrow: 1 }}>
-              <Typography 
-                variant="subtitle1" 
-                sx={{ 
-                  fontWeight: 600,
-                  color: activeColor,
-                  mb: 0.5
-                }}
-              >
-                {activeSegment?.name || 'Loading...'}
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2 }}>
-                <Typography 
-                  variant="body2" 
-                  sx={{ fontWeight: 600, color: activeColor }}
-                >
-                  {activePercentage}%
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  sx={{ fontWeight: 600, color: activeColor }}
-                >
-                  {activeTons} Tons
-                </Typography>
-              </Box>
-            </Box>
-            
-            <IconButton 
-              onClick={goToNextSegment}
-              size="small"
-              sx={{ 
-                color: activeColor,
-                p: 0.5
-              }}
-            >
-              <Box component="span" sx={{ fontSize: '1.2rem' }}>→</Box>
-            </IconButton>
-          </Box>
-        </Box>
-
         {/* Pie chart with pulled-out active segment - MADE LARGER */}
         <Box sx={{ height: 300, width: '100%', position: 'relative' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <defs>
-                <linearGradient id="othersGradientMobile" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
-                  <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
-                  <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
-                  <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
-                  <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
-                  <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
-                </linearGradient>
+          <PieChart>
+            <defs>
+              <linearGradient id="othersGradientMobile" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
+                <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
+                <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
+                <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
+                <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
+                <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
+              </linearGradient>
                 {chartData.map((_, index) => (
                   <filter key={`shadow-${index}`} id={`shadow-${index}`} x="-20%" y="-20%" width="140%" height="140%">
                     <feDropShadow 
@@ -564,30 +485,30 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     />
                   </filter>
                 ))}
-              </defs>
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
+            </defs>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
                 innerRadius={70}
                 outerRadius={120}
-                paddingAngle={2}
-                strokeWidth={0}
-                activeIndex={activeIndex}
+              paddingAngle={2}
+              strokeWidth={0}
+              activeIndex={activeIndex}
                 activeShape={(props: any) => {
                   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
                   
                   // Calculate position for pulled-out segment
                   const midAngle = (startAngle + endAngle) / 2;
-                  const RADIAN = Math.PI / 180;
-                  const sin = Math.sin(-midAngle * RADIAN);
-                  const cos = Math.cos(-midAngle * RADIAN);
+                const RADIAN = Math.PI / 180;
+                const sin = Math.sin(-midAngle * RADIAN);
+                const cos = Math.cos(-midAngle * RADIAN);
                   const offsetX = cos * 15;
                   const offsetY = sin * 15;
-                  
-                  return (
+                
+                return (
                     <g>
                       <Sector
                         cx={cx + offsetX}
@@ -603,93 +524,121 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                   );
                 }}
                 onClick={(_, index) => setActiveIndex(index)}
-              >
-                {chartData.map((entry, index) => (
+            >
+              {chartData.map((entry, index) => {
+                const percent = (entry.value / total * 100).toFixed(1);
+                const tons = kgToTons(entry.value);
+                const color = getSegmentColor(index, entry.name);
+                const isActive = activeIndex === index;
+                
+                return (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.name === 'Others' 
                       ? 'url(#othersGradientMobile)'
                       : `hsl(${200 + index * 25}, 70%, 55%)`}
-                    opacity={activeIndex === index ? 1 : 0.7}
+                      opacity={isActive ? 1 : 0.7}
                   />
-                ))}
-              </Pie>
-              <text
+                );
+              })}
+            </Pie>
+            {/* Show selected segment info in center instead of total */}
+            <text
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill={isDarkMode ? '#fff' : '#333'}
+              style={{
+                pointerEvents: 'none'
+              }}
+            >
+              <tspan
                 x="50%"
-                y="50%"
+                dy="-20"
+                fontSize="14"
+                fontWeight="600"
                 textAnchor="middle"
-                dominantBaseline="middle"
-                fill={isDarkMode ? '#fff' : '#333'}
-                style={{
-                  pointerEvents: 'none'
-                }}
+                fill={activeColor}
               >
-                <tspan
-                  x="50%"
-                  dy="-12"
-                  fontSize="14"
-                  fontWeight="500"
-                  textAnchor="middle"
-                >
-                  Consumption
-                </tspan>
-                <tspan
-                  x="50%"
-                  dy="28"
-                  fontSize="16"
-                  fontWeight="600"
-                  textAnchor="middle"
-                >
-                  {`${total.toLocaleString()} kgs`}
-                </tspan>
-              </text>
-            </PieChart>
-          </ResponsiveContainer>
+                {activeSegment?.name || ''}
+              </tspan>
+              <tspan
+                x="50%"
+                dy="24"
+                fontSize="16"
+                fontWeight="700"
+                textAnchor="middle"
+                fill={activeColor}
+              >
+                {activePercentage}%
+              </tspan>
+              <tspan
+                x="50%"
+                dy="24"
+                fontSize="14"
+                fontWeight="500"
+                textAnchor="middle"
+              >
+                {activeSegment?.value.toLocaleString()} kg
+              </tspan>
+            </text>
+          </PieChart>
+        </ResponsiveContainer>
         </Box>
 
-        {/* Compact overview of all segments - with "T" instead of "Tons" */}
-        {activeSegment?.name !== 'Others' && (
-          <Box sx={{ 
-            mx: 'auto', 
-            maxWidth: '90%',
-            mb: 1
+        {/* Enhanced supplier list with more compact active item */}
+        <Box sx={{
+          mx: 'auto', 
+          maxWidth: '90%',
+          mb: 1
+        }}>
+          <Box sx={{
+            p: 1,
+            borderRadius: 2,
+            backgroundColor: isDarkMode ? 'rgba(20,20,20,0.8)' : 'rgba(245,245,245,0.9)',
+            border: '1px solid',
+            borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
           }}>
-            <Box sx={{
-              p: 1,
-              borderRadius: 2,
-              backgroundColor: isDarkMode ? 'rgba(20,20,20,0.8)' : 'rgba(245,245,245,0.9)',
-              border: '1px solid',
-              borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-            }}>
-              {chartData.map((entry, index) => {
-                const percent = (entry.value / total * 100).toFixed(1);
-                const tons = kgToTons(entry.value);
-                const color = getSegmentColor(index, entry.name);
-                  
-                return (
-                  <Box 
-                    key={index}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      py: 0.5,
-                      px: 1,
-                      borderRadius: 1,
-                      mb: 0.5,
-                      backgroundColor: activeIndex === index 
-                        ? (isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)')
-                        : 'transparent',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-                      },
-                      borderLeft: '3px solid',
-                      borderLeftColor: color
-                    }}
-                    onClick={() => setActiveIndex(index)}
-                  >
+            {chartData.map((entry, index) => {
+              const percent = (entry.value / total * 100).toFixed(1);
+              const tons = kgToTons(entry.value);
+              const color = getSegmentColor(index, entry.name);
+              const isActive = activeIndex === index;
+                
+              return (
+                <Box 
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    py: isActive ? 1 : 0.5,
+                    px: isActive ? 1.5 : 1,
+                    borderRadius: 1,
+                    mb: 0.5,
+                    backgroundColor: isActive 
+                      ? (isDarkMode ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.9)')
+                      : 'transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+                    },
+                    borderLeft: '3px solid',
+                    borderLeftColor: color,
+                    overflow: 'hidden',
+                    boxShadow: isActive ? (isDarkMode ? '0 2px 8px rgba(255,255,255,0.1)' : '0 2px 8px rgba(0,0,0,0.1)') : 'none',
+                    transform: isActive ? 'scale(1.02)' : 'scale(1)'
+                  }}
+                  onClick={() => setActiveIndex(index)}
+                >
+                  {/* Main row - always visible */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
                     <Box sx={{ 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -698,8 +647,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     }}>
                       <Box 
                         sx={{ 
-                          width: 8, 
-                          height: 8, 
+                          width: isActive ? 10 : 8,
+                          height: isActive ? 10 : 8,
                           borderRadius: '50%', 
                           backgroundColor: color,
                           flexShrink: 0,
@@ -708,9 +657,9 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       />
                       <Typography 
                         sx={{ 
-                          fontWeight: 500,
-                          fontSize: '0.8rem',
-                          color: isDarkMode ? '#fff' : '#333',
+                          fontWeight: isActive ? 600 : 500,
+                          fontSize: isActive ? '0.9rem' : '0.8rem',
+                          color: isActive ? color : (isDarkMode ? '#fff' : '#333'),
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis'
@@ -727,8 +676,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     }}>
                       <Typography 
                         sx={{ 
-                          fontWeight: 500,
-                          fontSize: '0.8rem',
+                          fontWeight: isActive ? 600 : 500,
+                          fontSize: isActive ? '0.9rem' : '0.8rem',
                           color: color,
                           textAlign: 'right',
                           width: '40%'
@@ -738,8 +687,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       </Typography>
                       <Typography 
                         sx={{ 
-                          fontWeight: 500,
-                          fontSize: '0.8rem',
+                          fontWeight: isActive ? 600 : 500,
+                          fontSize: isActive ? '0.9rem' : '0.8rem',
                           color: color,
                           textAlign: 'right',
                           width: '40%'
@@ -749,13 +698,13 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       </Typography>
                     </Box>
                   </Box>
-                );
-              })}
-            </Box>
+                </Box>
+              );
+            })}
           </Box>
-        )}
+        </Box>
 
-        {/* Others Breakdown Box - with "T" instead of "Tons" */}
+        {/* Others Breakdown Box - only shown when Others is active */}
         {activeSegment?.name === 'Others' && otherSuppliers.length > 0 && (
           <Box sx={{ 
             mx: 'auto', 
@@ -763,21 +712,21 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             mb: 1
           }}>
             <Box sx={{
-              p: 1.5,
+            p: 1.5,
               borderRadius: 2,
               backgroundColor: isDarkMode ? 'rgba(20,20,20,0.8)' : 'rgba(245,245,245,0.9)',
               border: '1px solid',
               borderColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
             }}>
-              <Typography variant="subtitle2" gutterBottom sx={{ 
-                background: 'linear-gradient(45deg, #FFD700, #FF8C00, #FF4500, #4169E1, #8A2BE2)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontWeight: 600,
-                mb: 0.5
-              }}>
-                Others Breakdown:
-              </Typography>
+            <Typography variant="subtitle2" gutterBottom sx={{ 
+              background: 'linear-gradient(45deg, #FFD700, #FF8C00, #FF4500, #4169E1, #8A2BE2)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 600,
+              mb: 0.5
+            }}>
+              Others Breakdown:
+            </Typography>
               
               {/* Display other suppliers with "T" instead of "Tons" */}
               {[
@@ -795,7 +744,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                   return (
                     <Box 
                       key={index}
-                      sx={{
+                        sx={{ 
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
@@ -804,8 +753,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                         borderRadius: 1,
                         mb: 0.5,
                         backgroundColor: 'transparent',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
                           backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
                         },
                         borderLeft: '3px solid',
@@ -840,7 +789,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                         >
                           {supplier.name}
                         </Typography>
-                      </Box>
+                        </Box>
                       <Box sx={{ 
                         display: 'flex', 
                         gap: 2,
@@ -857,7 +806,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                           }}
                         >
                           {percent}%
-                        </Typography>
+                      </Typography>
                         <Typography 
                           sx={{ 
                             fontWeight: 500,
@@ -927,28 +876,257 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             : '0 4px 20px rgba(0,0,0,0.1)'
         }}>
           <CardContent>
+            {/* Mobile View - More Compact Layout */}
+            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+              {/* Compact Toggle for Consumption/Purchases and Filters */}
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.5,
+                mb: 2
+              }}>
+                {/* Compact Toggle Box */}
+                <Box sx={{ 
+                  display: 'flex',
+                  borderRadius: 4,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  overflow: 'hidden',
+                  width: '100%'
+                }}>
+                  <Box
+                    onClick={() => setVisibleGraphs(prev => ({ ...prev, consumption: !prev.consumption }))}
+                    sx={{
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      padding: '8px 12px',
+                      flex: 1,
+                      backgroundColor: isDarkMode ? '#7E57C2' : '#5E35B1',
+                      opacity: visibleGraphs.consumption ? 1 : 0.6,
+                      borderRight: '1px solid',
+                      borderColor: 'rgba(255,255,255,0.2)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Typography sx={{ 
+                      fontSize: '0.95rem', 
+                      fontWeight: 500, 
+                      color: '#fff',
+                      textAlign: 'center'
+                    }}>
+                      Consumption {visibleGraphs.consumption ? '✓' : ''}
+                    </Typography>
+                  </Box>
+                  <Box
+                    onClick={() => setVisibleGraphs(prev => ({ ...prev, purchases: !prev.purchases }))}
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      padding: '8px 12px',
+                      flex: 1,
+                      backgroundColor: isDarkMode ? '#4CAF50' : '#2E7D32',
+                      opacity: visibleGraphs.purchases ? 1 : 0.6,
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Typography sx={{ 
+                      fontSize: '0.95rem', 
+                      fontWeight: 500, 
+                      color: '#fff',
+                      textAlign: 'center'
+                    }}>
+                      Purchases {visibleGraphs.purchases ? '✓' : ''}
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                {/* Filters in a single row */}
+                <Stack 
+                  direction="row" 
+                  spacing={1.5}
+                  sx={{ width: '100%' }}
+                >
+                  <FormControl 
+                    size="small" 
+                    sx={{ 
+                      flex: 1,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 28,
+                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                        },
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontWeight: 500,
+                        fontSize: '0.85rem',
+                      },
+                      '& .MuiSelect-select': {
+                        py: 0.75,
+                        fontSize: '0.85rem',
+                      }
+                    }}
+                  >
+                    <InputLabel>Supplier</InputLabel>
+                  <Select
+                    value={filterType === 'supplier' ? filterValue : ''}
+                    onChange={(e) => {
+                      setFilterType('supplier');
+                      setFilterValue(e.target.value);
+                      if (!e.target.value) {
+                        setFilterType('none');
+                      }
+                    }}
+                      label="Supplier"
+                  >
+                    <MenuItem value="">All Suppliers</MenuItem>
+                    {suppliers.map((supplier) => (
+                      <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                  <FormControl 
+                    size="small" 
+                    sx={{ 
+                      flex: 1,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 28,
+                        backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                        },
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontWeight: 500,
+                        fontSize: '0.85rem',
+                      },
+                      '& .MuiSelect-select': {
+                        py: 0.75,
+                        fontSize: '0.85rem',
+                      }
+                    }}
+                  >
+                    <InputLabel>Category</InputLabel>
+                  <Select
+                    value={filterType === 'category' ? filterValue : ''}
+                    onChange={(e) => {
+                      setFilterType('category');
+                      setFilterValue(e.target.value);
+                      if (!e.target.value) {
+                        setFilterType('none');
+                      }
+                    }}
+                      label="Category"
+                  >
+                    <MenuItem value="">All Categories</MenuItem>
+                    {categories.map((category) => (
+                      <MenuItem key={category} value={category}>{category}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                </Stack>
+              </Box>
+            </Box>
+
+            {/* Desktop View - Original Layout */}
             <Stack 
               direction={{ xs: 'column', sm: 'row' }} 
               justifyContent="space-between" 
-              alignItems={{ xs: 'stretch', sm: 'flex-start' }}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
               mb={2}
               gap={2}
-              sx={{
-                flexWrap: { xs: 'nowrap', sm: 'wrap' },
-                overflowX: 'auto',
-                pb: { xs: 1, sm: 0 }
-              }}
+              sx={{ display: { xs: 'none', md: 'flex' } }}
             >
-              <CustomLegend />
+              <Box sx={{ 
+                display: 'flex',
+                borderRadius: 4,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                overflow: 'hidden',
+              }}>
+                <Box
+                  onClick={() => setVisibleGraphs(prev => ({ ...prev, consumption: !prev.consumption }))}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    padding: '8px 16px',
+                    backgroundColor: isDarkMode ? '#7E57C2' : '#5E35B1',
+                    opacity: visibleGraphs.consumption ? 1 : 0.6,
+                    borderRight: '1px solid',
+                    borderColor: 'rgba(255,255,255,0.2)',
+                  }}
+                >
+                  <Typography sx={{ 
+                    fontSize: 14, 
+                    fontWeight: 500, 
+                    color: '#fff' 
+                  }}>
+                    Consumption {visibleGraphs.consumption ? '✓' : ''}
+                  </Typography>
+                </Box>
+                <Box
+                  onClick={() => setVisibleGraphs(prev => ({ ...prev, purchases: !prev.purchases }))}
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    padding: '8px 16px',
+                    backgroundColor: isDarkMode ? '#4CAF50' : '#2E7D32',
+                    opacity: visibleGraphs.purchases ? 1 : 0.6,
+                  }}
+                >
+                  <Typography sx={{ 
+                    fontSize: 14, 
+                    fontWeight: 500, 
+                    color: '#fff' 
+                  }}>
+                    Purchases {visibleGraphs.purchases ? '✓' : ''}
+                  </Typography>
+                </Box>
+              </Box>
+
               <Stack 
                 direction={{ xs: 'column', sm: 'row' }} 
                 spacing={2}
                 sx={{ 
-                  minWidth: 'min-content',
                   flexShrink: 0
                 }}
               >
-                <FormControl size="small" sx={{ minWidth: 180 }}>
+                <FormControl 
+                  size="small" 
+                  sx={{ 
+                    width: '180px',
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 28,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontWeight: 500,
+                    },
+                    '& .MuiSelect-select': {
+                      py: 1,
+                    }
+                  }}
+                >
                   <InputLabel>Filter by Supplier</InputLabel>
                   <Select
                     value={filterType === 'supplier' ? filterValue : ''}
@@ -968,7 +1146,27 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                   </Select>
                 </FormControl>
 
-                <FormControl size="small" sx={{ minWidth: 180 }}>
+                <FormControl 
+                  size="small" 
+                  sx={{ 
+                    width: '180px',
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 28,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontWeight: 500,
+                    },
+                    '& .MuiSelect-select': {
+                      py: 1,
+                    }
+                  }}
+                >
                   <InputLabel>Filter by Category</InputLabel>
                   <Select
                     value={filterType === 'category' ? filterValue : ''}
@@ -987,49 +1185,31 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     ))}
                   </Select>
                 </FormControl>
-
-                <FormControl size="small" sx={{ minWidth: 180 }}>
-                  <InputLabel>Filter by Catalog</InputLabel>
-                  <Select
-                    value={filterType === 'catalog' ? filterValue : ''}
-                    onChange={(e) => {
-                      setFilterType('catalog');
-                      setFilterValue(e.target.value);
-                      if (!e.target.value) {
-                        setFilterType('none');
-                      }
-                    }}
-                    label="Filter by Catalog"
-                  >
-                    <MenuItem value="">All Catalogs</MenuItem>
-                    {uniqueCatalogs.map((catalog) => (
-                      <MenuItem key={catalog} value={catalog}>{catalog}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
               </Stack>
             </Stack>
+
             <Box sx={{ 
-              height: 400, 
+              height: 450,
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              position: 'relative',
               '& .recharts-wrapper': {
-                minWidth: { xs: '100%', sm: '90%' },
+                width: '100% !important',
                 margin: '0 auto'
               }
             }}>
               <ResponsiveContainer>
                 <ComposedChart
                   data={getMonthlyConsumption()}
-                  margin={{ top: 40, right: 30, left: 10, bottom: 40 }}
-                  barGap={0}
-                  barCategoryGap={2}
+                  margin={{ top: 15, right: 15, left: 5, bottom: 40 }}
+                  barGap={4}
+                  barCategoryGap={10}
                 >
                   <CartesianGrid 
                     strokeDasharray="3 3" 
-                    stroke={isDarkMode ? '#444' : '#eee'} 
+                    stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'} 
                     vertical={false}
                   />
                   <XAxis 
@@ -1043,47 +1223,62 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                             y={0}
                             dy={10}
                             textAnchor="end"
-                            fill={isDarkMode ? '#fff' : '#666'}
-                            transform="rotate(-45)"
+                            fill={isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)'}
+                            transform="rotate(-35)"
                             fontSize={11}
+                            fontWeight="500"
                           >
                             {payload.value}
                           </text>
                         </g>
                       );
                     }}
-                    axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
+                    axisLine={{ stroke: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}
                     tickLine={false}
                     interval={0}
                     height={60}
                     tickMargin={5}
                   />
                   <YAxis 
-                    tick={{ fill: isDarkMode ? '#fff' : '#666' }}
-                    axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
+                    tick={{ 
+                      fill: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                      fontSize: 11,
+                      fontWeight: 500
+                    }}
+                    axisLine={{ stroke: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}
                     tickLine={false}
-                    width={45}
+                    width={40}
+                    tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(1)}k` : value}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: isDarkMode ? '#333' : '#fff',
-                      border: `1px solid ${isDarkMode ? '#444' : '#ddd'}`,
-                      borderRadius: '4px'
+                      backgroundColor: isDarkMode ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.95)',
+                      border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                      padding: '8px 12px'
                     }}
-                    labelStyle={{ color: isDarkMode ? '#fff' : '#333' }}
+                    labelStyle={{ 
+                      color: isDarkMode ? '#fff' : '#333',
+                      fontWeight: 600,
+                      marginBottom: '4px',
+                      borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                      paddingBottom: '4px'
+                    }}
+                    itemStyle={{
+                      padding: '2px 0',
+                      fontSize: '12px'
+                    }}
+                    formatter={(value: any) => [`${value.toLocaleString()} kg`, null]}
                   />
                   {visibleGraphs.consumption && (
                     <Bar 
                       dataKey="amount" 
                       fill={isDarkMode ? '#7E57C2' : '#5E35B1'} 
                       name="Consumption"
-                      barSize={30}
+                      barSize={24}
                       radius={[4, 4, 0, 0]}
                       opacity={0.9}
-                      label={{
-                        position: 'top',
-                        content: (props) => renderBarLabel(props, 'consumption')
-                      }}
                     />
                   )}
                   {visibleGraphs.purchases && (
@@ -1096,13 +1291,9 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       }}
                       fill={isDarkMode ? '#4CAF50' : '#2E7D32'} 
                       name="Purchases"
-                      barSize={30}
+                      barSize={24}
                       radius={[4, 4, 0, 0]}
                       opacity={0.9}
-                      label={{
-                        position: 'top',
-                        content: (props) => renderBarLabel(props, 'purchases')
-                      }}
                     />
                   )}
                   <ReferenceLine
@@ -1116,12 +1307,22 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
               <Typography 
                 sx={{ 
                   color: isDarkMode ? '#FFB74D' : '#F57C00',
-                  mt: -3,
+                  mt: 0,
                   fontSize: '0.875rem',
-                  fontWeight: 500
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
                 }}
               >
-                Average Consumption: {getMonthlyConsumption()[0]?.average?.toLocaleString()} kgs
+                <Box component="span" sx={{ 
+                  width: 8, 
+                  height: 2, 
+                  backgroundColor: isDarkMode ? '#FFB74D' : '#F57C00',
+                  display: 'inline-block',
+                  marginRight: '4px'
+                }}/>
+                Average: {getMonthlyConsumption()[0]?.average?.toLocaleString()} kg
               </Typography>
             </Box>
           </CardContent>
@@ -1169,50 +1370,78 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     }
                   }}
                 >
-                  <InputLabel>Time Frame</InputLabel>
-                  <Select
-                    value={timeFrame}
-                    onChange={(e) => setTimeFrame(e.target.value)}
-                    label="Time Frame"
-                  >
-                    {timeFrameOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => setSupplierChartView(prev => 
-                    prev === 'consumption' ? 'purchases' : 'consumption'
-                  )}
-                  startIcon={<BarChartIcon />}
-                  sx={{
-                    borderRadius: 28,
-                    px: 2,
-                    py: 0.75,
-                    width: '180px',
-                    backgroundColor: supplierChartView === 'consumption' 
-                      ? (isDarkMode ? '#7E57C2' : '#5E35B1') 
-                      : (isDarkMode ? '#4CAF50' : '#2E7D32'),
-                    '&:hover': {
-                      backgroundColor: supplierChartView === 'consumption' 
-                        ? (isDarkMode ? '#6A1B9A' : '#4527A0') 
-                        : (isDarkMode ? '#388E3C' : '#1B5E20'),
-                    },
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                    transition: 'all 0.3s ease',
-                    textTransform: 'uppercase',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    letterSpacing: '0.5px'
-                  }}
+                <InputLabel>Time Frame</InputLabel>
+                <Select
+                  value={timeFrame}
+                  onChange={(e) => setTimeFrame(e.target.value)}
+                  label="Time Frame"
                 >
-                  {supplierChartView === 'consumption' ? 'CONSUMPTION' : 'PURCHASES'}
-                </Button>
+                  {timeFrameOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, width: '180px' }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => setSupplierChartView(prev => 
+                      prev === 'consumption' ? 'purchases' : 'consumption'
+                    )}
+                    startIcon={<BarChartIcon />}
+                    sx={{
+                      borderRadius: 28,
+                      px: 2,
+                      py: 0.75,
+                      width: '100%',
+                      backgroundColor: supplierChartView === 'consumption' 
+                        ? (isDarkMode ? '#7E57C2' : '#5E35B1') 
+                        : (isDarkMode ? '#4CAF50' : '#2E7D32'),
+                      '&:hover': {
+                        backgroundColor: supplierChartView === 'consumption' 
+                          ? (isDarkMode ? '#6A1B9A' : '#4527A0') 
+                          : (isDarkMode ? '#388E3C' : '#1B5E20'),
+                      },
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                      transition: 'all 0.3s ease',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      letterSpacing: '0.5px'
+                    }}
+                  >
+                    {supplierChartView === 'consumption' ? 'CONSUMPTION' : 'PURCHASES'}
+                  </Button>
+                  
+                  {/* Add back the total display below the toggle button */}
+                  <Box sx={{ 
+                    textAlign: 'center', 
+                    p: 0.75,
+                    borderRadius: 2,
+                    backgroundColor: isDarkMode ? 'rgba(20,20,20,0.6)' : 'rgba(245,245,245,0.7)',
+                    width: '100%',
+                  }}>
+                    <Typography sx={{ 
+                      fontWeight: 600, 
+                      fontSize: '0.85rem',
+                      color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'
+                    }}>
+                      Total: 
+                      <Box component="span" sx={{ 
+                        ml: 1,
+                        color: supplierChartView === 'consumption' 
+                          ? (isDarkMode ? '#9575CD' : '#5E35B1')
+                          : (isDarkMode ? '#81C784' : '#2E7D32'),
+                        fontWeight: 700
+                      }}>
+                        {activeSupplierData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} kg
+                      </Box>
+                    </Typography>
+                  </Box>
+                </Box>
               </Box>
             </Stack>
 
@@ -1255,137 +1484,34 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     outerRadius={140}
                     paddingAngle={2}
                     strokeWidth={0}
-                    label={({
-                      cx,
-                      cy,
-                      midAngle,
-                      innerRadius,
-                      outerRadius,
-                      percent,
-                      name,
-                      value,
-                      index
-                    }) => {
-                      if (name === 'Others') {
-                        const RADIAN = Math.PI / 180;
-                        const radius = outerRadius * 1.2;
-                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                        const sin = Math.sin(-midAngle * RADIAN);
-                        const cos = Math.cos(-midAngle * RADIAN);
-                        const textAnchor = cos >= 0 ? 'start' : 'end';
-                        const lineX2 = cx + (outerRadius + 10) * cos;
-                        const lineY2 = cy + (outerRadius + 10) * sin;
-
-                        return (
-                          <g>
-                            <line
-                              x1={cx + outerRadius * cos}
-                              y1={cy + outerRadius * sin}
-                              x2={lineX2}
-                              y2={lineY2}
-                              stroke={isDarkMode ? '#666' : '#999'}
-                              strokeWidth={1}
-                            />
-                            <line
-                              x1={lineX2}
-                              y1={lineY2}
-                              x2={x}
-                              y2={y}
-                              stroke={isDarkMode ? '#666' : '#999'}
-                              strokeWidth={1}
-                            />
-                            <text
-                              x={x + (cos >= 0 ? 5 : -5)}
-                              y={y}
-                              textAnchor={textAnchor}
-                              fill={`hsl(${200 + index * 25}, 70%, 55%)`}
-                              fontSize="12"
-                              fontWeight="600"
-                            >
-                              {`${name} (${(percent * 100).toFixed(1)}%)`}
-                            </text>
-                            <text
-                              x={x + (cos >= 0 ? 5 : -5)}
-                              y={y + 15}
-                              textAnchor={textAnchor}
-                              fill={`hsl(${200 + index * 25}, 70%, 55%)`}
-                              fontSize="11"
-                              fontWeight="500"
-                            >
-                              {`${value.toLocaleString()} kgs`}
-                            </text>
-                          </g>
-                        );
-                      }
-
+                    activeIndex={activeIndex}
+                    activeShape={(props: any) => {
+                      const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, name, value } = props;
+                      
+                      // Calculate position for pulled-out segment
+                      const midAngle = (startAngle + endAngle) / 2;
                       const RADIAN = Math.PI / 180;
-                      const radius = outerRadius * 1.2;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
                       const sin = Math.sin(-midAngle * RADIAN);
                       const cos = Math.cos(-midAngle * RADIAN);
-                      const textAnchor = cos >= 0 ? 'start' : 'end';
-                      const lineX2 = cx + (outerRadius + 10) * cos;
-                      const lineY2 = cy + (outerRadius + 10) * sin;
-
+                      const offsetX = cos * 15;
+                      const offsetY = sin * 15;
+                      
                       return (
-                        <g className={`supplier-label-${index}`}>
-                          <line
-                            x1={cx + outerRadius * cos}
-                            y1={cy + outerRadius * sin}
-                            x2={lineX2}
-                            y2={lineY2}
-                            stroke={isDarkMode ? '#666' : '#999'}
-                            strokeWidth={1}
+                        <g>
+                          <Sector
+                            cx={cx + offsetX}
+                            cy={cy + offsetY}
+                            innerRadius={innerRadius}
+                            outerRadius={outerRadius + 5}
+                            startAngle={startAngle}
+                            endAngle={endAngle}
+                            fill={fill}
+                            filter={`url(#shadow-${activeIndex})`}
                           />
-                          <line
-                            x1={lineX2}
-                            y1={lineY2}
-                            x2={x}
-                            y2={y}
-                            stroke={isDarkMode ? '#666' : '#999'}
-                            strokeWidth={1}
-                          />
-                          <g
-                            style={{
-                              transition: 'transform 0.2s',
-                              transformOrigin: `${x}px ${y}px`,
-                              cursor: 'pointer'
-                            }}
-                            onMouseEnter={(e) => {
-                              const group = e.currentTarget;
-                              group.style.transform = 'scale(1.15)';
-                            }}
-                            onMouseLeave={(e) => {
-                              const group = e.currentTarget;
-                              group.style.transform = 'scale(1)';
-                            }}
-                          >
-                            <text
-                              x={x + (cos >= 0 ? 5 : -5)}
-                              y={y}
-                              textAnchor={textAnchor}
-                              fill={`hsl(${200 + index * 25}, 70%, 55%)`}
-                              fontSize="12"
-                              fontWeight="600"
-                            >
-                              {`${name} (${(percent * 100).toFixed(1)}%)`}
-                            </text>
-                            <text
-                              x={x + (cos >= 0 ? 5 : -5)}
-                              y={y + 15}
-                              textAnchor={textAnchor}
-                              fill={`hsl(${200 + index * 25}, 70%, 55%)`}
-                              fontSize="11"
-                              fontWeight="500"
-                            >
-                              {`${value.toLocaleString()} kgs`}
-                            </text>
-                          </g>
                         </g>
                       );
                     }}
+                    onClick={(_, index) => setActiveIndex(index)}
                   >
                     {activeSupplierData.map((entry, index) => (
                       <Cell 
@@ -1436,21 +1562,36 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                   >
                     <tspan
                       x="50%"
-                      dy="-12"
+                      dy="-20"
                       fontSize="16"
-                      fontWeight="500"
+                      fontWeight="600"
                       textAnchor="middle"
+                      fill={activeSupplierData[activeIndex]?.name === 'Others' 
+                        ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
+                        : `hsl(${200 + activeIndex * 25}, 70%, 55%)`}
                     >
-                      Total {supplierChartView === 'consumption' ? 'Consumption' : 'Purchases'}
+                      {activeSupplierData[activeIndex]?.name || ''}
                     </tspan>
                     <tspan
                       x="50%"
                       dy="24"
-                      fontSize="15"
-                      fontWeight="600"
+                      fontSize="18"
+                      fontWeight="700"
+                      textAnchor="middle"
+                      fill={activeSupplierData[activeIndex]?.name === 'Others' 
+                        ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
+                        : `hsl(${200 + activeIndex * 25}, 70%, 55%)`}
+                    >
+                      {((activeSupplierData[activeIndex]?.value || 0) / activeSupplierData.reduce((sum, item) => sum + item.value, 0) * 100).toFixed(1)}%
+                    </tspan>
+                    <tspan
+                      x="50%"
+                      dy="24"
+                      fontSize="16"
+                      fontWeight="500"
                       textAnchor="middle"
                     >
-                      {`${activeSupplierData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} kgs`}
+                      {(activeSupplierData[activeIndex]?.value || 0).toLocaleString()} kg
                     </tspan>
                   </text>
                   <Legend
