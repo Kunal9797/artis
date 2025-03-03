@@ -31,6 +31,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
   const [timeFrame, setTimeFrame] = useState('all');
   const [supplierData, setSupplierData] = useState<Record<string, number>>({});
   const [supplierChartView, setSupplierChartView] = useState<'consumption' | 'purchases'>('consumption');
+  const [catalogDesignFilter, setCatalogDesignFilter] = useState<'all' | 'Liner' | '0.8MM' | '1MM'>('all');
 
   // Get unique suppliers and categories
   const suppliers = useMemo(() => 
@@ -55,6 +56,22 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
   const filteredInventory = useMemo(() => {
     let filtered = [...inventory];
     
+    if (catalogDesignFilter !== 'all') {
+      if (catalogDesignFilter === 'Liner') {
+        filtered = filtered.filter(item => 
+          item.catalogs?.includes('Liner')
+        );
+      } else if (catalogDesignFilter === '0.8MM') {
+        filtered = filtered.filter(item => 
+          item.catalogs?.includes('Artvio') || item.catalogs?.includes('Woodrica')
+        );
+      } else if (catalogDesignFilter === '1MM') {
+        filtered = filtered.filter(item => 
+          item.catalogs?.some(catalog => catalog.includes('1MM'))
+        );
+      }
+    }
+    
     if (filterType === 'supplier' && filterValue) {
       filtered = filtered.filter(item => item.supplier === filterValue);
     } else if (filterType === 'category' && filterValue) {
@@ -64,7 +81,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     }
     
     return filtered;
-  }, [inventory, filterType, filterValue]);
+  }, [inventory, filterType, filterValue, catalogDesignFilter]);
 
   const getMonthlyConsumption = () => {
     const monthOrder: { [key: string]: number } = {
@@ -876,6 +893,133 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             : '0 4px 20px rgba(0,0,0,0.1)'
         }}>
           <CardContent>
+            {/* Unified Compact Catalog Design Filter */}
+            <Box sx={{ 
+              mb: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <Box sx={{ 
+                display: 'flex',
+                borderRadius: 24,
+                overflow: 'hidden',
+                backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                border: '1px solid',
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                width: { xs: '100%', sm: 'auto' },
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+              }}>
+                <Box
+                  onClick={() => setCatalogDesignFilter('all')}
+                  sx={{
+                    px: { xs: 2, sm: 2.5 },
+                    py: 1,
+                    cursor: 'pointer',
+                    backgroundColor: catalogDesignFilter === 'all' 
+                      ? (isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)')
+                      : 'transparent',
+                    color: catalogDesignFilter === 'all' 
+                      ? (isDarkMode ? '#fff' : '#000') 
+                      : 'text.secondary',
+                    fontWeight: catalogDesignFilter === 'all' ? 600 : 400,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    borderRight: '1px solid',
+                    borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                    minWidth: { xs: '25%', sm: 'auto' }
+                  }}
+                >
+                  All
+                </Box>
+                <Box
+                  onClick={() => setCatalogDesignFilter('Liner')}
+                  sx={{
+                    px: { xs: 2, sm: 2.5 },
+                    py: 1,
+                    cursor: 'pointer',
+                    backgroundColor: catalogDesignFilter === 'Liner' 
+                      ? (isDarkMode ? 'rgba(255,152,0,0.2)' : 'rgba(255,152,0,0.1)')
+                      : 'transparent',
+                    color: catalogDesignFilter === 'Liner' 
+                      ? '#ff9800' 
+                      : 'text.secondary',
+                    fontWeight: catalogDesignFilter === 'Liner' ? 600 : 400,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    borderRight: '1px solid',
+                    borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                    minWidth: { xs: '25%', sm: 'auto' }
+                  }}
+                >
+                  Liner
+                </Box>
+                <Box
+                  onClick={() => setCatalogDesignFilter('0.8MM')}
+                  sx={{
+                    px: { xs: 2, sm: 2.5 },
+                    py: 1,
+                    cursor: 'pointer',
+                    backgroundColor: catalogDesignFilter === '0.8MM' 
+                      ? (isDarkMode ? 'rgba(156,39,176,0.2)' : 'rgba(156,39,176,0.1)')
+                      : 'transparent',
+                    color: catalogDesignFilter === '0.8MM' 
+                      ? (isDarkMode ? '#ce93d8' : '#7b1fa2') 
+                      : 'text.secondary',
+                    fontWeight: catalogDesignFilter === '0.8MM' ? 600 : 400,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    borderRight: '1px solid',
+                    borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                    minWidth: { xs: '25%', sm: 'auto' }
+                  }}
+                >
+                  0.8MM
+                </Box>
+                <Box
+                  onClick={() => setCatalogDesignFilter('1MM')}
+                  sx={{
+                    px: { xs: 2, sm: 2.5 },
+                    py: 1,
+                    cursor: 'pointer',
+                    backgroundColor: catalogDesignFilter === '1MM' 
+                      ? (isDarkMode ? 'rgba(33,150,243,0.2)' : 'rgba(33,150,243,0.1)')
+                      : 'transparent',
+                    color: catalogDesignFilter === '1MM' 
+                      ? (isDarkMode ? '#90caf9' : '#1976d2') 
+                      : 'text.secondary',
+                    fontWeight: catalogDesignFilter === '1MM' ? 600 : 400,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.2s',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    minWidth: { xs: '25%', sm: 'auto' }
+                  }}
+                >
+                  1MM
+                </Box>
+              </Box>
+              
+              {catalogDesignFilter !== 'all' && (
+                <Typography variant="caption" sx={{ 
+                  color: 'text.secondary',
+                  fontSize: '0.75rem',
+                  fontStyle: 'italic'
+                }}>
+                  {catalogDesignFilter === 'Liner' && 'Showing only Liner designs'}
+                  {catalogDesignFilter === '0.8MM' && 'Showing Artvio and Woodrica designs'}
+                  {catalogDesignFilter === '1MM' && 'Showing only 1MM designs'}
+                </Typography>
+              )}
+            </Box>
+
             {/* Mobile View - More Compact Layout */}
             <Box sx={{ display: { xs: 'block', md: 'none' } }}>
               {/* Compact Toggle for Consumption/Purchases and Filters */}
@@ -885,7 +1029,6 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                 gap: 1.5,
                 mb: 2
               }}>
-                {/* Compact Toggle Box */}
                 <Box sx={{ 
                   display: 'flex',
                   borderRadius: 4,
@@ -1047,6 +1190,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
               gap={2}
               sx={{ display: { xs: 'none', md: 'flex' } }}
             >
+              {/* Removed duplicate Catalog Design Filter for Desktop */}
+              
               <Box sx={{ 
                 display: 'flex',
                 borderRadius: 4,
@@ -1098,94 +1243,6 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                   </Typography>
                 </Box>
               </Box>
-
-              <Stack 
-                direction={{ xs: 'column', sm: 'row' }} 
-                spacing={2}
-                sx={{ 
-                  flexShrink: 0
-                }}
-              >
-                <FormControl 
-                  size="small" 
-                  sx={{ 
-                    width: '180px',
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 28,
-                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontWeight: 500,
-                    },
-                    '& .MuiSelect-select': {
-                      py: 1,
-                    }
-                  }}
-                >
-                  <InputLabel>Filter by Supplier</InputLabel>
-                  <Select
-                    value={filterType === 'supplier' ? filterValue : ''}
-                    onChange={(e) => {
-                      setFilterType('supplier');
-                      setFilterValue(e.target.value);
-                      if (!e.target.value) {
-                        setFilterType('none');
-                      }
-                    }}
-                    label="Filter by Supplier"
-                  >
-                    <MenuItem value="">All Suppliers</MenuItem>
-                    {suppliers.map((supplier) => (
-                      <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <FormControl 
-                  size="small" 
-                  sx={{ 
-                    width: '180px',
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 28,
-                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      fontWeight: 500,
-                    },
-                    '& .MuiSelect-select': {
-                      py: 1,
-                    }
-                  }}
-                >
-                  <InputLabel>Filter by Category</InputLabel>
-                  <Select
-                    value={filterType === 'category' ? filterValue : ''}
-                    onChange={(e) => {
-                      setFilterType('category');
-                      setFilterValue(e.target.value);
-                      if (!e.target.value) {
-                        setFilterType('none');
-                      }
-                    }}
-                    label="Filter by Category"
-                  >
-                    <MenuItem value="">All Categories</MenuItem>
-                    {categories.map((category) => (
-                      <MenuItem key={category} value={category}>{category}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
             </Stack>
 
             <Box sx={{ 

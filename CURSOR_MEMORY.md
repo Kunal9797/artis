@@ -199,6 +199,7 @@
 - Bulk data operations
 - Location tracking
 - Real-time updates
+- Inventory reporting with detailed product information
 
 ### Sales Team Management
 - Role-based team view
@@ -207,6 +208,15 @@
 - Target setting and monitoring
 - Activity tracking
 - Attendance monitoring
+
+### Inventory Management Features
+- Stock level tracking
+- Transaction history
+- Consumption analytics
+- Catalog design filtering
+- Comprehensive inventory reporting
+- Bulk data import/export
+- Supplier and category management
 
 ### Lead Management
 - Lead creation/update

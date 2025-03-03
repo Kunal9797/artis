@@ -15,6 +15,7 @@ import {
   Tooltip,
   Stack,
   Divider,
+  Alert,
 } from '@mui/material';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -24,6 +25,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import { useTheme } from '../../context/ThemeContext';
 import * as XLSX from 'xlsx';
 import { inventoryApi } from '../../services/api';
+import { useSnackbar } from 'notistack';
 
 interface BulkUploadDialogProps {
   open: boolean;
@@ -76,6 +78,7 @@ const templates: TemplateInfo[] = [
 const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSuccess }) => {
   const { isDarkMode } = useTheme();
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
   const handleDownloadTemplate = (template: TemplateType) => {
     const templateUrl = {
@@ -111,20 +114,71 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
         : await inventoryApi.uploadInventory(file); // Both inventory and consumption use same endpoint
 
       if (response.data.processed?.length > 0) {
+        const processedCount = response.data.processed.length;
+        const skippedCount = response.data.skipped?.length || 0;
+        const totalCount = processedCount + skippedCount;
+        
+        let notificationMessage = `Upload complete: ${processedCount} of ${totalCount} products processed successfully`;
+        
+        // Create content for notification
+        const content = (
+          <Box>
+            <Typography variant="body2">{notificationMessage}</Typography>
+            {skippedCount > 0 && (
+              <Box sx={{ mt: 1, maxHeight: '200px', overflowY: 'auto' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  {skippedCount} items failed:
+                </Typography>
+                {response.data.skipped.map((skip: any, index: number) => (
+                  <Typography key={index} variant="caption" display="block">
+                    • {skip.artisCode}: {skip.reason}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+          </Box>
+        );
+        
+        enqueueSnackbar(content, { 
+          variant: skippedCount > 0 ? 'info' : 'success',
+          autoHideDuration: skippedCount > 0 ? 10000 : 6000,
+        });
+        
         onSuccess();
         onClose();
       } else if (response.data.skipped?.length > 0) {
-        const skippedDetails = response.data.skipped
-          .map((skip: any) => `${skip.artisCode}: ${skip.reason}`)
-          .join('\n');
-        alert(`No records were processed.\nSkipped entries:\n${skippedDetails}`);
+        const content = (
+          <Box>
+            <Typography variant="body2">No records were processed.</Typography>
+            <Box sx={{ mt: 1, maxHeight: '200px', overflowY: 'auto' }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                {response.data.skipped.length} items failed:
+              </Typography>
+              {response.data.skipped.map((skip: any, index: number) => (
+                <Typography key={index} variant="caption" display="block">
+                  • {skip.artisCode}: {skip.reason}
+                </Typography>
+              ))}
+            </Box>
+          </Box>
+        );
+        
+        enqueueSnackbar(content, { 
+          variant: 'error',
+          autoHideDuration: 10000,
+        });
       } else {
-        alert('No records were processed. Please check the file format and try again.');
+        enqueueSnackbar('No records were processed. Please check the file format and try again.', { 
+          variant: 'error' 
+        });
       }
     } catch (error: any) {
       console.error('Error uploading file:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
-      alert(`Failed to process file: ${errorMessage}`);
+      
+      enqueueSnackbar(`Failed to process file: ${errorMessage}`, { 
+        variant: 'error' 
+      });
     }
   };
 
@@ -133,46 +187,65 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
       console.log('Starting inventory report download...');
       
       const response = await inventoryApi.getAllInventory();
-      const { artisCodes, supplierCodes, currentStocks } = response.data;
+      const inventoryData = response.data;
       
-      // Create workbook with data arranged in rows instead of columns
+      if (!Array.isArray(inventoryData)) {
+        throw new Error('Invalid inventory data format received from server');
+      }
+      
+      // Create workbook
       const wb = XLSX.utils.book_new();
       
-      // Combine the data into rows
-      const rows = artisCodes.map((artisCode: string, index: number) => [
-        artisCode,
-        supplierCodes[index] || '',
-        currentStocks[index] || 0
-      ]);
-
-      // Add headers and data
-      const wsData = [
-        ['Artis Code', 'Supplier Code', 'Current Stock'],
-        ...rows
+      // Prepare data for the report
+      const rows = [
+        // Header row
+        ['Artis Code(s)', 'Supplier', 'Supplier Code', 'Category', 'Current Stock (kgs)', 'Min Stock Level', 'Avg. Consumption']
       ];
-
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-      // Set column widths
-      ws['!cols'] = [
-        { width: 15 },  // Artis Code
-        { width: 15 },  // Supplier Code
-        { width: 15 }   // Current Stock
-      ];
-
-      XLSX.utils.book_append_sheet(wb, ws, 'Inventory Report');
-      XLSX.writeFile(wb, 'inventory-report.xlsx');
-      console.log('Excel file created successfully');
-    } catch (error: any) {
-      console.error('Error downloading inventory report:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        url: error.config?.url,
-        method: error.config?.method,
-        baseURL: error.config?.baseURL
+      
+      // Add data rows
+      inventoryData.forEach(item => {
+        // Handle multiple Artis codes by joining them with commas
+        const artisCodesStr = Array.isArray(item.artisCodes) ? item.artisCodes.join(', ') : item.artisCodes || '';
+        
+        rows.push([
+          artisCodesStr,
+          item.supplier || '',
+          item.supplierCode || '',
+          item.category || '',
+          item.currentStock || 0,
+          item.minStockLevel || 0,
+          item.avgConsumption || 0
+        ]);
       });
-      alert('Failed to download inventory report. Please check console for details.');
+      
+      // Create worksheet from the rows
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      
+      // Set column widths for better readability
+      const colWidths = [
+        { wch: 20 }, // Artis Code(s)
+        { wch: 20 }, // Supplier
+        { wch: 15 }, // Supplier Code
+        { wch: 15 }, // Category
+        { wch: 15 }, // Current Stock
+        { wch: 15 }, // Min Stock Level
+        { wch: 15 }  // Avg. Consumption
+      ];
+      
+      ws['!cols'] = colWidths;
+      
+      // Add the worksheet to the workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventory Report');
+      
+      // Generate and download the file
+      XLSX.writeFile(wb, 'Artis_Inventory_Report.xlsx');
+      
+      enqueueSnackbar('Inventory report downloaded successfully', { variant: 'success' });
+    } catch (error: any) {
+      console.error('Error downloading inventory report:', error);
+      enqueueSnackbar(`Failed to download inventory report: ${error.message || 'Unknown error'}`, { 
+        variant: 'error' 
+      });
     }
   };
 
