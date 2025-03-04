@@ -917,21 +917,21 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
           <Grid container spacing={3}>
             <Grid item xs={12} md={3}>
               <StatBox
-                icon={<LocationOnIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
+                icon={<LocationOnIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1A237E' }} />}
                 value={distributors.length}
                 label="Total Distributors"
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <StatBox
-                icon={<CategoryIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
+                icon={<CategoryIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1A237E' }} />}
                 value={totalDesigns}
                 label="Total Designs"
               />
             </Grid>
             <Grid item xs={12} md={3}>
               <StatBox
-                icon={<InventoryIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
+                icon={<InventoryIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1A237E' }} />}
                 value={totalStock.toFixed(2)}
                 unit="kgs"
                 label="Total Stock"
@@ -939,7 +939,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             </Grid>
             <Grid item xs={12} md={3}>
               <StatBox
-                icon={<BarChartIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1976d2' }} />}
+                icon={<BarChartIcon sx={{ fontSize: 40, color: theme => theme.palette.mode === 'dark' ? '#90caf9' : '#1A237E' }} />}
                 value={totalAvgConsumption.toFixed(2)}
                 unit="kgs"
                 label="Avg. Consumption"
