@@ -32,6 +32,9 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
   const [supplierData, setSupplierData] = useState<Record<string, number>>({});
   const [supplierChartView, setSupplierChartView] = useState<'consumption' | 'purchases'>('consumption');
   const [catalogDesignFilter, setCatalogDesignFilter] = useState<'all' | 'Liner' | '0.8MM' | '1MM'>('all');
+  const [customDateRange, setCustomDateRange] = useState<{start: string, end: string} | null>(null);
+  // Add a new state to track if the custom menu is open
+  const [customMenuOpen, setCustomMenuOpen] = useState(false);
 
   // Get unique suppliers and categories
   const suppliers = useMemo(() => 
@@ -164,12 +167,33 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       const consumption = item.transactions
         .filter(t => {
           if (t.type !== 'OUT') return false;
+          
+          // Handle different time frame types
           if (timeFrame === 'all') return true;
-          const transactionDate = new Date(t.date).toLocaleDateString('en-US', { 
+          
+          const transactionDate = new Date(t.date);
+          const formattedDate = transactionDate.toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short' 
           });
-          return transactionDate === timeFrame;
+          
+          // Check if timeFrame is a predefined range
+          if (timeFrame === 'last2' || timeFrame === 'last3' || timeFrame === 'last6') {
+            // Get number of months to include
+            const monthsCount = timeFrame === 'last2' ? 2 : timeFrame === 'last3' ? 3 : 6;
+            
+            // Calculate date range
+            const now = new Date();
+            const oldestDate = new Date();
+            oldestDate.setMonth(now.getMonth() - monthsCount + 1); // +1 to include current month
+            oldestDate.setDate(1); // Start of month
+            
+            // Check if transaction is within range
+            return transactionDate >= oldestDate;
+          } else {
+            // It's a specific month
+            return formattedDate === timeFrame;
+          }
         })
         .reduce((sum, t) => sum + Number(t.quantity), 0);
       
@@ -179,6 +203,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       }
     });
 
+    // Rest of the function remains the same
     const sortedData = Object.entries(allSupplierData)
       .map(([name, value]) => ({
         name,
@@ -213,12 +238,33 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       const purchases = item.transactions
         .filter(t => {
           if (t.type !== 'IN') return false;
+          
+          // Handle different time frame types
           if (timeFrame === 'all') return true;
-          const transactionDate = new Date(t.date).toLocaleDateString('en-US', { 
+          
+          const transactionDate = new Date(t.date);
+          const formattedDate = transactionDate.toLocaleDateString('en-US', { 
             year: 'numeric', 
             month: 'short' 
           });
-          return transactionDate === timeFrame;
+          
+          // Check if timeFrame is a predefined range
+          if (timeFrame === 'last2' || timeFrame === 'last3' || timeFrame === 'last6') {
+            // Get number of months to include
+            const monthsCount = timeFrame === 'last2' ? 2 : timeFrame === 'last3' ? 3 : 6;
+            
+            // Calculate date range
+            const now = new Date();
+            const oldestDate = new Date();
+            oldestDate.setMonth(now.getMonth() - monthsCount + 1); // +1 to include current month
+            oldestDate.setDate(1); // Start of month
+            
+            // Check if transaction is within range
+            return transactionDate >= oldestDate;
+          } else {
+            // It's a specific month
+            return formattedDate === timeFrame;
+          }
         })
         .reduce((sum, t) => sum + Number(t.quantity), 0);
       
@@ -228,6 +274,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       }
     });
 
+    // Rest of the function remains the same
     const sortedData = Object.entries(allSupplierData)
       .map(([name, value]) => ({
         name,
@@ -253,8 +300,15 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     return topSuppliers;
   };
 
-  const memoizedSupplierConsumption = useMemo(() => getSupplierConsumption(7), [filteredInventory, timeFrame]);
-  const memoizedSupplierPurchases = useMemo(() => getSupplierPurchases(7), [filteredInventory, timeFrame]);
+  const memoizedSupplierConsumption = useMemo(() => 
+    getSupplierConsumption(7), 
+    [filteredInventory, timeFrame]
+  );
+
+  const memoizedSupplierPurchases = useMemo(() => 
+    getSupplierPurchases(7), 
+    [filteredInventory, timeFrame]
+  );
 
   const activeSupplierData = useMemo(() => 
     supplierChartView === 'consumption' ? memoizedSupplierConsumption : memoizedSupplierPurchases, 
@@ -428,19 +482,29 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     )
   });
 
+  // Modify the timeFrameOptions to be more compact
   const timeFrameOptions = useMemo(() => {
-    const options = [{ value: 'all', label: 'All Time' }];
+    // Get individual months
     const dates = new Set(
       filteredInventory
         .flatMap(item => item.transactions || [])
         .map(t => new Date(t.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }))
     );
     
+    // Sort months in descending order
+    const individualMonths = Array.from(dates)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+      .map(date => ({ value: date, label: date }));
+    
+    // Return the restructured options
     return [
-      ...options,
-      ...Array.from(dates)
-        .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-        .map(date => ({ value: date, label: date }))
+      { value: 'all', label: 'All Time' },
+      { value: 'divider_custom', label: 'Custom Ranges', isDivider: true },
+      { value: 'last2', label: 'Last 2 Months' },
+      { value: 'last3', label: 'Last 3 Months' },
+      { value: 'last6', label: 'Last 6 Months' },
+      { value: 'divider_months', label: 'Individual Months', isDivider: true },
+      ...individualMonths
     ];
   }, [filteredInventory]);
 
@@ -1032,9 +1096,12 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                 <Box sx={{ 
                   display: 'flex',
                   borderRadius: 4,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   overflow: 'hidden',
-                  width: '100%'
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                  border: '1px solid',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                  width: '100%',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
                 }}>
                   <Box
                     onClick={() => setVisibleGraphs(prev => ({ ...prev, consumption: !prev.consumption }))}
@@ -1386,7 +1453,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
         </Card>
       </Grid>
 
-      <Grid item xs={12} md={6}>
+      <Grid item xs={12}>
         <Card sx={{ 
           borderRadius: 2,
           boxShadow: isDarkMode 
@@ -1403,7 +1470,17 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
               gap={2}
             >
               <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
-                {`Top Suppliers of ${timeFrame === 'all' ? 'All Time' : timeFrame}`}
+                {`Top Suppliers of ${
+                  timeFrame === 'all' 
+                    ? 'All Time' 
+                    : timeFrame === 'last2'
+                      ? 'Last 2 Months'
+                      : timeFrame === 'last3'
+                        ? 'Last 3 Months'
+                        : timeFrame === 'last6'
+                          ? 'Last 6 Months'
+                          : timeFrame // specific month
+                }`}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                 <FormControl 
@@ -1427,20 +1504,63 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     }
                   }}
                 >
-                <InputLabel>Time Frame</InputLabel>
-                <Select
-                  value={timeFrame}
-                  onChange={(e) => setTimeFrame(e.target.value)}
-                  label="Time Frame"
-                >
-                  {timeFrameOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  <InputLabel>Time Frame</InputLabel>
+                  <Select
+                    value={timeFrame}
+                    onChange={(e) => {
+                      // Only set timeFrame if the selected value is not a divider
+                      if (!e.target.value.toString().startsWith('divider_')) {
+                        setTimeFrame(e.target.value);
+                      }
+                    }}
+                    label="Time Frame"
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          maxHeight: 300,
+                        }
+                      }
+                    }}
+                  >
+                    {timeFrameOptions.map(option => 
+                      option.isDivider ? (
+                        // Render dividers as non-selectable headers
+                        <MenuItem 
+                          key={option.value}
+                          disabled
+                          sx={{ 
+                            opacity: 0.7, 
+                            py: 0.5, 
+                            fontSize: '0.8rem',
+                            pointerEvents: 'none',
+                            color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
+                            fontWeight: 600,
+                            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                            borderBottom: '1px solid',
+                            borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                          }}
+                        >
+                          {option.label}
+                        </MenuItem>
+                      ) : (
+                        // Render normal options
+                        <MenuItem 
+                          key={option.value} 
+                          value={option.value}
+                          sx={{ 
+                            pl: option.value !== 'all' ? 2 : 1,
+                            fontSize: '0.9rem',
+                            py: 0.75
+                          }}
+                        >
+                          {option.label}
+                        </MenuItem>
+                      )
+                    )}
+                  </Select>
+                </FormControl>
                 
+                {/* Rest of the existing controls */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, width: '180px' }}>
                   <Button
                     variant="contained"
@@ -1509,220 +1629,369 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
               <MobilePieChart data={activeSupplierData} />
             </Box>
 
-            {/* Desktop View */}
+            {/* Desktop View - UPDATED LAYOUT */}
             <Box sx={{ 
               display: { xs: 'none', md: 'block' } // Show only on desktop
             }}>
-              <ResponsiveContainer width="100%" height={400}>
-                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                  <defs>
-                    <linearGradient id="othersGradientDesktop" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
-                      <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
-                      <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
-                      <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
-                      <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
-                      <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
-                    </linearGradient>
-                    {activeSupplierData.map((_, index) => (
-                      <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stopColor={`hsl(${200 + index * 25}, 70%, 55%)`} />
-                        <stop offset="100%" stopColor={`hsl(${200 + index * 25}, 80%, 35%)`} />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  <Pie
-                    data={activeSupplierData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={80}
-                    outerRadius={140}
-                    paddingAngle={2}
-                    strokeWidth={0}
-                    activeIndex={activeIndex}
-                    activeShape={(props: any) => {
-                      const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, name, value } = props;
-                      
-                      // Calculate position for pulled-out segment
-                      const midAngle = (startAngle + endAngle) / 2;
-                      const RADIAN = Math.PI / 180;
-                      const sin = Math.sin(-midAngle * RADIAN);
-                      const cos = Math.cos(-midAngle * RADIAN);
-                      const offsetX = cos * 15;
-                      const offsetY = sin * 15;
-                      
-                      return (
-                        <g>
-                          <Sector
-                            cx={cx + offsetX}
-                            cy={cy + offsetY}
-                            innerRadius={innerRadius}
-                            outerRadius={outerRadius + 5}
-                            startAngle={startAngle}
-                            endAngle={endAngle}
-                            fill={fill}
-                            filter={`url(#shadow-${activeIndex})`}
-                          />
-                        </g>
-                      );
-                    }}
-                    onClick={(_, index) => setActiveIndex(index)}
-                  >
-                    {activeSupplierData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`}
-                        fill={entry.name === 'Others' 
-                          ? 'url(#othersGradientDesktop)'
-                          : `url(#gradient-${index})`}
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                width: '100%',
+                height: 500, // Increased height
+              }}> 
+                {/* Pie chart container - Increased size */}
+                <Box sx={{ 
+                  width: '65%', // Adjusted width
+                  height: '100%',
+                  position: 'relative'
+                }}> 
+                  <ResponsiveContainer width="100%" height="100%"> 
+                    <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                      <defs>
+                        <linearGradient id="othersGradientDesktop" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor={isDarkMode ? '#FFD700' : '#FFE57F'} />
+                          <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
+                          <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
+                          <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
+                          <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
+                          <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
+                        </linearGradient>
+                        {activeSupplierData.map((_, index) => (
+                          <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stopColor={`hsl(${200 + index * 25}, 70%, 55%)`} />
+                            <stop offset="100%" stopColor={`hsl(${200 + index * 25}, 80%, 35%)`} />
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      <Pie
+                        data={activeSupplierData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={100} // Increased inner radius
+                        outerRadius={180} // Increased outer radius
+                        paddingAngle={2}
                         strokeWidth={0}
-                        opacity={0.85}
-                        onMouseEnter={(e) => {
-                          const label = document.querySelector(`.supplier-label-${index} g`);
-                          if (label) {
-                            (label as HTMLElement).style.transform = 'scale(1.15)';
-                          }
-                          if (entry.name === 'Others') {
-                            const othersBox = document.querySelector('.others-box');
-                            if (othersBox) {
-                              (othersBox as HTMLElement).style.opacity = '1';
-                              (othersBox as HTMLElement).style.pointerEvents = 'auto';
-                            }
-                          }
+                        activeIndex={activeIndex}
+                        activeShape={(props: any) => {
+                          const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, name, value } = props;
+                          
+                          // Calculate position for pulled-out segment
+                          const midAngle = (startAngle + endAngle) / 2;
+                          const RADIAN = Math.PI / 180;
+                          const sin = Math.sin(-midAngle * RADIAN);
+                          const cos = Math.cos(-midAngle * RADIAN);
+                          const offsetX = cos * 15;
+                          const offsetY = sin * 15;
+                          
+                          return (
+                            <g>
+                              <Sector
+                                cx={cx + offsetX}
+                                cy={cy + offsetY}
+                                innerRadius={innerRadius}
+                                outerRadius={outerRadius + 5}
+                                startAngle={startAngle}
+                                endAngle={endAngle}
+                                fill={fill}
+                                filter={`url(#shadow-${activeIndex})`}
+                              />
+                            </g>
+                          );
                         }}
-                        onMouseLeave={(e) => {
-                          const label = document.querySelector(`.supplier-label-${index} g`);
-                          if (label) {
-                            (label as HTMLElement).style.transform = 'scale(1)';
+                        onClick={(_, index) => setActiveIndex(index)}
+                      >
+                        {activeSupplierData.map((entry, index) => (
+                          <Cell 
+                            key={`cell-${index}`}
+                            fill={entry.name === 'Others' 
+                              ? 'url(#othersGradientDesktop)'
+                              : `url(#gradient-${index})`}
+                            strokeWidth={0}
+                            opacity={0.85}
+                            onMouseEnter={(e) => {
+                              const label = document.querySelector(`.supplier-label-${index} g`);
+                              if (label) {
+                                (label as HTMLElement).style.transform = 'scale(1.15)';
+                              }
+                              if (entry.name === 'Others') {
+                                const othersBox = document.querySelector('.others-box');
+                                if (othersBox) {
+                                  (othersBox as HTMLElement).style.opacity = '1';
+                                  (othersBox as HTMLElement).style.pointerEvents = 'auto';
+                                }
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              const label = document.querySelector(`.supplier-label-${index} g`);
+                              if (label) {
+                                (label as HTMLElement).style.transform = 'scale(1)';
+                              }
+                              if (entry.name === 'Others') {
+                                const othersBox = document.querySelector('.others-box');
+                                if (othersBox) {
+                                  (othersBox as HTMLElement).style.opacity = '0';
+                                  (othersBox as HTMLElement).style.pointerEvents = 'none';
+                                }
+                              }
+                            }}
+                          />
+                        ))}
+                      </Pie>
+                      <text
+                        x="50%"
+                        y="50%"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill={isDarkMode ? '#fff' : '#333'}
+                        style={{
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        <tspan
+                          x="50%"
+                          dy="-22" // Adjusted spacing
+                          fontSize="22" // Increased font size
+                          fontWeight="600"
+                          textAnchor="middle"
+                          fill={activeSupplierData[activeIndex]?.name === 'Others' 
+                            ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
+                            : `hsl(${200 + activeIndex * 25}, 70%, 55%)`}
+                        >
+                          {activeSupplierData[activeIndex]?.name || ''}
+                        </tspan>
+                        <tspan
+                          x="50%"
+                          dy="30" // Adjusted spacing
+                          fontSize="24" // Increased font size
+                          fontWeight="700"
+                          textAnchor="middle"
+                          fill={activeSupplierData[activeIndex]?.name === 'Others' 
+                            ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
+                            : `hsl(${200 + activeIndex * 25}, 70%, 55%)`}
+                        >
+                          {((activeSupplierData[activeIndex]?.value || 0) / activeSupplierData.reduce((sum, item) => sum + item.value, 0) * 100).toFixed(1)}%
+                        </tspan>
+                        <tspan
+                          x="50%"
+                          dy="30" // Adjusted spacing
+                          fontSize="20" // Increased font size
+                          fontWeight="500"
+                          textAnchor="middle"
+                        >
+                          {(activeSupplierData[activeIndex]?.value || 0).toLocaleString()} kg
+                        </tspan>
+                      </text>
+                      <Legend
+                        content={() => {
+                          const othersData = activeSupplierData.find(item => item.name === 'Others');
+                          if (!othersData) return null;
+                          
+                          const total = activeSupplierData.reduce((sum, item) => sum + item.value, 0);
+                          
+                          // Get the correct suppliers for the Others breakdown based on current view and filters
+                          let othersSuppliers = [];
+                          
+                          if (supplierChartView === 'consumption') {
+                            // Get all suppliers from the current filtered inventory
+                            const allSuppliers = getSupplierConsumption(999); // Get all suppliers
+                            // Filter out the ones already shown in the main pie chart (top 7)
+                            othersSuppliers = allSuppliers
+                              .filter(s => !memoizedSupplierConsumption.slice(0, 7).some(top => top.name === s.name))
+                              .filter(s => s.name !== 'Others')
+                              .map(s => ({
+                                name: s.name,
+                                value: s.value,
+                                percentage: (s.value / total * 100).toFixed(1)
+                              }));
+                          } else {
+                            // Same for purchases view
+                            const allSuppliers = getSupplierPurchases(999);
+                            othersSuppliers = allSuppliers
+                              .filter(s => !memoizedSupplierPurchases.slice(0, 7).some(top => top.name === s.name))
+                              .filter(s => s.name !== 'Others')
+                              .map(s => ({
+                                name: s.name,
+                                value: s.value,
+                                percentage: (s.value / total * 100).toFixed(1)
+                              }));
                           }
-                          if (entry.name === 'Others') {
-                            const othersBox = document.querySelector('.others-box');
-                            if (othersBox) {
-                              (othersBox as HTMLElement).style.opacity = '0';
-                              (othersBox as HTMLElement).style.pointerEvents = 'none';
-                            }
-                          }
+
+                          // Calculate Others segment position
+                          const RADIAN = Math.PI / 180;
+                          const othersIndex = activeSupplierData.findIndex(item => item.name === 'Others');
+                          const startAngle = othersIndex * (360 / activeSupplierData.length) * RADIAN;
+                          const x = 250 + 180 * Math.cos(-startAngle - (RADIAN * 15)); // Adjusted for larger radius
+                          const y = 250 + 180 * Math.sin(-startAngle - (RADIAN * 15)); // Adjusted for larger radius
+
+                          return (
+                            <div 
+                              className="others-box"
+                              style={{
+                                position: 'absolute',
+                                right: 20,
+                                bottom: 20,
+                                backgroundColor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)',
+                                padding: '12px',
+                                borderRadius: '8px',
+                                border: `1px solid ${isDarkMode ? '#333' : '#ddd'}`,
+                                maxWidth: '200px',
+                                opacity: 0,
+                                pointerEvents: 'none',
+                                transition: 'opacity 0.2s'
+                              }}
+                            >
+                              <svg
+                                style={{
+                                  position: 'absolute',
+                                  left: -40,
+                                  top: '50%',
+                                  width: 40,
+                                  height: 2
+                                }}
+                              >
+                                
+                              </svg>
+                              <div style={{ 
+                                fontSize: '12px', 
+                                fontWeight: 500,
+                                color: isDarkMode ? '#fff' : '#333',
+                                marginBottom: '8px'
+                              }}>
+                                Others ({(othersData.value / total * 100).toFixed(1)}%):
+                              </div>
+                              {othersSuppliers.length > 0 ? (
+                                othersSuppliers.map((supplier) => (
+                                  <div key={supplier.name} style={{
+                                    fontSize: '11px',
+                                    color: isDarkMode ? '#aaa' : '#666',
+                                    marginTop: '4px'
+                                  }}>
+                                    {`${supplier.name} (${supplier.percentage}%)`}
+                                  </div>
+                                ))
+                              ) : (
+                                <div style={{
+                                  fontSize: '11px',
+                                  color: isDarkMode ? '#aaa' : '#666',
+                                  fontStyle: 'italic'
+                                }}>
+                                  No additional suppliers
+                                </div>
+                              )}
+                            </div>
+                          );
                         }}
                       />
-                    ))}
-                  </Pie>
-                  <text
-                    x="50%"
-                    y="50%"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fill={isDarkMode ? '#fff' : '#333'}
-                    style={{
-                      pointerEvents: 'none'
-                    }}
-                  >
-                    <tspan
-                      x="50%"
-                      dy="-20"
-                      fontSize="16"
-                      fontWeight="600"
-                      textAnchor="middle"
-                      fill={activeSupplierData[activeIndex]?.name === 'Others' 
+                    </PieChart>
+                  </ResponsiveContainer>
+                </Box>
+                
+                {/* Supplier List - Improved styling */}
+                <Box sx={{ 
+                  width: '30%',
+                  maxWidth: '350px',
+                  minWidth: '250px',
+                  height: 500, // Increased height
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  backgroundColor: isDarkMode ? 'rgba(20,20,20,0.8)' : 'rgba(245,245,245,0.9)', 
+                  borderRadius: 2,
+                  boxShadow: isDarkMode ? '0 2px 8px rgba(255,255,255,0.1)' : '0 2px 8px rgba(0,0,0,0.05)',
+                  ml: 3, // Added margin for spacing
+                }}>
+                  <Typography variant="h6" sx={{ 
+                    mb: 1, 
+                    fontWeight: 600,
+                    px: 2, // Increased padding
+                    pt: 2, // Increased padding
+                    pb: 1.5, // Increased padding
+                    fontSize: '1rem', // Increased font size
+                    borderBottom: '1px solid',
+                    borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                  }}>
+                    Suppliers List
+                  </Typography>
+                  
+                  <Box sx={{ px: 2, pb: 2 }}>
+                    {activeSupplierData.map((entry, index) => {
+                      const percent = (entry.value / activeSupplierData.reduce((sum, item) => sum + item.value, 0) * 100).toFixed(1);
+                      const color = entry.name === 'Others' 
                         ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
-                        : `hsl(${200 + activeIndex * 25}, 70%, 55%)`}
-                    >
-                      {activeSupplierData[activeIndex]?.name || ''}
-                    </tspan>
-                    <tspan
-                      x="50%"
-                      dy="24"
-                      fontSize="18"
-                      fontWeight="700"
-                      textAnchor="middle"
-                      fill={activeSupplierData[activeIndex]?.name === 'Others' 
-                        ? (isDarkMode ? '#9C27B0' : '#7B1FA2')
-                        : `hsl(${200 + activeIndex * 25}, 70%, 55%)`}
-                    >
-                      {((activeSupplierData[activeIndex]?.value || 0) / activeSupplierData.reduce((sum, item) => sum + item.value, 0) * 100).toFixed(1)}%
-                    </tspan>
-                    <tspan
-                      x="50%"
-                      dy="24"
-                      fontSize="16"
-                      fontWeight="500"
-                      textAnchor="middle"
-                    >
-                      {(activeSupplierData[activeIndex]?.value || 0).toLocaleString()} kg
-                    </tspan>
-                  </text>
-                  <Legend
-                    content={() => {
-                      const othersData = activeSupplierData.find(item => item.name === 'Others');
-                      if (!othersData) return null;
+                        : `hsl(${200 + index * 25}, 70%, 55%)`;
+                      const isActive = activeIndex === index;
                       
-                      const total = activeSupplierData.reduce((sum, item) => sum + item.value, 0);
-                      const othersSuppliers = Object.entries(supplierData)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([name, value]) => ({
-                          name,
-                          value,
-                          percentage: (value / total * 100).toFixed(1)
-                        }));
-
-                      // Calculate Others segment position
-                      const RADIAN = Math.PI / 180;
-                      const othersIndex = activeSupplierData.findIndex(item => item.name === 'Others');
-                      const startAngle = othersIndex * (360 / activeSupplierData.length) * RADIAN;
-                      const x = 250 + 160 * Math.cos(-startAngle - (RADIAN * 15));
-                      const y = 200 + 160 * Math.sin(-startAngle - (RADIAN * 15));
-
                       return (
-                        <div 
-                          className="others-box"
-                          style={{
-                            position: 'absolute',
-                            right: 20,
-                            bottom: 20,
-                            backgroundColor: isDarkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: `1px solid ${isDarkMode ? '#333' : '#ddd'}`,
-                            maxWidth: '200px',
-                            opacity: 0,
-                            pointerEvents: 'none',
-                            transition: 'opacity 0.2s'
+                        <Box
+                          key={`supplier-${index}`}
+                          onClick={() => setActiveIndex(isActive ? -1 : index)}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            p: 1, // Increased padding
+                            mb: 1, // Increased margin
+                            borderRadius: 1,
+                            cursor: 'pointer',
+                            backgroundColor: isActive 
+                              ? (isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)')
+                              : 'transparent',
+                            borderLeft: '4px solid', // Increased border thickness
+                            borderLeftColor: color,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                              transform: 'translateX(2px)'
+                            }
                           }}
                         >
-                          <svg
-                            style={{
-                              position: 'absolute',
-                              left: -40,
-                              top: '50%',
-                              width: 40,
-                              height: 2
-                            }}
-                          >
-                            
-                          </svg>
-                          <div style={{ 
-                            fontSize: '12px', 
-                            fontWeight: 500,
-                            color: isDarkMode ? '#fff' : '#333',
-                            marginBottom: '8px'
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center',
+                            maxWidth: '60%',
+                            overflow: 'hidden'
                           }}>
-                            Others ({(othersData.value / total * 100).toFixed(1)}%):
-                          </div>
-                          {othersSuppliers.map((supplier) => (
-                            <div key={supplier.name} style={{
-                              fontSize: '11px',
-                              color: isDarkMode ? '#aaa' : '#666',
-                              marginTop: '4px'
+                            <Box 
+                              sx={{ 
+                                width: 12, // Increased size
+                                height: 12, // Increased size
+                                borderRadius: '50%', 
+                                backgroundColor: color,
+                                mr: 1, // Increased margin
+                                flexShrink: 0
+                              }} 
+                            />
+                            <Typography sx={{ 
+                              fontWeight: isActive ? 600 : 500,
+                              fontSize: '0.9rem', // Increased font size
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
                             }}>
-                              {`${supplier.name} (${supplier.percentage}%)`}
-                            </div>
-                          ))}
-                        </div>
+                              {entry.name}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                            <Typography sx={{ 
+                              fontWeight: 600,
+                              fontSize: '0.95rem' // Increased font size
+                            }}>
+                              {percent}%
+                            </Typography>
+                            <Typography sx={{ 
+                              color: isDarkMode ? '#aaa' : '#666',
+                              fontSize: '0.8rem' // Increased font size
+                            }}>
+                              {entry.value.toLocaleString()} kg
+                            </Typography>
+                          </Box>
+                        </Box>
                       );
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+                    })}
+                  </Box>
+                </Box>
+              </Box>
             </Box>
           </CardContent>
         </Card>
