@@ -493,31 +493,18 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       filteredInventory.flatMap(item => item.transactions || [])
     );
     
-    // If set to show all data, return all data
-    if (chartTimeRange === 'all') {
+    if (chartTimeRange === 'recent') {
+      // Return only the last 4 months of data
       return {
-        consumptionData: allConsumptionData,
-        purchasesData: allPurchasesData
+        consumptionData: allConsumptionData.slice(-4),
+        purchasesData: allPurchasesData.slice(-4)
       };
     } 
     
-    // For recent view, use the 4 most recent months
-    // This simpler approach takes the last 4 months from the already chronologically sorted data
-    const recentMonths = 4;
-    const consumptionLength = allConsumptionData.length;
-    const purchasesLength = allPurchasesData.length;
-    
-    const recentConsumption = consumptionLength <= recentMonths 
-      ? allConsumptionData 
-      : allConsumptionData.slice(consumptionLength - recentMonths);
-      
-    const recentPurchases = purchasesLength <= recentMonths 
-      ? allPurchasesData 
-      : allPurchasesData.slice(purchasesLength - recentMonths);
-    
+    // Return all data
     return {
-      consumptionData: recentConsumption,
-      purchasesData: recentPurchases
+      consumptionData: allConsumptionData,
+      purchasesData: allPurchasesData
     };
   };
 
