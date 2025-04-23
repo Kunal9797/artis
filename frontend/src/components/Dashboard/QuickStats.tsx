@@ -5,13 +5,15 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CategoryIcon from '@mui/icons-material/Category';
 import BusinessIcon from '@mui/icons-material/Business';
-import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Bar, ReferenceLine, Legend, Tooltip, PieChart, Pie, Cell, Sector } from 'recharts';
+import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Bar, ReferenceLine, Legend, Tooltip, PieChart, Pie, Cell, Sector, Label } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 import { aggregateMonthlyConsumption } from '../../utils/consumption';
 import { Transaction } from '../../types/transaction';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { Distributor } from '../../types/distributor';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 
 interface QuickStatsProps {
   inventory: InventoryItem[];
@@ -35,6 +37,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
   const [customDateRange, setCustomDateRange] = useState<{start: string, end: string} | null>(null);
   // Add a new state to track if the custom menu is open
   const [customMenuOpen, setCustomMenuOpen] = useState(false);
+  // Add a new state for chart time range view
+  const [chartTimeRange, setChartTimeRange] = useState<'recent' | 'all'>('recent');
 
   // Get unique suppliers and categories
   const suppliers = useMemo(() => 
@@ -375,7 +379,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             width: 16, 
             height: 16, 
             borderRadius: '50%', 
-            bgcolor: isDarkMode ? '#7E57C2' : '#5E35B1' 
+            bgcolor: isDarkMode ? '#3B7EA1' : '#4A8CAF' // Updated to slate blue
           }} 
         />
         <Typography sx={{ fontSize: 16, fontWeight: 500, color: isDarkMode ? '#fff' : '#333' }}>
@@ -403,7 +407,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             width: 16, 
             height: 16, 
             borderRadius: '50%', 
-            bgcolor: isDarkMode ? '#4CAF50' : '#2E7D32' 
+            bgcolor: isDarkMode ? '#5D9D7E' : '#68B090' // Updated to sage green
           }} 
         />
         <Typography sx={{ fontSize: 16, fontWeight: 500, color: isDarkMode ? '#fff' : '#333' }}>
@@ -451,7 +455,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
           <text
             x={0}
             y={100}
-            fill={isDarkMode ? '#9575CD' : '#5E35B1'}
+            fill={isDarkMode ? '#78A7BF' : '#3B7EA1'}
             textAnchor="middle"
             fontSize={12}
             fontWeight="600"
@@ -463,7 +467,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
           <text
             x={0}
             y={117}
-            fill={isDarkMode ? '#81C784' : '#2E7D32'}
+            fill={isDarkMode ? '#8ABE9F' : '#5D9D7E'}
             textAnchor="middle"
             fontSize={12}
             fontWeight="600"
@@ -482,31 +486,40 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     )
   });
 
-  // Modify the timeFrameOptions to be more compact
-  const timeFrameOptions = useMemo(() => {
-    // Get individual months
-    const dates = new Set(
-      filteredInventory
-        .flatMap(item => item.transactions || [])
-        .map(t => new Date(t.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }))
+  // Function to filter data based on chart time range
+  const getFilteredChartData = () => {
+    const allConsumptionData = getMonthlyConsumption();
+    const allPurchasesData = aggregateMonthlyPurchases(
+      filteredInventory.flatMap(item => item.transactions || [])
     );
     
-    // Sort months in descending order
-    const individualMonths = Array.from(dates)
-      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-      .map(date => ({ value: date, label: date }));
+    // If set to show all data, return all data
+    if (chartTimeRange === 'all') {
+      return {
+        consumptionData: allConsumptionData,
+        purchasesData: allPurchasesData
+      };
+    } 
     
-    // Return the restructured options
-    return [
-      { value: 'all', label: 'All Time' },
-      { value: 'divider_custom', label: 'Custom Ranges', isDivider: true },
-      { value: 'last2', label: 'Last 2 Months' },
-      { value: 'last3', label: 'Last 3 Months' },
-      { value: 'last6', label: 'Last 6 Months' },
-      { value: 'divider_months', label: 'Individual Months', isDivider: true },
-      ...individualMonths
-    ];
-  }, [filteredInventory]);
+    // For recent view, use the 4 most recent months
+    // This simpler approach takes the last 4 months from the already chronologically sorted data
+    const recentMonths = 4;
+    const consumptionLength = allConsumptionData.length;
+    const purchasesLength = allPurchasesData.length;
+    
+    const recentConsumption = consumptionLength <= recentMonths 
+      ? allConsumptionData 
+      : allConsumptionData.slice(consumptionLength - recentMonths);
+      
+    const recentPurchases = purchasesLength <= recentMonths 
+      ? allPurchasesData 
+      : allPurchasesData.slice(purchasesLength - recentMonths);
+    
+    return {
+      consumptionData: recentConsumption,
+      purchasesData: recentPurchases
+    };
+  };
 
   const MobilePieChart: React.FC<{ data: any[] }> = ({ data }) => {
     const { isDarkMode } = useTheme();
@@ -552,8 +565,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                 <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
                 <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
                 <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
-                <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
-                <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
+                <stop offset="80%" stopColor={isDarkMode ? '#78A7BF' : '#3B7EA1'} /> {/* Updated to slate blue */}
+                <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#5D9D7E'} /> {/* Updated to include sage green */}
               </linearGradient>
                 {chartData.map((_, index) => (
                   <filter key={`shadow-${index}`} id={`shadow-${index}`} x="-20%" y="-20%" width="140%" height="140%">
@@ -910,6 +923,32 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     );
   };
 
+  // Modify the timeFrameOptions to be more compact
+  const timeFrameOptions = useMemo(() => {
+    // Get individual months
+    const dates = new Set(
+      filteredInventory
+        .flatMap(item => item.transactions || [])
+        .map(t => new Date(t.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }))
+    );
+    
+    // Sort months in descending order
+    const individualMonths = Array.from(dates)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+      .map(date => ({ value: date, label: date }));
+    
+    // Return the restructured options
+    return [
+      { value: 'all', label: 'All Time' },
+      { value: 'divider_custom', label: 'Custom Ranges', isDivider: true },
+      { value: 'last2', label: 'Last 2 Months' },
+      { value: 'last3', label: 'Last 3 Months' },
+      { value: 'last6', label: 'Last 6 Months' },
+      { value: 'divider_months', label: 'Individual Months', isDivider: true },
+      ...individualMonths
+    ];
+  }, [filteredInventory]);
+
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
@@ -956,10 +995,13 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             ? '0 4px 20px rgba(0,0,0,0.25)' 
             : '0 4px 20px rgba(0,0,0,0.1)'
         }}>
-          <CardContent>
+          <CardContent sx={{ 
+            pb: 2, // Reduce bottom padding
+            '&:last-child': { pb: 2 } // Override MUI's default padding
+          }}>
             {/* Unified Compact Catalog Design Filter */}
             <Box sx={{ 
-              mb: 3,
+              mb: 2, // Reduced margin
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -1113,7 +1155,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       transition: 'all 0.2s',
                       padding: '8px 12px',
                       flex: 1,
-                      backgroundColor: isDarkMode ? '#7E57C2' : '#5E35B1',
+                      backgroundColor: isDarkMode ? '#3B7EA1' : '#4A8CAF', // Slate blue
                       opacity: visibleGraphs.consumption ? 1 : 0.6,
                       borderRight: '1px solid',
                       borderColor: 'rgba(255,255,255,0.2)',
@@ -1139,7 +1181,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       transition: 'all 0.2s',
                       padding: '8px 12px',
                       flex: 1,
-                      backgroundColor: isDarkMode ? '#4CAF50' : '#2E7D32',
+                      backgroundColor: isDarkMode ? '#5D9D7E' : '#68B090', // Sage green
                       opacity: visibleGraphs.purchases ? 1 : 0.6,
                       whiteSpace: 'nowrap'
                     }}
@@ -1261,7 +1303,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
               
               <Box sx={{ 
                 display: 'flex',
-                borderRadius: 4,
+                borderRadius: 8, // More rounded corners
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 overflow: 'hidden',
               }}>
@@ -1272,12 +1314,15 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     alignItems: 'center', 
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.25s ease',
                     padding: '8px 16px',
-                    backgroundColor: isDarkMode ? '#7E57C2' : '#5E35B1',
+                    backgroundColor: isDarkMode ? '#3B7EA1' : '#4A8CAF', // Slate blue
                     opacity: visibleGraphs.consumption ? 1 : 0.6,
                     borderRight: '1px solid',
                     borderColor: 'rgba(255,255,255,0.2)',
+                    '&:hover': {
+                      opacity: 0.9,
+                    }
                   }}
                 >
                   <Typography sx={{ 
@@ -1295,10 +1340,13 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     alignItems: 'center', 
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
+                    transition: 'all 0.25s ease',
                     padding: '8px 16px',
-                    backgroundColor: isDarkMode ? '#4CAF50' : '#2E7D32',
+                    backgroundColor: isDarkMode ? '#5D9D7E' : '#68B090', // Sage green
                     opacity: visibleGraphs.purchases ? 1 : 0.6,
+                    '&:hover': {
+                      opacity: 0.9,
+                    }
                   }}
                 >
                   <Typography sx={{ 
@@ -1313,7 +1361,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             </Stack>
 
             <Box sx={{ 
-              height: 450,
+              height: 400, // Reduced height from 450px
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
@@ -1322,19 +1370,94 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
               '& .recharts-wrapper': {
                 width: '100% !important',
                 margin: '0 auto'
-              }
+              },
+              borderRadius: 2,
+              backgroundImage: isDarkMode ? 
+                'linear-gradient(rgba(30, 30, 30, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 30, 30, 0.05) 1px, transparent 1px)' : 
+                'linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px)',
+              backgroundSize: '20px 20px',
+              padding: '10px 5px'
             }}>
+              {/* Add time range toggle button as a floating element */}
+              <Box 
+                sx={{
+                  position: 'absolute',
+                  top: 5,
+                  right: 5,
+                  zIndex: 10
+                }}
+              >
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => setChartTimeRange(prev => prev === 'recent' ? 'all' : 'recent')}
+                  sx={{
+                    borderRadius: 20,
+                    py: 0.5,
+                    px: 2,
+                    minWidth: 'auto',
+                    backgroundColor: isDarkMode 
+                      ? (chartTimeRange === 'recent' ? 'rgba(59, 126, 161, 0.8)' : 'rgba(93, 157, 126, 0.8)') // Match consumption/purchases colors
+                      : (chartTimeRange === 'recent' ? 'rgba(74, 140, 175, 0.9)' : 'rgba(104, 176, 144, 0.9)'),
+                    color: '#fff',
+                    boxShadow: isDarkMode 
+                      ? '0 2px 8px rgba(0,0,0,0.4)' 
+                      : '0 2px 8px rgba(0,0,0,0.15)',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    transition: 'all 0.25s ease',
+                    '&:hover': {
+                      backgroundColor: isDarkMode 
+                        ? (chartTimeRange === 'recent' ? 'rgba(59, 126, 161, 0.9)' : 'rgba(93, 157, 126, 0.9)')
+                        : (chartTimeRange === 'recent' ? 'rgba(74, 140, 175, 1)' : 'rgba(104, 176, 144, 1)'),
+                    },
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 0.5
+                  }}
+                  endIcon={chartTimeRange === 'recent' ? 
+                    <ArrowDropDownIcon style={{ marginLeft: -4, marginRight: -4 }} /> : 
+                    <ArrowDropUpIcon style={{ marginLeft: -4, marginRight: -4 }} />}
+                >
+                  {chartTimeRange === 'recent' ? 'Recent' : 'All Time'}
+                </Button>
+              </Box>
               <ResponsiveContainer>
                 <ComposedChart
-                  data={getMonthlyConsumption()}
-                  margin={{ top: 15, right: 15, left: 5, bottom: 40 }}
-                  barGap={4}
-                  barCategoryGap={10}
+                  data={getFilteredChartData().consumptionData}
+                  margin={{ top: 20, right: 20, left: 10, bottom: 30 }} // Reduced bottom margin
+                  barGap={chartTimeRange === 'recent' ? 8 : 5} // Dynamic spacing between bars
+                  barCategoryGap={chartTimeRange === 'recent' ? 30 : 15} // Wider spacing between categories
                 >
+                  <defs>
+                    {/* Gradient for consumption bars */}
+                    <linearGradient id="consumptionGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={isDarkMode ? '#2E6A8A' : '#3B7EA1'} stopOpacity={1} />
+                      <stop offset="95%" stopColor={isDarkMode ? '#1E4C65' : '#2A5C7A'} stopOpacity={0.9} />
+                    </linearGradient>
+                    {/* Gradient for purchase bars */}
+                    <linearGradient id="purchasesGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={isDarkMode ? '#4D8269' : '#5D9D7E'} stopOpacity={1} />
+                      <stop offset="95%" stopColor={isDarkMode ? '#3D6352' : '#487A62'} stopOpacity={0.9} />
+                    </linearGradient>
+                    {/* Drop shadow for bars */}
+                    <filter id="barShadow" x="-10%" y="-10%" width="120%" height="130%">
+                      <feDropShadow 
+                        dx="0" 
+                        dy="1" 
+                        stdDeviation="2" 
+                        floodColor={isDarkMode ? '#000' : '#333'} 
+                        floodOpacity="0.2" 
+                      />
+                    </filter>
+                  </defs>
                   <CartesianGrid 
                     strokeDasharray="3 3" 
-                    stroke={isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'} 
+                    stroke={isDarkMode ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.04)'} // Significantly increased opacity for dark mode
                     vertical={false}
+                    strokeWidth={isDarkMode ? 0.9 : 0.8} // Slightly thicker in dark mode
                   />
                   <XAxis 
                     dataKey="month" 
@@ -1374,80 +1497,131 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     width={40}
                     tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(1)}k` : value}
                   />
+                  
                   <Tooltip
                     contentStyle={{
                       backgroundColor: isDarkMode ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.95)',
                       border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                      borderRadius: '8px',
+                      borderRadius: '10px', // More rounded corners
                       boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-                      padding: '8px 12px'
+                      padding: '10px 14px', // More padding
+                      fontSize: '12px',
+                      lineHeight: 1.4
                     }}
                     labelStyle={{ 
                       color: isDarkMode ? '#fff' : '#333',
                       fontWeight: 600,
-                      marginBottom: '4px',
+                      marginBottom: '6px',
                       borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
-                      paddingBottom: '4px'
+                      paddingBottom: '6px'
                     }}
                     itemStyle={{
-                      padding: '2px 0',
+                      padding: '3px 0',
                       fontSize: '12px'
                     }}
-                    formatter={(value: any) => [`${value.toLocaleString()} kg`, null]}
+                    // Fix tooltip display
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div style={{ 
+                            backgroundColor: isDarkMode ? 'rgba(30,30,30,0.95)' : 'rgba(255,255,255,0.95)',
+                            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                            borderRadius: '10px',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                            padding: '10px 14px',
+                            fontSize: '12px',
+                            lineHeight: 1.4
+                          }}>
+                            <p style={{ 
+                              color: isDarkMode ? '#fff' : '#333',
+                              fontWeight: 600,
+                              marginBottom: '6px',
+                              borderBottom: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                              paddingBottom: '6px',
+                              margin: '0 0 8px 0'
+                            }}>
+                              {label}
+                            </p>
+                            {payload.map((entry, index) => {
+                              // Check data type to assign proper name
+                              const isConsumption = entry.dataKey === 'amount';
+                              const color = isConsumption 
+                                ? (isDarkMode ? '#78A7BF' : '#3B7EA1') 
+                                : (isDarkMode ? '#8ABE9F' : '#5D9D7E');
+                              const name = isConsumption ? 'Consumption' : 'Purchases';
+                              
+                              return (
+                                <p key={index} style={{ 
+                                  color,
+                                  margin: '4px 0',
+                                  fontWeight: 500
+                                }}>
+                                  {name}: {(entry.value !== undefined) ? entry.value.toLocaleString() : '0'} kg
+                                </p>
+                              );
+                            })}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
                   />
                   {visibleGraphs.consumption && (
                     <Bar 
                       dataKey="amount" 
-                      fill={isDarkMode ? '#7E57C2' : '#5E35B1'} 
+                      fill="url(#consumptionGradient)" // Use gradient
                       name="Consumption"
-                      barSize={24}
-                      radius={[4, 4, 0, 0]}
-                      opacity={0.9}
+                      barSize={chartTimeRange === 'recent' ? 34 : 26} // Slightly wider bars
+                      radius={[6, 6, 0, 0]} // More rounded corners
+                      opacity={1} // Full opacity for gradient effect
+                      filter="url(#barShadow)" // Add drop shadow
                     />
                   )}
                   {visibleGraphs.purchases && (
                     <Bar 
                       dataKey={(data) => {
-                        const purchases = aggregateMonthlyPurchases(
-                          filteredInventory.flatMap(item => item.transactions || [])
-                        );
+                        const purchases = getFilteredChartData().purchasesData;
                         return purchases.find(p => p.month === data.month)?.amount || 0;
                       }}
-                      fill={isDarkMode ? '#4CAF50' : '#2E7D32'} 
-                      name="Purchases"
-                      barSize={24}
-                      radius={[4, 4, 0, 0]}
-                      opacity={0.9}
+                      fill="url(#purchasesGradient)" // Use gradient 
+                      name="purchases" // Use a consistent recognizable name
+                      barSize={chartTimeRange === 'recent' ? 34 : 26} // Slightly wider bars
+                      radius={[6, 6, 0, 0]} // More rounded corners
+                      opacity={1} // Full opacity for gradient effect
+                      filter="url(#barShadow)" // Add drop shadow
                     />
                   )}
+                  {/* Display average line - MOVED AFTER BARS to ensure it's visible */}
                   <ReferenceLine
-                    y={getMonthlyConsumption()[0]?.average}
-                    stroke={isDarkMode ? '#FFB74D' : '#F57C00'}
-                    strokeDasharray="3 3"
-                    strokeWidth={2}
+                    y={getFilteredChartData().consumptionData[0]?.average}
+                    stroke={isDarkMode ? '#E8B266' : '#D08C39'} // Warmer orange tone
+                    strokeDasharray="5 3" // Better dash pattern
+                    strokeWidth={1.5} // Slightly thicker line
+                    z={10} // Ensure it's above the bars
                   />
+
+                  {/* Add average value as text at y-axis with better positioning - MOVED AFTER BARS */}
+                  <text
+                    className="average-label"
+                    x={-35} 
+                    y={getFilteredChartData().consumptionData[0]?.average}
+                    textAnchor="start"
+                    dominantBaseline="middle"
+                    fill={isDarkMode ? '#E8B266' : '#D08C39'}
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      filter: 'drop-shadow(0px 0px 2px rgba(0,0,0,0.3))' // Add shadow to improve visibility over bars
+                    }}
+                  >
+                    {getFilteredChartData().consumptionData[0]?.average !== undefined 
+                      ? `${(getFilteredChartData().consumptionData[0].average/1000).toFixed(1)}k` 
+                      : '0'
+                    }
+                  </text>
+                  {/* Removing duplicate ReferenceLine since we already added one above with better positioning */}
                 </ComposedChart>
               </ResponsiveContainer>
-              <Typography 
-                sx={{ 
-                  color: isDarkMode ? '#FFB74D' : '#F57C00',
-                  mt: 0,
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <Box component="span" sx={{ 
-                  width: 8, 
-                  height: 2, 
-                  backgroundColor: isDarkMode ? '#FFB74D' : '#F57C00',
-                  display: 'inline-block',
-                  marginRight: '4px'
-                }}/>
-                Average: {getMonthlyConsumption()[0]?.average?.toLocaleString()} kg
-              </Typography>
             </Box>
           </CardContent>
         </Card>
@@ -1575,12 +1749,12 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       py: 0.75,
                       width: '100%',
                       backgroundColor: supplierChartView === 'consumption' 
-                        ? (isDarkMode ? '#7E57C2' : '#5E35B1') 
-                        : (isDarkMode ? '#4CAF50' : '#2E7D32'),
+                        ? (isDarkMode ? '#3B7EA1' : '#4A8CAF') // Updated to slate blue for consumption
+                        : (isDarkMode ? '#5D9D7E' : '#68B090'), // Updated to sage green for purchases
                       '&:hover': {
                         backgroundColor: supplierChartView === 'consumption' 
-                          ? (isDarkMode ? '#6A1B9A' : '#4527A0') 
-                          : (isDarkMode ? '#388E3C' : '#1B5E20'),
+                          ? (isDarkMode ? '#2E6A8A' : '#3B7EA1') // Updated hover state
+                          : (isDarkMode ? '#4D8269' : '#5D9D7E'), // Updated hover state
                       },
                       boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                       transition: 'all 0.3s ease',
@@ -1610,8 +1784,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       <Box component="span" sx={{ 
                         ml: 1,
                         color: supplierChartView === 'consumption' 
-                          ? (isDarkMode ? '#9575CD' : '#5E35B1')
-                          : (isDarkMode ? '#81C784' : '#2E7D32'),
+                          ? (isDarkMode ? '#78A7BF' : '#3B7EA1') // Updated to slate blue for consumption
+                          : (isDarkMode ? '#8ABE9F' : '#5D9D7E'), // Updated to sage green for purchases
                         fontWeight: 700
                       }}>
                         {activeSupplierData.reduce((sum, item) => sum + item.value, 0).toLocaleString()} kg
@@ -1653,8 +1827,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                           <stop offset="20%" stopColor={isDarkMode ? '#FF8C00' : '#FFA726'} />
                           <stop offset="40%" stopColor={isDarkMode ? '#FF4500' : '#FF7043'} />
                           <stop offset="60%" stopColor={isDarkMode ? '#4169E1' : '#5C6BC0'} />
-                          <stop offset="80%" stopColor={isDarkMode ? '#8A2BE2' : '#9575CD'} />
-                          <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#673AB7'} />
+                          <stop offset="80%" stopColor={isDarkMode ? '#78A7BF' : '#3B7EA1'} /> {/* Updated to slate blue */}
+                          <stop offset="100%" stopColor={isDarkMode ? '#4B0082' : '#5D9D7E'} /> {/* Updated to include sage green */}
                         </linearGradient>
                         {activeSupplierData.map((_, index) => (
                           <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="1" y2="1">
@@ -1983,7 +2157,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                               color: isDarkMode ? '#aaa' : '#666',
                               fontSize: '0.8rem' // Increased font size
                             }}>
-                              {entry.value.toLocaleString()} kg
+                              {(entry.value !== undefined) ? entry.value.toLocaleString() : '0'} kg
                             </Typography>
                           </Box>
                         </Box>
