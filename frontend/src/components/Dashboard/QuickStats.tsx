@@ -494,10 +494,27 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     );
     
     if (chartTimeRange === 'recent') {
-      // Return only the last 4 months of data
+      // Get the last 4 months, but ensure we're consistent with months
+      // First, get all unique months from both datasets
+      const allMonths = [...new Set([
+        ...allConsumptionData.map(d => d.month),
+        ...allPurchasesData.map(d => d.month)
+      ])];
+      
+      // Sort chronologically (oldest to newest)
+      const sortedMonths = allMonths.sort((a, b) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateA.getTime() - dateB.getTime();
+      });
+      
+      // Take the most recent 4 months
+      const recentMonths = sortedMonths.slice(-4);
+      
+      // Filter both datasets to only include these recent months
       return {
-        consumptionData: allConsumptionData.slice(-4),
-        purchasesData: allPurchasesData.slice(-4)
+        consumptionData: allConsumptionData.filter(d => recentMonths.includes(d.month)),
+        purchasesData: allPurchasesData.filter(d => recentMonths.includes(d.month))
       };
     } 
     
