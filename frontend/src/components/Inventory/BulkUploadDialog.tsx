@@ -33,7 +33,7 @@ interface BulkUploadDialogProps {
   onSuccess: () => void;
 }
 
-type TemplateType = 'inventory' | 'purchase' | 'consumption';
+type TemplateType = 'inventory' | 'purchase' | 'consumption' | 'correction';
 
 interface TemplateInfo {
   type: TemplateType;
@@ -72,6 +72,15 @@ const templates: TemplateInfo[] = [
     columns: ['Artis Code', 'Date', 'Amount (Kgs)', 'Notes'],
     format: 'Date format: MM/DD/YY',
     example: '901, 03/15/24, 500kg'
+  },
+  {
+    type: 'correction',
+    title: 'Stock Corrections',
+    description: 'Apply bulk corrections to inventory levels',
+    icon: <InventoryIcon sx={{ fontSize: 40, color: 'warning.main' }} />,
+    columns: ['Artis Code', 'Date', 'Correction Amount (+ or -)', 'Reason'],
+    format: 'Date format: MM/DD/YY',
+    example: '901, 03/31/24, -5.5, "March Closing Reconciliation"'
   }
 ];
 
@@ -84,13 +93,15 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
     const templateUrl = {
       inventory: '/templates/inventory-template.xlsx',
       consumption: '/templates/consumption-template.xlsx',
-      purchase: '/templates/purchase-template.xlsx'
+      purchase: '/templates/purchase-template.xlsx',
+      correction: '/templates/correction-template.xlsx'
     }[template];
     
     const fileName = {
       inventory: 'inventory-template.xlsx',
       consumption: 'consumption-template.xlsx',
-      purchase: 'purchase-template.xlsx'
+      purchase: 'purchase-template.xlsx',
+      correction: 'correction-template.xlsx'
     }[template];
     
     const link = document.createElement('a');
@@ -109,9 +120,15 @@ const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({ open, onClose, onSu
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = template === 'purchase' 
-        ? await inventoryApi.uploadPurchaseOrder(file)
-        : await inventoryApi.uploadInventory(file); // Both inventory and consumption use same endpoint
+      let response;
+      if (template === 'purchase') {
+        response = await inventoryApi.uploadPurchaseOrder(file);
+      } else if (template === 'correction') {
+        response = await inventoryApi.uploadCorrections(file);
+      } else {
+        // Both inventory and consumption use same endpoint
+        response = await inventoryApi.uploadInventory(file);
+      }
 
       if (response.data.processed?.length > 0) {
         const processedCount = response.data.processed.length;

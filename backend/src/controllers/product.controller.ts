@@ -413,6 +413,7 @@ export const updateProductAverageConsumption = async (productId: string, transac
     }
 
     // Get all OUT transactions that should be included in average calculation
+    // This explicitly excludes any CORRECTION transactions as they don't have type='OUT'
     const outTransactions = await Transaction.findAll({
       where: {
         productId,

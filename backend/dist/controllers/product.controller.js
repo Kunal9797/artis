@@ -370,18 +370,24 @@ const searchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.searchProducts = searchProducts;
 const deleteAllProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('Delete All Products - Request received');
+    console.log('User info:', req.user);
     const t = yield sequelize_1.default.transaction();
     try {
-        yield Product_1.default.destroy({
+        console.log('Starting product deletion');
+        const result = yield Product_1.default.destroy({
             where: {},
+            truncate: true,
+            cascade: true,
             transaction: t
         });
+        console.log('Products deleted successfully, count:', result);
         yield t.commit();
-        res.json({ message: 'All products deleted successfully' });
+        res.json({ message: 'All products deleted successfully', count: result });
     }
     catch (error) {
+        console.error('Error in deleteAllProducts:', error);
         yield t.rollback();
-        console.error('Error deleting all products:', error);
         res.status(500).json({ error: 'Error deleting all products' });
     }
 });
@@ -392,24 +398,55 @@ const updateProductAverageConsumption = (productId, transaction) => __awaiter(vo
         if (!product) {
             throw new Error('Product not found');
         }
+        // Get all OUT transactions that should be included in average calculation
+        // This explicitly excludes any CORRECTION transactions as they don't have type='OUT'
         const outTransactions = yield Transaction_1.default.findAll({
             where: {
                 productId,
                 type: 'OUT',
                 includeInAvg: true
             },
+            order: [['date', 'ASC']], // Order by date ascending to find first usage
             transaction,
-            attributes: ['quantity']
+            attributes: ['quantity', 'date']
         });
         console.log(`Found ${outTransactions.length} OUT transactions for product ${productId}`);
-        const totalOutQuantity = outTransactions.reduce((sum, t) => {
+        if (outTransactions.length === 0) {
+            // No transactions, set average to 0
+            yield product.update({ avgConsumption: 0 }, { transaction });
+            return 0;
+        }
+        // Find the first transaction with non-zero quantity
+        const firstNonZeroIndex = outTransactions.findIndex(t => Number(t.quantity) > 0);
+        if (firstNonZeroIndex === -1) {
+            // No non-zero transactions, set average to 0
+            yield product.update({ avgConsumption: 0 }, { transaction });
+            return 0;
+        }
+        // Get the date of the first non-zero transaction
+        const firstUsageDate = outTransactions[firstNonZeroIndex].date;
+        console.log(`First usage date: ${firstUsageDate}`);
+        // Filter transactions to only include those after the first usage
+        const relevantTransactions = outTransactions.filter(t => new Date(t.date) >= new Date(firstUsageDate));
+        console.log(`Relevant transactions count: ${relevantTransactions.length}`);
+        // Calculate total quantity from relevant transactions
+        const totalOutQuantity = relevantTransactions.reduce((sum, t) => {
             const qty = Number(t.quantity);
-            console.log(`Transaction quantity: ${qty}`);
             return sum + qty;
         }, 0);
         console.log(`Total OUT quantity: ${totalOutQuantity}`);
-        const avgConsumption = outTransactions.length > 0
-            ? Number((totalOutQuantity / outTransactions.length).toFixed(2))
+        // Group transactions by month to count unique months with data
+        const monthsWithData = new Set();
+        relevantTransactions.forEach(t => {
+            const date = new Date(t.date);
+            const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+            monthsWithData.add(monthKey);
+        });
+        const uniqueMonthsCount = monthsWithData.size;
+        console.log(`Unique months with data: ${uniqueMonthsCount}`);
+        // Calculate average based on unique months with data
+        const avgConsumption = uniqueMonthsCount > 0
+            ? Number((totalOutQuantity / uniqueMonthsCount).toFixed(2))
             : 0;
         console.log(`Calculated average consumption: ${avgConsumption}`);
         yield product.update({

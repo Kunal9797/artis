@@ -10,7 +10,8 @@ import {
   TableHead,
   TableRow,
   Paper,
-  IconButton
+  IconButton,
+  Chip
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { inventoryApi } from '../../services/api';
@@ -44,6 +45,28 @@ const HistoryDialog: React.FC<HistoryDialogProps> = ({ open, onClose, productId 
     }
   };
 
+  const getTransactionTypeChip = (type: string) => {
+    switch (type) {
+      case 'IN':
+        return <Chip label="IN" size="small" color="primary" />;
+      case 'OUT':
+        return <Chip label="OUT" size="small" color="secondary" />;
+      case 'CORRECTION':
+        return <Chip label="CORRECTION" size="small" color="warning" />;
+      default:
+        return <Chip label={type} size="small" />;
+    }
+  };
+
+  const getQuantityColor = (transaction: Transaction) => {
+    if (transaction.type === 'IN') return 'success.main';
+    if (transaction.type === 'OUT') return 'error.main';
+    if (transaction.type === 'CORRECTION') {
+      return Number(transaction.quantity) >= 0 ? 'success.main' : 'error.main';
+    }
+    return 'inherit';
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -66,10 +89,24 @@ const HistoryDialog: React.FC<HistoryDialogProps> = ({ open, onClose, productId 
             </TableHead>
             <TableBody>
               {transactions.map((transaction) => (
-                <TableRow key={transaction.id}>
+                <TableRow 
+                  key={transaction.id}
+                  sx={{ 
+                    backgroundColor: transaction.type === 'CORRECTION' ? 'rgba(255, 152, 0, 0.05)' : 'inherit'
+                  }}
+                >
                   <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{transaction.type}</TableCell>
-                  <TableCell align="right">{transaction.quantity}</TableCell>
+                  <TableCell>{getTransactionTypeChip(transaction.type)}</TableCell>
+                  <TableCell 
+                    align="right"
+                    sx={{ 
+                      color: getQuantityColor(transaction),
+                      fontWeight: transaction.type === 'CORRECTION' ? 'bold' : 'inherit'
+                    }}
+                  >
+                    {transaction.quantity > 0 && transaction.type !== 'OUT' ? '+' : ''}
+                    {transaction.quantity}
+                  </TableCell>
                   <TableCell align="right">{transaction.balance}</TableCell>
                   <TableCell>{transaction.notes || '-'}</TableCell>
                 </TableRow>

@@ -9,7 +9,8 @@ import {
   clearInventory,
   getRecentTransactions,
   bulkUploadPurchaseOrder,
-  getInventoryDetails
+  getInventoryDetails,
+  bulkUploadCorrections
 } from '../controllers/inventory.controller';
 import { auth, adminAuth } from '../middleware/auth';
 
@@ -25,6 +26,7 @@ router.get('/transactions/:productId', auth, getProductTransactions);
 // Bulk operations - Add auth middleware before adminAuth
 router.post('/bulk', [auth, adminAuth], upload.single('file'), bulkUploadInventory);
 router.post('/purchase', [auth, adminAuth], upload.single('file'), bulkUploadPurchaseOrder);
+router.post('/corrections', [auth, adminAuth], upload.single('file'), bulkUploadCorrections);
 router.delete('/clear', [auth, adminAuth], clearInventory);
 
 // Individual transactions

@@ -86,7 +86,7 @@ interface FilterState {
 
 interface TransactionData {
   id: string;
-  type: 'IN' | 'OUT';
+  type: 'IN' | 'OUT' | 'CORRECTION';
   quantity: number;
   date: string;
   notes?: string;

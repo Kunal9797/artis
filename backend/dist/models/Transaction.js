@@ -22,7 +22,7 @@ Transaction.init({
         }
     },
     type: {
-        type: sequelize_1.DataTypes.ENUM('IN', 'OUT'),
+        type: sequelize_1.DataTypes.ENUM('IN', 'OUT', 'CORRECTION'),
         allowNull: false,
     },
     quantity: {

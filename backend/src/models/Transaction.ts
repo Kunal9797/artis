@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 interface TransactionAttributes {
   id: string;
   productId: string;
-  type: 'IN' | 'OUT';
+  type: 'IN' | 'OUT' | 'CORRECTION';
   quantity: number;
   date: Date;
   notes?: string;
@@ -15,7 +15,7 @@ interface TransactionAttributes {
 class Transaction extends Model {
   public id!: string;
   public productId!: string;
-  public type!: 'IN' | 'OUT';
+  public type!: 'IN' | 'OUT' | 'CORRECTION';
   public quantity!: number;
   public date!: Date;
   public notes?: string;
@@ -38,7 +38,7 @@ Transaction.init(
       }
     },
     type: {
-      type: DataTypes.ENUM('IN', 'OUT'),
+      type: DataTypes.ENUM('IN', 'OUT', 'CORRECTION'),
       allowNull: false,
     },
     quantity: {

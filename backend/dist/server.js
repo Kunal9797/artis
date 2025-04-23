@@ -20,7 +20,15 @@ const sequelize_1 = __importDefault(require("./config/sequelize"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const product_routes_1 = __importDefault(require("./routes/product.routes"));
 const inventory_routes_1 = __importDefault(require("./routes/inventory.routes"));
-const database_1 = __importDefault(require("./config/database"));
+const distributor_routes_1 = __importDefault(require("./routes/distributor.routes"));
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const swagger_1 = __importDefault(require("./config/swagger"));
+const child_process_1 = require("child_process");
+const util_1 = require("util");
+const associations_1 = require("./models/associations");
+const sales_routes_1 = __importDefault(require("./routes/sales.routes"));
+const auth_1 = require("./middleware/auth");
+const execAsync = (0, util_1.promisify)(child_process_1.exec);
 // Load environment variables
 dotenv_1.default.config();
 // Initialize express app
@@ -39,6 +47,16 @@ exports.app.use((0, cors_1.default)({
 }));
 exports.app.use(express_1.default.json());
 exports.app.use(express_1.default.urlencoded({ extended: true }));
+// Add global auth middleware for /api routes
+exports.app.use('/api', (req, res, next) => {
+    if (req.path === '/auth/login' || req.path === '/auth/register') {
+        return next();
+    }
+    (0, auth_1.auth)(req, res, next);
+});
+// Swagger documentation route (must be before other routes)
+exports.app.use('/api-docs', swagger_ui_express_1.default.serve);
+exports.app.get('/api-docs', swagger_ui_express_1.default.setup(swagger_1.default));
 // Initialize database connection for each request
 exports.app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -54,6 +72,8 @@ exports.app.use((req, res, next) => __awaiter(void 0, void 0, void 0, function* 
 exports.app.use('/api/auth', auth_routes_1.default);
 exports.app.use('/api/products', product_routes_1.default);
 exports.app.use('/api/inventory', inventory_routes_1.default);
+exports.app.use('/api/distributors', distributor_routes_1.default);
+exports.app.use('/api/sales', sales_routes_1.default);
 // Test route
 exports.app.get('/api/test', (req, res) => {
     res.json({ message: 'Backend is working!' });
@@ -68,17 +88,31 @@ exports.app.get('/api/health', (req, res) => __awaiter(void 0, void 0, void 0, f
         res.status(500).json({ error: 'Database connection failed' });
     }
 }));
-// Simple ping endpoint for keepalive
-exports.app.get('/ping', (req, res) => {
-    res.status(200).send('pong');
-});
+// After database connection
+(0, associations_1.initializeAssociations)();
 const PORT = parseInt(process.env.PORT || '8099', 10);
 exports.app.listen(PORT, '0.0.0.0', () => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-    console.log('Database initialization starting...');
     try {
-        yield (0, database_1.default)();
-        console.log('Database initialization completed');
+        yield sequelize_1.default.authenticate();
+        console.log('✓ Database connected');
+        // Only run migrations in production
+        if (process.env.NODE_ENV === 'production') {
+            console.log('Running migrations...');
+            try {
+                const { stdout, stderr } = yield execAsync('npx sequelize-cli db:migrate');
+                console.log('Migration output:', stdout);
+                if (stderr)
+                    console.error('Migration stderr:', stderr);
+                console.log('✓ Migrations completed');
+            }
+            catch (migrationError) {
+                console.error('Migration error:', migrationError);
+                throw migrationError;
+            }
+        }
+        yield sequelize_1.default.sync({ alter: true });
+        console.log('✓ Models synced successfully');
     }
     catch (error) {
         console.error('Database initialization failed:', error);

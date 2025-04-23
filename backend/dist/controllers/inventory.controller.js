@@ -45,7 +45,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getInventoryDetails = exports.bulkUploadPurchaseOrder = exports.getRecentTransactions = exports.clearInventory = exports.getInventory = exports.bulkUploadInventory = exports.getProductTransactions = exports.createTransaction = exports.getAllInventory = void 0;
+exports.bulkUploadCorrections = exports.getInventoryDetails = exports.bulkUploadPurchaseOrder = exports.getRecentTransactions = exports.clearInventory = exports.getInventory = exports.bulkUploadInventory = exports.getProductTransactions = exports.createTransaction = exports.getAllInventory = void 0;
 const Product_1 = __importDefault(require("../models/Product"));
 const Transaction_1 = __importDefault(require("../models/Transaction"));
 const sequelize_1 = require("sequelize");
@@ -57,6 +57,7 @@ var TransactionType;
 (function (TransactionType) {
     TransactionType["IN"] = "IN";
     TransactionType["OUT"] = "OUT";
+    TransactionType["CORRECTION"] = "CORRECTION";
 })(TransactionType || (TransactionType = {}));
 // Get all inventory items with their associated products
 const getAllInventory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -102,8 +103,19 @@ const createTransaction = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (!product) {
             throw new Error('Product not found');
         }
-        // Calculate new stock
-        const stockChange = type === TransactionType.IN ? Number(quantity) : -Number(quantity);
+        // Calculate new stock based on transaction type
+        let stockChange = 0;
+        if (type === TransactionType.IN) {
+            stockChange = Number(quantity);
+        }
+        else if (type === TransactionType.OUT) {
+            stockChange = -Number(quantity);
+        }
+        else if (type === TransactionType.CORRECTION) {
+            // For corrections, the quantity represents the direct adjustment amount
+            // Positive values increase stock, negative values decrease stock
+            stockChange = Number(quantity);
+        }
         const newStock = Number(product.currentStock) + stockChange;
         // Create transaction
         const transaction = yield Transaction_1.default.create({
@@ -112,6 +124,7 @@ const createTransaction = (req, res) => __awaiter(void 0, void 0, void 0, functi
             quantity: Number(quantity),
             notes,
             date: date || new Date(),
+            // CORRECTION transactions should never affect consumption averages
             includeInAvg: type === TransactionType.OUT ? (includeInAvg || false) : false
         }, { transaction: t });
         // Update product stock
@@ -158,8 +171,12 @@ const getProductTransactions = (req, res) => __awaiter(void 0, void 0, void 0, f
             if (t.type === TransactionType.IN) {
                 currentStock += quantity;
             }
-            else {
+            else if (t.type === TransactionType.OUT) {
                 currentStock -= quantity;
+            }
+            else if (t.type === TransactionType.CORRECTION) {
+                // For CORRECTION, we directly add the quantity (which can be positive or negative)
+                currentStock += quantity;
             }
             return Object.assign(Object.assign({}, t.toJSON()), { balance: Number(currentStock.toFixed(2)) });
         });
@@ -234,7 +251,7 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
         yield Promise.all(data.map((row) => __awaiter(void 0, void 0, void 0, function* () {
             var _a;
             const artisCode = (_a = row['OUR CODE']) === null || _a === void 0 ? void 0 : _a.toString();
-            const initialStock = parseFloat(row['IN']) || 0;
+            const initialStock = row['IN'] ? parseFloat(row['IN']) : 0;
             if (!artisCode) {
                 skippedRows.push({
                     artisCode: 'unknown',
@@ -259,15 +276,26 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
                     });
                     return;
                 }
-                // Record initial stock (IN transaction)
-                yield Transaction_1.default.create({
-                    productId: product.id,
-                    type: TransactionType.IN,
-                    quantity: initialStock,
-                    date: new Date('2024-01-09'),
-                    notes: 'Initial Stock',
-                    includeInAvg: false
-                }, { transaction: t });
+                const isInitialInventory = headers.some(h => h === 'IN' || h === 'OPEN');
+                if (isInitialInventory) {
+                    // Reset current stock only for initial inventory upload
+                    yield product.update({
+                        currentStock: 0,
+                        lastUpdated: new Date()
+                    }, { transaction: t });
+                    if (initialStock > 0) {
+                        yield Transaction_1.default.create({
+                            productId: product.id,
+                            type: TransactionType.IN,
+                            quantity: initialStock,
+                            date: new Date('2024-01-09'),
+                            notes: 'Initial Stock',
+                            includeInAvg: false
+                        }, { transaction: t });
+                    }
+                }
+                // For consumption updates, don't reset current stock
+                let newStock = isInitialInventory ? initialStock : product.currentStock;
                 // Record consumption transactions (OUT)
                 for (const { date, column } of consumptionDates) {
                     const consumption = parseFloat(row[column]) || 0;
@@ -286,28 +314,6 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
                     console.log(`Consumption for ${column}: ${consumption}`);
                     return sum + consumption;
                 }, 0);
-                // Reset current stock before calculating new value
-                yield product.update({
-                    currentStock: 0,
-                    lastUpdated: new Date()
-                }, { transaction: t });
-                // Calculate new stock considering all transactions
-                let newStock = initialStock;
-                // Add existing IN transactions
-                const existingTransactions = yield Transaction_1.default.findAll({
-                    where: {
-                        productId: product.id,
-                        date: {
-                            [sequelize_1.Op.gt]: new Date('2024-01-09') // After initial stock date
-                        }
-                    },
-                    transaction: t
-                });
-                existingTransactions.forEach(transaction => {
-                    if (transaction.type === TransactionType.IN) {
-                        newStock += Number(transaction.quantity);
-                    }
-                });
                 newStock = Number((newStock - totalConsumption).toFixed(2));
                 console.log(`Initial stock: ${initialStock}, Total consumption: ${totalConsumption}, Final stock: ${newStock}`);
                 // Update product's current stock
@@ -517,7 +523,16 @@ const getInventoryDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
         let balance = product.currentStock;
         const transactionsWithBalance = transactions.map(t => {
             const transaction = t.toJSON();
-            balance = balance + (t.type === 'OUT' ? t.quantity : -t.quantity);
+            // Adjust balance based on transaction type
+            if (t.type === 'OUT') {
+                balance = balance + t.quantity; // Adding back what was consumed
+            }
+            else if (t.type === 'IN') {
+                balance = balance - t.quantity; // Removing what was added
+            }
+            else if (t.type === 'CORRECTION') {
+                balance = balance - t.quantity; // Removing the correction amount
+            }
             return Object.assign(Object.assign({}, transaction), { balance: Number(balance.toFixed(2)) });
         }).reverse(); // Reverse to show oldest first
         res.json({
@@ -539,3 +554,112 @@ const getInventoryDetails = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.getInventoryDetails = getInventoryDetails;
+// Implementation of bulk corrections upload
+const bulkUploadCorrections = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const t = yield sequelize_2.default.transaction();
+    const skippedRows = [];
+    const processedCorrections = [];
+    try {
+        const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(worksheet);
+        // Validate and process each row
+        for (const row of data) {
+            // Skip any row that has "Instructions" or empty cells (likely header or instructions)
+            if (((_a = row['Artis Code']) === null || _a === void 0 ? void 0 : _a.toString().includes('Instructions')) ||
+                !row['Artis Code'] ||
+                !row['Date (MM/DD/YY)'] ||
+                row['Correction Amount'] === undefined) {
+                continue;
+            }
+            const artisCode = (_b = row['Artis Code']) === null || _b === void 0 ? void 0 : _b.toString();
+            const rawDate = (_c = row['Date (MM/DD/YY)']) === null || _c === void 0 ? void 0 : _c.toString();
+            const correctionAmount = parseFloat(row['Correction Amount'].toString());
+            const reason = ((_d = row['Reason']) === null || _d === void 0 ? void 0 : _d.toString()) || 'Bulk correction';
+            // Validate required fields
+            if (!artisCode || !rawDate || isNaN(correctionAmount)) {
+                skippedRows.push({
+                    artisCode: artisCode || 'unknown',
+                    reason: 'Missing or invalid fields'
+                });
+                continue;
+            }
+            // Parse the date (MM/DD/YY format)
+            let parsedDate;
+            try {
+                const [month, day, year] = rawDate.split('/');
+                const fullYear = parseInt('20' + year);
+                parsedDate = new Date(fullYear, parseInt(month) - 1, parseInt(day));
+                if (isNaN(parsedDate.getTime())) {
+                    throw new Error('Invalid date format');
+                }
+            }
+            catch (error) {
+                skippedRows.push({
+                    artisCode,
+                    reason: 'Invalid date format. Use MM/DD/YY'
+                });
+                continue;
+            }
+            // Find the product by artisCode
+            const product = yield Product_1.default.findOne({
+                where: {
+                    artisCodes: {
+                        [sequelize_1.Op.contains]: [artisCode]
+                    }
+                },
+                transaction: t,
+                lock: true
+            });
+            if (!product) {
+                skippedRows.push({
+                    artisCode,
+                    reason: 'Product not found'
+                });
+                continue;
+            }
+            try {
+                // Create CORRECTION transaction - note we directly use the positive/negative amount
+                yield Transaction_1.default.create({
+                    productId: product.id,
+                    type: TransactionType.CORRECTION,
+                    quantity: correctionAmount,
+                    date: parsedDate,
+                    notes: reason,
+                    includeInAvg: false // Corrections should never affect consumption averages
+                }, { transaction: t });
+                // Update product stock - add the correction amount (positive or negative)
+                yield product.update({
+                    currentStock: Number((Number(product.currentStock) + correctionAmount).toFixed(2)),
+                    lastUpdated: new Date()
+                }, { transaction: t });
+                processedCorrections.push(artisCode);
+            }
+            catch (error) {
+                skippedRows.push({
+                    artisCode,
+                    reason: `Error processing: ${error instanceof Error ? error.message : 'Unknown error'}`
+                });
+            }
+        }
+        yield t.commit();
+        res.json({
+            message: 'Corrections processed successfully',
+            processed: processedCorrections,
+            skipped: skippedRows
+        });
+    }
+    catch (error) {
+        yield t.rollback();
+        console.error('Error processing corrections upload:', error);
+        res.status(500).json({
+            error: 'Failed to process corrections upload',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+exports.bulkUploadCorrections = bulkUploadCorrections;

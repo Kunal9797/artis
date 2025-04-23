@@ -2,7 +2,7 @@ import { Product } from './product';
 
 export interface Transaction {
   id: string;
-  type: 'IN' | 'OUT';
+  type: 'IN' | 'OUT' | 'CORRECTION';
   quantity: number;
   date: string;
   notes?: string;
@@ -20,7 +20,7 @@ export interface ProductDetails {
 
 export interface TransactionData {
   productId: string;
-  type: 'IN' | 'OUT';
+  type: 'IN' | 'OUT' | 'CORRECTION';
   quantity: number;
   notes?: string;
   date?: string;

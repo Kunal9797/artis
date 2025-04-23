@@ -43,7 +43,7 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
   productId,
   onSuccess
 }) => {
-  const [type, setType] = useState<'IN' | 'OUT'>('IN');
+  const [type, setType] = useState<'IN' | 'OUT' | 'CORRECTION'>('IN');
   const [quantity, setQuantity] = useState('');
   const [notes, setNotes] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -83,8 +83,18 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
 
     try {
       const parsedQuantity = Number(quantity);
-      if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
-        setError('Quantity must be a positive number');
+      if (isNaN(parsedQuantity)) {
+        setError('Please enter a valid number');
+        return;
+      }
+      
+      if (parsedQuantity === 0) {
+        setError('Quantity cannot be zero');
+        return;
+      }
+      
+      if (parsedQuantity < 0 && type !== 'CORRECTION') {
+        setError(`${type === 'IN' ? 'Stock in' : 'Stock out'} quantity must be positive`);
         return;
       }
 
@@ -99,7 +109,8 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
         type,
         quantity: parsedQuantity,
         notes,
-        date: parsedDate
+        date: parsedDate,
+        includeInAvg: type === 'OUT' ? includeInAvg : false
       });
 
       const response = await inventoryApi.createTransaction({
@@ -107,7 +118,8 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
         type,
         quantity: parsedQuantity,
         notes,
-        date: parsedDate
+        date: parsedDate,
+        includeInAvg: type === 'OUT' ? includeInAvg : false
       });
       console.log('Transaction response:', response);
       onSuccess();
@@ -169,6 +181,28 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
       console.error('Error fetching products:', error);
     }
   };
+
+  useEffect(() => {
+    if (type !== 'OUT') {
+      setIncludeInAvg(false);
+    }
+  }, [type]);
+
+  const getQuantityLabel = () => {
+    if (type === 'IN') return 'Quantity Received';
+    if (type === 'OUT') return 'Quantity Consumed';
+    if (type === 'CORRECTION') return 'Adjustment Amount';
+    return 'Quantity';
+  };
+
+  const getQuantityHelperText = () => {
+    if (type === 'CORRECTION') {
+      return 'Enter a positive value to increase stock or negative value to decrease stock';
+    }
+    return '';
+  };
+
+  const isNegativeAllowed = type === 'CORRECTION';
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -234,20 +268,26 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
               select
               label="Type"
               value={type}
-              onChange={(e) => setType(e.target.value as 'IN' | 'OUT')}
+              onChange={(e) => setType(e.target.value as 'IN' | 'OUT' | 'CORRECTION')}
               fullWidth
             >
               <MenuItem value="IN">Stock In</MenuItem>
               <MenuItem value="OUT">Stock Out</MenuItem>
+              <MenuItem value="CORRECTION">Stock Correction</MenuItem>
             </TextField>
             <TextField
-              label="Quantity"
+              label={getQuantityLabel()}
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               fullWidth
               required
+              helperText={getQuantityHelperText()}
               InputProps={{
+                inputProps: { 
+                  min: isNegativeAllowed ? undefined : 0,
+                  step: 0.01 
+                },
                 endAdornment: (
                   <Box component="span" sx={{ color: 'text.secondary' }}>
                     kgs
@@ -271,6 +311,8 @@ const TransactionDialog: React.FC<TransactionDialogProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               fullWidth
+              required={type === 'CORRECTION'}
+              helperText={type === 'CORRECTION' ? 'Please provide a reason for the correction' : ''}
             />
             {type === 'OUT' && (
               <FormControlLabel

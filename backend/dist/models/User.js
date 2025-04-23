@@ -21,6 +21,20 @@ class User extends sequelize_1.Model {
             return bcrypt_1.default.compare(password, this.password);
         });
     }
+    isSalesRole() {
+        return ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(this.role);
+    }
+    canManage(otherRole) {
+        var _a;
+        const roleHierarchy = {
+            COUNTRY_HEAD: ['ZONAL_HEAD', 'SALES_EXECUTIVE'],
+            ZONAL_HEAD: ['SALES_EXECUTIVE'],
+            SALES_EXECUTIVE: [],
+        };
+        if (!this.isSalesRole())
+            return false;
+        return ((_a = roleHierarchy[this.role]) === null || _a === void 0 ? void 0 : _a.includes(otherRole)) || false;
+    }
 }
 User.init({
     id: {
@@ -32,6 +46,10 @@ User.init({
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
         unique: true,
+        validate: {
+            notEmpty: true,
+            len: [3, 30]
+        }
     },
     email: {
         type: sequelize_1.DataTypes.STRING,
@@ -46,9 +64,26 @@ User.init({
         allowNull: false,
     },
     role: {
-        type: sequelize_1.DataTypes.ENUM('admin', 'user'),
+        type: sequelize_1.DataTypes.ENUM('admin', 'user', 'SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'),
         defaultValue: 'user',
     },
+    version: {
+        type: sequelize_1.DataTypes.INTEGER,
+        defaultValue: 1,
+        allowNull: false
+    },
+    firstName: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false,
+    },
+    lastName: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false,
+    },
+    phoneNumber: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false,
+    }
 }, {
     sequelize: sequelize_2.default,
     modelName: 'User',
@@ -56,6 +91,11 @@ User.init({
         beforeCreate: (user) => __awaiter(void 0, void 0, void 0, function* () {
             user.password = yield bcrypt_1.default.hash(user.password, 10);
         }),
+        beforeUpdate: (user) => __awaiter(void 0, void 0, void 0, function* () {
+            if (user.changed('password')) {
+                user.password = yield bcrypt_1.default.hash(user.password, 10);
+            }
+        })
     },
 });
 exports.default = User;

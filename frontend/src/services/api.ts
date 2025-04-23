@@ -116,6 +116,11 @@ export const inventoryApi = {
     formData.append('file', file);
     return api.post('/api/inventory/purchase', formData);
   },
+  uploadCorrections: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/api/inventory/corrections', formData);
+  },
   clearInventory: () => api.delete('/api/inventory/clear'),
   getRecentTransactions: () => api.get('/api/inventory/recent'),
   getInventoryDetails: (id: string) => api.get(`/api/inventory/details/${id}`)

@@ -3,10 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeAssociations = void 0;
 const sequelize_1 = require("sequelize");
 const sequelize_2 = __importDefault(require("../config/sequelize"));
-const Transaction_1 = __importDefault(require("./Transaction"));
 class Product extends sequelize_1.Model {
 }
 Product.init({
@@ -73,16 +71,4 @@ Product.init({
     modelName: 'Product',
     tableName: 'Products'
 });
-const initializeAssociations = () => {
-    Product.hasMany(Transaction_1.default, {
-        foreignKey: 'productId',
-        as: 'transactions',
-        onDelete: 'CASCADE'
-    });
-    Transaction_1.default.belongsTo(Product, {
-        foreignKey: 'productId',
-        onDelete: 'CASCADE'
-    });
-};
-exports.initializeAssociations = initializeAssociations;
 exports.default = Product;
