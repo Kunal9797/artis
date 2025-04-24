@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Box, Card, CardContent, Grid, Typography, FormControl, InputLabel, Select, MenuItem, Button, Stack, IconButton } from '@mui/material';
+import { Box, Card, CardContent, Grid, Typography, FormControl, InputLabel, Select, MenuItem, Button, Stack, IconButton, Menu, Popover, Paper } from '@mui/material';
 import { InventoryItem } from '../Inventory/InventoryList';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -14,6 +14,7 @@ import { Distributor } from '../../types/distributor';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 interface QuickStatsProps {
   inventory: InventoryItem[];
@@ -76,6 +77,9 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
   const [customMenuOpen, setCustomMenuOpen] = useState(false);
   // Add a new state for chart time range view
   const [chartTimeRange, setChartTimeRange] = useState<'recent' | 'all'>('recent');
+  // Add month picker anchor and state
+  const [monthPickerAnchor, setMonthPickerAnchor] = useState<null | HTMLElement>(null);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
 
   // Get unique suppliers and categories
   const suppliers = useMemo(() => 
@@ -246,19 +250,9 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             month: 'short' 
           });
           
-          // Check if timeFrame is a predefined range
-          if (timeFrame === 'last2' || timeFrame === 'last3' || timeFrame === 'last6') {
-            // Get number of months to include
-            const monthsCount = timeFrame === 'last2' ? 2 : timeFrame === 'last3' ? 3 : 6;
-            
-            // Calculate date range
-            const now = new Date();
-            const oldestDate = new Date();
-            oldestDate.setMonth(now.getMonth() - monthsCount + 1); // +1 to include current month
-            oldestDate.setDate(1); // Start of month
-            
-            // Check if transaction is within range
-            return transactionDate >= oldestDate;
+          // Handle custom selection
+          if (timeFrame === 'custom') {
+            return selectedMonths.includes(formattedDate);
           } else {
             // It's a specific month
             return formattedDate === timeFrame;
@@ -317,19 +311,9 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
             month: 'short' 
           });
           
-          // Check if timeFrame is a predefined range
-          if (timeFrame === 'last2' || timeFrame === 'last3' || timeFrame === 'last6') {
-            // Get number of months to include
-            const monthsCount = timeFrame === 'last2' ? 2 : timeFrame === 'last3' ? 3 : 6;
-            
-            // Calculate date range
-            const now = new Date();
-            const oldestDate = new Date();
-            oldestDate.setMonth(now.getMonth() - monthsCount + 1); // +1 to include current month
-            oldestDate.setDate(1); // Start of month
-            
-            // Check if transaction is within range
-            return transactionDate >= oldestDate;
+          // Handle custom selection
+          if (timeFrame === 'custom') {
+            return selectedMonths.includes(formattedDate);
           } else {
             // It's a specific month
             return formattedDate === timeFrame;
@@ -371,12 +355,12 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
 
   const memoizedSupplierConsumption = useMemo(() => 
     getSupplierConsumption(7), 
-    [filteredInventory, timeFrame]
+    [filteredInventory, timeFrame, selectedMonths]
   );
 
   const memoizedSupplierPurchases = useMemo(() => 
     getSupplierPurchases(7), 
-    [filteredInventory, timeFrame]
+    [filteredInventory, timeFrame, selectedMonths]
   );
 
   const activeSupplierData = useMemo(() => 
@@ -602,14 +586,15 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       return { consumptionData: [], purchasesData: [] };
     }
     
-    // Create a Map for faster lookups instead of using includes()
+    // Create a Map for faster lookups
     const allMonthsMap = new Map();
     
-    // Add all months to the map
+    // Add all months to the map with a single iteration for each array
     monthlyConsumption.forEach(d => allMonthsMap.set(d.month, true));
     monthlyPurchases.forEach(d => allMonthsMap.set(d.month, true));
     
-    // Convert map keys to array and sort
+    // Convert map keys to array and sort once
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const sortedMonths = Array.from(allMonthsMap.keys()).sort((a, b) => {
       // Handle consistent date parsing across all browsers and devices
       // Split the month string (e.g., "Jan 2025") into month and year
@@ -617,58 +602,34 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       const [monthB, yearB] = b.split(' ');
       
       // Convert month names to month numbers (0-11)
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
       const monthNumA = monthNames.indexOf(monthA);
       const monthNumB = monthNames.indexOf(monthB);
       
-      // Compare years first
-      if (Number(yearA) !== Number(yearB)) {
-        return Number(yearA) - Number(yearB);
-      }
-      
-      // If years are the same, compare months
-      return monthNumA - monthNumB;
+      // Compare years first, then months
+      return Number(yearA) !== Number(yearB) 
+        ? Number(yearA) - Number(yearB) 
+        : monthNumA - monthNumB;
     });
     
-    if (chartTimeRange === 'recent') {
-      // Get the last 4 months
-      const recentMonths = sortedMonths.slice(-4);
-      
-      // Create a Set for faster lookups
-      const recentMonthsSet = new Set(recentMonths);
-      
-      // Filter and ensure consistent order
-      const recentConsumptionData = monthlyConsumption
-        .filter(d => recentMonthsSet.has(d.month))
-        .sort((a, b) => {
-          return recentMonths.indexOf(a.month) - recentMonths.indexOf(b.month);
-        });
-        
-      const recentPurchasesData = monthlyPurchases
-        .filter(d => recentMonthsSet.has(d.month))
-        .sort((a, b) => {
-          return recentMonths.indexOf(a.month) - recentMonths.indexOf(b.month);
-        });
-      
-      return {
-        consumptionData: recentConsumptionData,
-        purchasesData: recentPurchasesData
-      };
-    }
+    // Create lookup Maps for faster access instead of filtering arrays repeatedly
+    const consumptionMap = new Map(monthlyConsumption.map(item => [item.month, item]));
+    const purchasesMap = new Map(monthlyPurchases.map(item => [item.month, item]));
     
-    // For all-time, still ensure consistent order
-    const sortedConsumptionData = [...monthlyConsumption].sort((a, b) => {
-      return sortedMonths.indexOf(a.month) - sortedMonths.indexOf(b.month);
-    });
+    // Get months based on the time range setting
+    const months = chartTimeRange === 'recent' ? sortedMonths.slice(-4) : sortedMonths;
     
-    const sortedPurchasesData = [...monthlyPurchases].sort((a, b) => {
-      return sortedMonths.indexOf(a.month) - sortedMonths.indexOf(b.month);
-    });
+    // Map the months to their data points efficiently
+    const consumptionData = months.map(month => 
+      consumptionMap.has(month) ? consumptionMap.get(month) : { month, amount: 0, average: monthlyConsumption[0]?.average || 0 }
+    );
     
-    // Return all data sorted
+    const purchasesData = months.map(month => 
+      purchasesMap.has(month) ? purchasesMap.get(month) : { month, amount: 0 }
+    );
+    
     return {
-      consumptionData: sortedConsumptionData,
-      purchasesData: sortedPurchasesData
+      consumptionData,
+      purchasesData
     };
   }, [chartTimeRange, monthlyConsumption, monthlyPurchases]);
   
@@ -1099,6 +1060,19 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     );
   };
 
+  // Get all available months for the month picker
+  const availableMonths = useMemo(() => {
+    const dates = new Set(
+      filteredInventory
+        .flatMap(item => item.transactions || [])
+        .map(t => new Date(t.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }))
+    );
+    
+    // Sort months in chronological order
+    return Array.from(dates)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  }, [filteredInventory]);
+
   // Modify the timeFrameOptions to be more compact
   const timeFrameOptions = useMemo(() => {
     // Get individual months
@@ -1116,14 +1090,30 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     // Return the restructured options
     return [
       { value: 'all', label: 'All Time' },
-      { value: 'divider_custom', label: 'Custom Ranges', isDivider: true },
-      { value: 'last2', label: 'Last 2 Months' },
-      { value: 'last3', label: 'Last 3 Months' },
-      { value: 'last6', label: 'Last 6 Months' },
+      { value: 'custom', label: 'Custom Selection' },
       { value: 'divider_months', label: 'Individual Months', isDivider: true },
       ...individualMonths
     ];
   }, [filteredInventory]);
+
+  // Handle month selection 
+  const handleMonthClick = (month: string) => {
+    if (selectedMonths.includes(month)) {
+      setSelectedMonths(selectedMonths.filter(m => m !== month));
+    } else {
+      setSelectedMonths([...selectedMonths, month]);
+    }
+  };
+
+  // Apply selected months
+  const applyCustomSelection = () => {
+    if (selectedMonths.length > 0) {
+      setTimeFrame('custom');
+    } else {
+      setTimeFrame('all');
+    }
+    setMonthPickerAnchor(null);
+  };
 
   return (
     <Grid container spacing={3}>
@@ -1438,6 +1428,138 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     </Typography>
                   </Box>
                 </Box>
+                
+                {/* Mobile Filter Controls */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {/* Filter Controls Row - Changed to horizontal layout */}
+                  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1.5 }}>
+                    {/* Filter by Supplier */}
+                    <FormControl 
+                      size="small" 
+                      sx={{ 
+                        flex: 1,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 28,
+                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          transform: 'translate(14px, -9px) scale(0.75)',
+                          '&.MuiInputLabel-shrink': {
+                            transform: 'translate(14px, -9px) scale(0.75)',
+                          }
+                        },
+                        '& .MuiSelect-select': {
+                          py: 0.75,
+                          fontSize: '0.8rem',
+                          paddingTop: '10px',
+                        }
+                      }}
+                    >
+                      <InputLabel 
+                        sx={{ 
+                          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.6)' : 'rgba(255, 255, 255, 0.7)',
+                          px: 0.5,
+                          borderRadius: 1,
+                          backdropFilter: 'blur(4px)',
+                          fontSize: '0.85rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        Supplier
+                      </InputLabel>
+                      <Select
+                        value={filterType === 'supplier' ? filterValue : ''}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            setFilterType('supplier');
+                            setFilterValue(e.target.value);
+                          } else {
+                            setFilterType('none');
+                            setFilterValue('');
+                          }
+                        }}
+                        label="Supplier"
+                        displayEmpty
+                      >
+                        <MenuItem value="">All Suppliers</MenuItem>
+                        {suppliers.map(supplier => (
+                          <MenuItem key={supplier} value={supplier}>
+                            {supplier}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    
+                    {/* Filter by Category */}
+                    <FormControl 
+                      size="small" 
+                      sx={{ 
+                        flex: 1,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 28,
+                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontWeight: 500,
+                          fontSize: '0.75rem',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          transform: 'translate(14px, -9px) scale(0.75)',
+                          '&.MuiInputLabel-shrink': {
+                            transform: 'translate(14px, -9px) scale(0.75)',
+                          }
+                        },
+                        '& .MuiSelect-select': {
+                          py: 0.75,
+                          fontSize: '0.8rem',
+                          paddingTop: '10px',
+                        }
+                      }}
+                    >
+                      <InputLabel 
+                        sx={{ 
+                          backgroundColor: isDarkMode ? 'rgba(30, 30, 30, 0.6)' : 'rgba(255, 255, 255, 0.7)',
+                          px: 0.5,
+                          borderRadius: 1,
+                          backdropFilter: 'blur(4px)',
+                          fontSize: '0.85rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        Category
+                      </InputLabel>
+                      <Select
+                        value={filterType === 'category' ? filterValue : ''}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            setFilterType('category');
+                            setFilterValue(e.target.value);
+                          } else {
+                            setFilterType('none');
+                            setFilterValue('');
+                          }
+                        }}
+                        label="Category"
+                        displayEmpty
+                      >
+                        <MenuItem value="">All Categories</MenuItem>
+                        {categories.map(category => (
+                          <MenuItem key={category} value={category}>
+                            {category}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
               </Box>
             </Box>
 
@@ -1509,9 +1631,107 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                   </Typography>
                 </Box>
               </Box>
+              
+              {/* Add filter controls here */}
+              <Box sx={{ 
+                display: 'flex',
+                gap: 2,
+              }}>
+                {/* Filter by Supplier */}
+                <FormControl 
+                  size="small" 
+                  sx={{ 
+                    width: '180px',
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 28,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontWeight: 500,
+                    },
+                    '& .MuiSelect-select': {
+                      py: 1,
+                    }
+                  }}
+                >
+                  <InputLabel>Filter by Supplier</InputLabel>
+                  <Select
+                    value={filterType === 'supplier' ? filterValue : ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setFilterType('supplier');
+                        setFilterValue(e.target.value);
+                      } else {
+                        setFilterType('none');
+                        setFilterValue('');
+                      }
+                    }}
+                    label="Filter by Supplier"
+                    displayEmpty
+                  >
+                    <MenuItem value="">All Suppliers</MenuItem>
+                    {suppliers.map(supplier => (
+                      <MenuItem key={supplier} value={supplier}>
+                        {supplier}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                
+                {/* Filter by Category */}
+                <FormControl 
+                  size="small" 
+                  sx={{ 
+                    width: '180px',
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 28,
+                      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      fontWeight: 500,
+                    },
+                    '& .MuiSelect-select': {
+                      py: 1,
+                    }
+                  }}
+                >
+                  <InputLabel>Filter by Category</InputLabel>
+                  <Select
+                    value={filterType === 'category' ? filterValue : ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setFilterType('category');
+                        setFilterValue(e.target.value);
+                      } else {
+                        setFilterType('none');
+                        setFilterValue('');
+                      }
+                    }}
+                    label="Filter by Category"
+                    displayEmpty
+                  >
+                    <MenuItem value="">All Categories</MenuItem>
+                    {categories.map(category => (
+                      <MenuItem key={category} value={category}>
+                        {category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
             </Stack>
 
-            <Box sx={{ 
+            <Box sx={{
               height: 400, // Reduced height from 450px
               width: '100%',
               display: 'flex',
@@ -1710,7 +1930,8 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     <Bar 
                       dataKey={(data) => {
                         const purchases = getFilteredChartData().purchasesData;
-                        return purchases.find(p => p.month === data.month)?.amount || 0;
+                        const purchase = purchases.find(p => p?.month === data.month);
+                        return purchase?.amount || 0;
                       }}
                       fill="url(#purchasesGradient)" 
                       name="Purchases" 
@@ -1856,7 +2077,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                       }
                     }}
                   >
-                    {timeFrameOptions.map(option => 
+                    {timeFrameOptions.map((option: { value: string; label: string; isDivider?: boolean; }) => 
                       option.isDivider ? (
                         // Render dividers as non-selectable headers
                         <MenuItem 
@@ -1876,6 +2097,27 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                         >
                           {option.label}
                         </MenuItem>
+                      ) : option.value === 'custom' ? (
+                        // Custom month selection option
+                        <MenuItem 
+                          key={option.value} 
+                          value={option.value}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setMonthPickerAnchor(e.currentTarget);
+                          }}
+                          sx={{ 
+                            pl: 1,
+                            fontSize: '0.9rem',
+                            py: 0.75,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}
+                        >
+                          <span>{option.label}</span>
+                          <CalendarMonthIcon fontSize="small" sx={{ ml: 1, opacity: 0.7 }} />
+                        </MenuItem>
                       ) : (
                         // Render normal options
                         <MenuItem 
@@ -1893,6 +2135,105 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     )}
                   </Select>
                 </FormControl>
+                
+                {/* Month Picker Popover */}
+                <Popover
+                  open={Boolean(monthPickerAnchor)}
+                  anchorEl={monthPickerAnchor}
+                  onClose={() => setMonthPickerAnchor(null)}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'center',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                  }}
+                  PaperProps={{
+                    sx: {
+                      p: 2,
+                      width: 320,
+                      maxHeight: 400,
+                      overflow: 'auto',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                      borderRadius: '10px',
+                      border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                    }
+                  }}
+                >
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                    Select Months
+                  </Typography>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: 1,
+                    mb: 2
+                  }}>
+                    {availableMonths.map(month => (
+                      <Box
+                        key={month}
+                        onClick={() => handleMonthClick(month)}
+                        sx={{
+                          px: 1.5,
+                          py: 0.75,
+                          borderRadius: '20px',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          backgroundColor: selectedMonths.includes(month)
+                            ? (isDarkMode ? '#4A8CAF' : '#3B7EA1')
+                            : (isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'),
+                          color: selectedMonths.includes(month)
+                            ? '#fff'
+                            : (isDarkMode ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)'),
+                          fontWeight: selectedMonths.includes(month) ? 600 : 400,
+                          border: '1px solid',
+                          borderColor: selectedMonths.includes(month)
+                            ? (isDarkMode ? '#4A8CAF' : '#3B7EA1')
+                            : 'transparent',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            backgroundColor: selectedMonths.includes(month)
+                              ? (isDarkMode ? '#3B7EA1' : '#2E6A8A')
+                              : (isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)'),
+                          }
+                        }}
+                      >
+                        {month}
+                      </Box>
+                    ))}
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                    <Button 
+                      variant="outlined" 
+                      size="small"
+                      onClick={() => setMonthPickerAnchor(null)}
+                      sx={{ 
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        px: 2
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      size="small"
+                      onClick={applyCustomSelection}
+                      sx={{ 
+                        borderRadius: '20px',
+                        textTransform: 'none',
+                        px: 2,
+                        backgroundColor: isDarkMode ? '#4A8CAF' : '#3B7EA1',
+                        '&:hover': {
+                          backgroundColor: isDarkMode ? '#3B7EA1' : '#2E6A8A',
+                        }
+                      }}
+                    >
+                      Apply Selection
+                    </Button>
+                  </Box>
+                </Popover>
                 
                 {/* Rest of the existing controls */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, width: '180px' }}>

@@ -31,6 +31,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import UserManagement from './Users/UserManagement';
 import SalesTeamManagement from './SalesTeamManagement';
 import LeadManagement from './Leads/LeadManagement';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -292,8 +293,55 @@ const Dashboard: React.FC = () => {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+      <Box sx={{ flexGrow: 1, overflow: 'auto', position: 'relative' }}>
         {renderContent()}
+        
+        <Box 
+          sx={{ 
+            py: 1.2, 
+            px: 3, 
+            backgroundColor: 'transparent',
+            position: 'relative',
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '0.75rem',
+            color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+            textAlign: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+            mt: 3,
+            mb: 1
+          }}
+        >
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              fontWeight: 400,
+              fontSize: '0.7rem',
+              opacity: 0.8
+            }}
+          >
+            Version 2.0.1
+          </Typography>
+          
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              fontWeight: 400,
+              fontSize: '0.7rem',
+              opacity: 0.8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5
+            }}
+          >
+            Designed with <FavoriteIcon sx={{ fontSize: '0.7rem', color: isDarkMode ? '#ff6b6b' : '#e53e3e', opacity: 0.8 }} /> by Kunal
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
