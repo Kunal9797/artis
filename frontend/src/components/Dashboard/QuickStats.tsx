@@ -602,38 +602,73 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       return { consumptionData: [], purchasesData: [] };
     }
     
+    // Create a Map for faster lookups instead of using includes()
+    const allMonthsMap = new Map();
+    
+    // Add all months to the map
+    monthlyConsumption.forEach(d => allMonthsMap.set(d.month, true));
+    monthlyPurchases.forEach(d => allMonthsMap.set(d.month, true));
+    
+    // Convert map keys to array and sort
+    const sortedMonths = Array.from(allMonthsMap.keys()).sort((a, b) => {
+      // Handle consistent date parsing across all browsers and devices
+      // Split the month string (e.g., "Jan 2025") into month and year
+      const [monthA, yearA] = a.split(' ');
+      const [monthB, yearB] = b.split(' ');
+      
+      // Convert month names to month numbers (0-11)
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthNumA = monthNames.indexOf(monthA);
+      const monthNumB = monthNames.indexOf(monthB);
+      
+      // Compare years first
+      if (Number(yearA) !== Number(yearB)) {
+        return Number(yearA) - Number(yearB);
+      }
+      
+      // If years are the same, compare months
+      return monthNumA - monthNumB;
+    });
+    
     if (chartTimeRange === 'recent') {
-      // Create a Map for faster lookups instead of using includes()
-      const allMonthsMap = new Map();
-      
-      // Add all months to the map
-      monthlyConsumption.forEach(d => allMonthsMap.set(d.month, true));
-      monthlyPurchases.forEach(d => allMonthsMap.set(d.month, true));
-      
-      // Convert map keys to array and sort
-      const sortedMonths = Array.from(allMonthsMap.keys()).sort((a, b) => {
-        const dateA = new Date(a);
-        const dateB = new Date(b);
-        return dateA.getTime() - dateB.getTime();
-      });
-      
       // Get the last 4 months
       const recentMonths = sortedMonths.slice(-4);
       
       // Create a Set for faster lookups
       const recentMonthsSet = new Set(recentMonths);
       
-      // Filter using Set.has() which is faster than Array.includes()
+      // Filter and ensure consistent order
+      const recentConsumptionData = monthlyConsumption
+        .filter(d => recentMonthsSet.has(d.month))
+        .sort((a, b) => {
+          return recentMonths.indexOf(a.month) - recentMonths.indexOf(b.month);
+        });
+        
+      const recentPurchasesData = monthlyPurchases
+        .filter(d => recentMonthsSet.has(d.month))
+        .sort((a, b) => {
+          return recentMonths.indexOf(a.month) - recentMonths.indexOf(b.month);
+        });
+      
       return {
-        consumptionData: monthlyConsumption.filter(d => recentMonthsSet.has(d.month)),
-        purchasesData: monthlyPurchases.filter(d => recentMonthsSet.has(d.month))
+        consumptionData: recentConsumptionData,
+        purchasesData: recentPurchasesData
       };
     }
     
-    // Return all data without unnecessary processing
+    // For all-time, still ensure consistent order
+    const sortedConsumptionData = [...monthlyConsumption].sort((a, b) => {
+      return sortedMonths.indexOf(a.month) - sortedMonths.indexOf(b.month);
+    });
+    
+    const sortedPurchasesData = [...monthlyPurchases].sort((a, b) => {
+      return sortedMonths.indexOf(a.month) - sortedMonths.indexOf(b.month);
+    });
+    
+    // Return all data sorted
     return {
-      consumptionData: monthlyConsumption,
-      purchasesData: monthlyPurchases
+      consumptionData: sortedConsumptionData,
+      purchasesData: sortedPurchasesData
     };
   }, [chartTimeRange, monthlyConsumption, monthlyPurchases]);
   
