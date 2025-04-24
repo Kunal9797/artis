@@ -1,24 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Grid,
-  Paper,
   Typography,
+  Container,
 } from '@mui/material';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import CategoryIcon from '@mui/icons-material/Category';
-import MapIcon from '@mui/icons-material/Map';
-import PeopleIcon from '@mui/icons-material/People';
 import { useTheme } from '../context/ThemeContext';
 import QuickStats from './Dashboard/QuickStats';
 import { inventoryApi } from '../services/api';
 import { distributorApi } from '../services/distributorApi';
 import { InventoryItem } from './Inventory/InventoryList';
-import NavigationCard from './NavigationCard';
 import { Distributor } from '../types/distributor';
 import { useAuth } from '../context/AuthContext';
-
+import NavigationMenu from './NavigationMenu';
 
 interface DashboardHomeProps {
   setCurrentPage: (page: string) => void;
@@ -50,132 +43,76 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setCurrentPage }) => {
   }, []);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box 
-        sx={{ 
-          p: 3,
-          textAlign: 'center',
-          mb: { xs: 2, md: 4 }
-        }}
-      >
-        <Typography
-          variant="h3"
-          sx={{
-            fontFamily: '"Poppins", sans-serif',
-            fontWeight: 700,
-            color: isDarkMode ? '#fff' : '#2C3E50',
-            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-            lineHeight: 1.2,
-            mb: { xs: 1, md: 2 },
-            position: 'relative',
-            display: 'inline-block',
-            textShadow: isDarkMode 
-              ? '0 0 30px rgba(255,255,255,0.15)'
-              : '0 0 30px rgba(44,62,80,0.15)',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: isDarkMode 
-                ? 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%)'
-                : 'radial-gradient(circle, rgba(44,62,80,0.08) 0%, rgba(44,62,80,0) 70%)',
-              filter: 'blur(20px)',
-              zIndex: -1
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: -8,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: { xs: '80px', md: '120px' },
-              height: '3px',
-              background: isDarkMode 
-                ? 'linear-gradient(90deg, rgba(128,128,128,0.7) 0%, rgba(255,215,0,0.7) 100%)'
-                : 'linear-gradient(90deg, rgba(44,62,80,0.7) 0%, rgba(218,165,32,0.7) 100%)',
-              borderRadius: '2px'
-            }
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      <Container maxWidth="lg">
+        <Box 
+          sx={{ 
+            py: { xs: 2, md: 4 },
+            textAlign: 'center',
+            mb: { xs: 3, md: 4 }
           }}
         >
-          Welcome to Artis
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{
-            fontFamily: '"Poppins", sans-serif',
-            color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(44,62,80,0.7)',
-            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
-            fontWeight: 500,
-            mt: { xs: 1, md: 2 }
-          }}
-        >
-          Inventory Management Platform
-        </Typography>
-      </Box>
+          <Typography
+            variant="h2"
+            sx={{
+              fontFamily: '"Poppins", sans-serif',
+              fontWeight: 800,
+              color: isDarkMode ? '#fff' : '#1A2027',
+              fontSize: { xs: '2.25rem', sm: '2.75rem', md: '3.5rem' },
+              letterSpacing: '-0.5px',
+              lineHeight: 1.1,
+              mb: { xs: 2, md: 3 },
+              background: isDarkMode 
+                ? 'linear-gradient(135deg, #ffffff 0%, #78A7BF 100%)'
+                : 'linear-gradient(135deg, #1A2027 0%, #4A8CAF 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -10,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: { xs: '100px', md: '150px' },
+                height: '4px',
+                background: isDarkMode 
+                  ? 'linear-gradient(90deg, #3B7EA1 0%, #78A7BF 100%)'
+                  : 'linear-gradient(90deg, #1A2027 0%, #4A8CAF 100%)',
+                borderRadius: '4px'
+              }
+            }}
+          >
+            Welcome to Artis
+          </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              fontFamily: '"Poppins", sans-serif',
+              color: isDarkMode ? 'rgba(255,255,255,0.85)' : 'rgba(26,32,39,0.8)',
+              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+              fontWeight: 500,
+              letterSpacing: '0.5px',
+              mt: { xs: 3, md: 4 },
+              maxWidth: '700px',
+              mx: 'auto'
+            }}
+          >
+            Inventory Management Platform
+          </Typography>
+        </Box>
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        {[
-          {
-            title: "Inventory",
-            description: "Track stock levels and consumption",
-            icon: <InventoryIcon />,
-            page: 'inventory'
-          },
-          {
-            title: "Distributor Map",
-            description: "View and manage distributor network",
-            icon: <MapIcon />,
-            page: 'distributors'
-          },
-          {
-            title: "Purchase Orders",
-            description: "Create design paper purchase orders",
-            icon: <ShoppingCartIcon />,
-            page: 'orders'
-          }
-        ].map((item) => (
-          <Grid item xs={12} md={4} key={item.title}>
-            <NavigationCard
-              title={item.title}
-              description={item.description}
-              icon={React.cloneElement(item.icon, {
-                sx: { 
-                  fontSize: { xs: 32, md: 40 }, 
-                  color: isDarkMode ? '#90CAF9' : '#1A237E',
-                  mb: 1
-                }
-              })}
-              onClick={() => setCurrentPage(item.page)}
-              sx={{
-                height: { xs: 'auto', md: '100%' },
-                p: { xs: 2.5, md: 3 },
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: (theme) => `0 8px 24px ${
-                    isDarkMode ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)'
-                  }`
-                }
-              }}
-            />
-          </Grid>
-        ))}
-      </Grid>
+        <Box sx={{ mb: 2, mt: 2 }}>
+          <NavigationMenu setCurrentPage={setCurrentPage} />
+        </Box>
 
-      <Box sx={{ mt: 3 }}>
-        <QuickStats 
-          inventory={inventory} 
-          distributors={distributors}
-        />
-      </Box>
+        <Box sx={{ mt: 3 }}>
+          <QuickStats 
+            inventory={inventory} 
+            distributors={distributors}
+          />
+        </Box>
+      </Container>
     </Box>
   );
 };
