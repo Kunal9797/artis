@@ -46,5 +46,7 @@ export const coordinatesCache: { [key: string]: { lat: number; lng: number } } =
   'Meerut-Uttar Pradesh': { lat: 29.0018557, lng: 77.76796714992041 },
   'Dehradun-Uttarakhand': { lat: 30.3255646, lng: 78.0436813 },
   'Haldwani-Uttarakhand': { lat: 29.2144809, lng: 79.5279012 },
-  'Srinagar-Kashmir': { lat: 34.0747444, lng: 74.8204443 }
+  'Srinagar-Kashmir': { lat: 34.0747444, lng: 74.8204443 },
+  'Satna-Madhya Pradesh': { lat: 24.6005, lng: 80.8322 },
+  'Patiala-Punjab': { lat: 30.3398, lng: 76.3869 }
 }; 
