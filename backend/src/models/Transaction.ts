@@ -10,6 +10,7 @@ interface TransactionAttributes {
   date: Date;
   notes?: string;
   includeInAvg: boolean;
+  operationId?: string; // New field to track which bulk operation this belongs to
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -22,6 +23,7 @@ class Transaction extends Model {
   public date!: Date;
   public notes?: string;
   public includeInAvg!: boolean;
+  public operationId?: string;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -67,6 +69,10 @@ Transaction.init(
     includeInAvg: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
+    },
+    operationId: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   },
   {

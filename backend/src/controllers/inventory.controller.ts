@@ -15,7 +15,7 @@ enum TransactionType {
 
 interface PurchaseOrderRow {
   'Artis Code': string;
-  'Date': string;
+  'Date': string; // Supports both MM/DD/YY and MM/DD/YYYY formats
   'Amount (Kgs)': string | number;
   'Notes'?: string;
 }
@@ -23,7 +23,7 @@ interface PurchaseOrderRow {
 // Add this interface for correction bulk uploads
 interface CorrectionRow {
   'Artis Code': string;
-  'Date (MM/DD/YY)': string;
+  'Date (MM/DD/YY)': string; // Supports both MM/DD/YY and MM/DD/YYYY formats
   'Correction Amount': string | number;
   'Reason': string;
 }
@@ -183,6 +183,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedProducts: string[] = [];
+  const operationId = `bulk_inventory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -283,7 +284,8 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
               quantity: initialStock,
               date: new Date('2024-01-09'),
               notes: 'Initial Stock',
-              includeInAvg: false
+              includeInAvg: false,
+              operationId
             }, { transaction: t });
           }
         }
@@ -300,7 +302,8 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
             quantity: consumption,
             date,
             notes: `Monthly Consumption - ${date.toLocaleDateString()}`,
-            includeInAvg: true
+            includeInAvg: true,
+            operationId
           }, { transaction: t });
         }
 
@@ -421,6 +424,7 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedOrders: string[] = [];
+  const operationId = `bulk_purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -429,9 +433,20 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
 
     for (const row of data) {
       const artisCode = row['Artis Code']?.toString();
-      const rawDate = row['Date']?.toString();
+      let rawDate = row['Date']?.toString();
       const amount = parseFloat(row['Amount (Kgs)'].toString());
       const notes = row['Notes']?.toString() || '';
+
+      // Handle Excel date numbers (like 45045 which represents a date)
+      if (rawDate && !isNaN(Number(rawDate)) && Number(rawDate) > 1000) {
+        // This looks like an Excel date serial number
+        const excelDate = new Date((Number(rawDate) - 25569) * 86400 * 1000);
+        const month = excelDate.getMonth() + 1;
+        const day = excelDate.getDate();
+        const year = excelDate.getFullYear() % 100; // Get 2-digit year
+        rawDate = `${month}/${day}/${year}`;
+        console.log(`Converted Excel date ${row['Date']} to ${rawDate}`);
+      }
 
       if (!artisCode || !rawDate || isNaN(amount)) {
         skippedRows.push({
@@ -441,15 +456,69 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
         continue;
       }
 
-      // Parse date
-      const [month, day, year] = rawDate.split('/');
-      const fullYear = parseInt('20' + year);
-      const parsedDate = new Date(fullYear, parseInt(month) - 1, parseInt(day));
-
-      if (isNaN(parsedDate.getTime())) {
+      // Parse date - handle flexible formats: M/D/YY, MM/DD/YYYY, etc.
+      let parsedDate: Date;
+      try {
+        // Debug logging to see what we're actually getting
+        console.log(`Processing date for ${artisCode}: rawDate="${rawDate}", length=${rawDate.length}, charCodes=[${Array.from(rawDate).map(c => c.charCodeAt(0)).join(', ')}]`);
+        
+        const dateParts = rawDate.trim().split('/');
+        console.log(`Date parts: [${dateParts.map(p => `"${p}"`).join(', ')}], count=${dateParts.length}`);
+        
+        if (dateParts.length !== 3) {
+          throw new Error(`Date must have month, day, and year separated by / (got ${dateParts.length} parts: ${dateParts.join('|')})`);
+        }
+        
+        const [monthStr, dayStr, yearStr] = dateParts;
+        
+        // Parse month (1-12)
+        const month = parseInt(monthStr.trim());
+        if (isNaN(month) || month < 1 || month > 12) {
+          throw new Error('Invalid month - must be 1-12');
+        }
+        
+        // Parse day (1-31)
+        const day = parseInt(dayStr.trim());
+        if (isNaN(day) || day < 1 || day > 31) {
+          throw new Error('Invalid day - must be 1-31');
+        }
+        
+        // Parse year - handle both 2-digit and 4-digit years
+        const yearTrimmed = yearStr.trim();
+        let fullYear: number;
+        
+        if (yearTrimmed.length === 2) {
+          // Handle YY format (2-digit year)
+          const yearNum = parseInt(yearTrimmed);
+          if (isNaN(yearNum)) {
+            throw new Error('Invalid 2-digit year');
+          }
+          // Assume years 00-30 are 2000-2030, 31-99 are 1931-1999
+          fullYear = yearNum <= 30 ? 2000 + yearNum : 1900 + yearNum;
+        } else if (yearTrimmed.length === 4) {
+          // Handle YYYY format (4-digit year)
+          fullYear = parseInt(yearTrimmed);
+          if (isNaN(fullYear)) {
+            throw new Error('Invalid 4-digit year');
+          }
+        } else {
+          throw new Error('Year must be 2 or 4 digits');
+        }
+        
+        // Create the date object
+        parsedDate = new Date(fullYear, month - 1, day);
+        
+        // Validate the date is real (handles cases like Feb 30)
+        if (isNaN(parsedDate.getTime()) || 
+            parsedDate.getFullYear() !== fullYear ||
+            parsedDate.getMonth() !== month - 1 ||
+            parsedDate.getDate() !== day) {
+          throw new Error('Invalid date - day does not exist in the specified month/year');
+        }
+      } catch (dateError) {
         skippedRows.push({
           artisCode: artisCode || 'unknown',
-          reason: 'Invalid date'
+          reason: `Date parsing error: ${dateError instanceof Error ? dateError.message : 'Invalid date format'}`
         });
         continue;
       }
@@ -479,7 +548,8 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
           type: TransactionType.IN,
           quantity: amount,
           date: parsedDate,
-          notes: notes ? `Bulk Purchase: ${notes}` : 'Bulk Purchase Order'
+          notes: notes ? `Bulk Purchase: ${notes}` : 'Bulk Purchase Order',
+          operationId
         }, { transaction: t });
 
         // Update product stock and lastUpdated
@@ -582,6 +652,7 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedCorrections: string[] = [];
+  const operationId = `bulk_corrections_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -612,20 +683,64 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
         continue;
       }
 
-      // Parse the date (MM/DD/YY format)
+      // Parse the date - handle flexible formats: M/D/YY, MM/DD/YYYY, etc.
       let parsedDate: Date;
       try {
-        const [month, day, year] = rawDate.split('/');
-        const fullYear = parseInt('20' + year);
-        parsedDate = new Date(fullYear, parseInt(month) - 1, parseInt(day));
-
-        if (isNaN(parsedDate.getTime())) {
-          throw new Error('Invalid date format');
+        const dateParts = rawDate.trim().split('/');
+        if (dateParts.length !== 3) {
+          throw new Error('Date must have month, day, and year separated by /');
         }
-      } catch (error) {
+        
+        const [monthStr, dayStr, yearStr] = dateParts;
+        
+        // Parse month (1-12)
+        const month = parseInt(monthStr.trim());
+        if (isNaN(month) || month < 1 || month > 12) {
+          throw new Error('Invalid month - must be 1-12');
+        }
+        
+        // Parse day (1-31)
+        const day = parseInt(dayStr.trim());
+        if (isNaN(day) || day < 1 || day > 31) {
+          throw new Error('Invalid day - must be 1-31');
+        }
+        
+        // Parse year - handle both 2-digit and 4-digit years
+        const yearTrimmed = yearStr.trim();
+        let fullYear: number;
+        
+        if (yearTrimmed.length === 2) {
+          // Handle YY format (2-digit year)
+          const yearNum = parseInt(yearTrimmed);
+          if (isNaN(yearNum)) {
+            throw new Error('Invalid 2-digit year');
+          }
+          // Assume years 00-30 are 2000-2030, 31-99 are 1931-1999
+          fullYear = yearNum <= 30 ? 2000 + yearNum : 1900 + yearNum;
+        } else if (yearTrimmed.length === 4) {
+          // Handle YYYY format (4-digit year)
+          fullYear = parseInt(yearTrimmed);
+          if (isNaN(fullYear)) {
+            throw new Error('Invalid 4-digit year');
+          }
+        } else {
+          throw new Error('Year must be 2 or 4 digits');
+        }
+        
+        // Create the date object
+        parsedDate = new Date(fullYear, month - 1, day);
+        
+        // Validate the date is real (handles cases like Feb 30)
+        if (isNaN(parsedDate.getTime()) || 
+            parsedDate.getFullYear() !== fullYear ||
+            parsedDate.getMonth() !== month - 1 ||
+            parsedDate.getDate() !== day) {
+          throw new Error('Invalid date - day does not exist in the specified month/year');
+        }
+      } catch (dateError) {
         skippedRows.push({
           artisCode,
-          reason: 'Invalid date format. Use MM/DD/YY'
+          reason: `Date parsing error: ${dateError instanceof Error ? dateError.message : 'Invalid date format'}`
         });
         continue;
       }
@@ -657,7 +772,8 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
           quantity: correctionAmount,
           date: parsedDate,
           notes: reason,
-          includeInAvg: false // Corrections should never affect consumption averages
+          includeInAvg: false, // Corrections should never affect consumption averages
+          operationId
         }, { transaction: t });
 
         // Update product stock - add the correction amount (positive or negative)
@@ -693,6 +809,31 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
 }; 
 
 // Helper function to determine if a transaction is compatible with an existing operation
+// Stricter compatibility checking for legacy transactions without operationId
+const isLegacyTransactionStrictlyCompatible = (transaction: any, existingOperation: any): boolean => {
+  const existingTxns = existingOperation.transactions;
+  if (!existingTxns || existingTxns.length === 0) return true;
+  
+  const firstExistingTxn = existingTxns[0];
+  
+  // Must be exact same transaction type
+  if (transaction.type !== firstExistingTxn.type) return false;
+  
+  // Must have very similar notes or both be null/empty
+  const transactionNotes = transaction.notes || '';
+  const existingNotes = firstExistingTxn.notes || '';
+  
+  // If both have notes, they must be identical patterns
+  if (transactionNotes && existingNotes) {
+    return transactionNotes === existingNotes;
+  }
+  
+  // If one has notes and other doesn't, they're incompatible
+  if (!!transactionNotes !== !!existingNotes) return false;
+  
+  return true;
+};
+
 const isTransactionCompatibleWithOperation = (transaction: any, existingOperation: any): boolean => {
   if (existingOperation.transactions.length === 0) {
     return true; // Empty operation, always compatible
@@ -747,7 +888,7 @@ const isTransactionCompatibleWithOperation = (transaction: any, existingOperatio
 
 export const getOperationsHistory = async (req: Request, res: Response) => {
   try {
-    // Get transactions grouped by creation time to identify bulk operations
+    // Get transactions grouped by operationId first, then by creation time for individual transactions
     const transactions = await Transaction.findAll({
       include: [{
         model: Product,
@@ -757,36 +898,50 @@ export const getOperationsHistory = async (req: Request, res: Response) => {
       limit: 1000 // Get last 1000 transactions
     });
 
-    // Group transactions by creation time windows (within 3 minutes = same operation)
     const operations: { [key: string]: any } = {};
-    const timeWindow = 3 * 60 * 1000; // 3 minutes in milliseconds
+    const timeWindow = 3 * 60 * 1000; // 3 minutes for individual transactions only
 
     transactions.forEach(transaction => {
-      const createdAt = new Date(transaction.createdAt).getTime();
+      let operationKey: string;
       
-      // Find existing operation within time window AND with compatible operation type
-      let operationKey = null;
-      for (const key in operations) {
-        const operationTime = parseInt(key);
-        const existingOp = operations[key];
+      // If transaction has an operationId, use that for perfect grouping
+      if (transaction.operationId) {
+        operationKey = transaction.operationId;
+      } else {
+        // For individual transactions without operationId (legacy or manual transactions)
+        const createdAt = new Date(transaction.createdAt).getTime();
         
-        if (Math.abs(createdAt - operationTime) <= timeWindow) {
-          // Check if this transaction is compatible with the existing operation
-          const isCompatible = isTransactionCompatibleWithOperation(transaction, existingOp);
-          if (isCompatible) {
-            operationKey = key;
-            break;
+        // For legacy transactions, use stricter grouping to prevent cross-contamination
+        // Only group transactions if they have identical notes pattern and are very close in time
+        let foundKey = null;
+        for (const key in operations) {
+          if (key.startsWith('individual_')) {
+            const operationTime = parseInt(key.split('_')[1]);
+            const timeDiff = Math.abs(createdAt - operationTime);
+            
+            // Reduce time window for legacy transactions to prevent mixing
+            if (timeDiff <= 30000) { // 30 seconds instead of 3 minutes
+              const existingOp = operations[key];
+              
+              // Much stricter compatibility checking for legacy transactions
+              const isVeryCompatible = isLegacyTransactionStrictlyCompatible(transaction, existingOp);
+              if (isVeryCompatible) {
+                foundKey = key;
+                break;
+              }
+            }
           }
         }
+        
+        operationKey = foundKey || `individual_${createdAt}_${Math.random().toString(36).substr(2, 9)}`;
       }
       
-      // If no existing compatible operation found, create new one
-      if (!operationKey) {
-        operationKey = createdAt.toString();
+      // Create operation if it doesn't exist
+      if (!operations[operationKey]) {
         operations[operationKey] = {
           id: operationKey,
-          timestamp: new Date(createdAt),
-          type: 'individual', // Will be updated based on transaction patterns
+          timestamp: new Date(transaction.createdAt),
+          type: 'individual',
           transactions: [],
           summary: {
             totalTransactions: 0,
@@ -817,8 +972,17 @@ export const getOperationsHistory = async (req: Request, res: Response) => {
       // Convert Set to number for response
       op.summary.productsAffected = op.summary.productsAffected.size;
       
-      // Determine operation type based on patterns
-      if (op.summary.totalTransactions >= 2) { // Lowered threshold for better detection
+      // Determine operation type based on operationId pattern first, then fallback to content analysis
+      if (op.id.startsWith('bulk_inventory_')) {
+        op.type = 'bulk_inventory';
+        op.description = 'Bulk Inventory Upload';
+      } else if (op.id.startsWith('bulk_purchase_')) {
+        op.type = 'bulk_purchase';
+        op.description = 'Bulk Purchase Order';
+      } else if (op.id.startsWith('bulk_corrections_')) {
+        op.type = 'bulk_corrections';
+        op.description = 'Bulk Stock Corrections';
+      } else if (op.summary.totalTransactions >= 2) { // Legacy detection for transactions without operationId
         if (op.transactions.some((t: any) => t.notes?.includes('Initial Stock'))) {
           op.type = 'bulk_inventory';
           op.description = 'Bulk Inventory Upload';
@@ -876,25 +1040,69 @@ export const deleteOperation = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   
   try {
-    const operationTime = parseInt(operationId);
-    const timeWindow = 3 * 60 * 1000; // 3 minutes
+    let transactions;
     
-    // Find all transactions within the time window
-    const transactions = await Transaction.findAll({
-      where: {
-        createdAt: {
-          [Op.between]: [
-            new Date(operationTime - timeWindow),
-            new Date(operationTime + timeWindow)
-          ]
-        }
-      },
-      include: [{
-        model: Product,
-        attributes: ['id', 'currentStock']
-      }],
-      transaction: t
-    });
+    // If operationId starts with a known pattern, use exact operationId matching
+    if (operationId.startsWith('bulk_inventory_') || 
+        operationId.startsWith('bulk_purchase_') || 
+        operationId.startsWith('bulk_corrections_') ||
+        operationId.startsWith('individual_')) {
+      
+      // For operations with operationId, find all transactions with that exact operationId
+      if (operationId.startsWith('individual_')) {
+        // For individual operations, use time-based approach as fallback
+        const operationTime = parseInt(operationId.split('_')[1]);
+        const timeWindow = 3 * 60 * 1000; // 3 minutes
+        
+        transactions = await Transaction.findAll({
+          where: {
+            createdAt: {
+              [Op.between]: [
+                new Date(operationTime - timeWindow),
+                new Date(operationTime + timeWindow)
+              ]
+            }
+          },
+          include: [{
+            model: Product,
+            attributes: ['id', 'currentStock']
+          }],
+          transaction: t
+        });
+      } else {
+        // For bulk operations, use exact operationId match
+        transactions = await Transaction.findAll({
+          where: {
+            operationId: operationId
+          },
+          include: [{
+            model: Product,
+            attributes: ['id', 'currentStock']
+          }],
+          transaction: t
+        });
+      }
+    } else {
+      // Legacy: For old timestamp-based operationIds
+      const operationTime = parseInt(operationId);
+      const timeWindow = 3 * 60 * 1000; // 3 minutes
+      
+      transactions = await Transaction.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [
+              new Date(operationTime - timeWindow),
+              new Date(operationTime + timeWindow)
+            ]
+          }
+        },
+        include: [{
+          model: Product,
+          attributes: ['id', 'currentStock']
+        }],
+        transaction: t
+      });
+    }
 
     if (transactions.length === 0) {
       await t.rollback();
@@ -933,18 +1141,50 @@ export const deleteOperation = async (req: Request, res: Response) => {
       }
     }
 
-    // Delete the transactions
-    await Transaction.destroy({
-      where: {
-        createdAt: {
-          [Op.between]: [
-            new Date(operationTime - timeWindow),
-            new Date(operationTime + timeWindow)
-          ]
-        }
-      },
-      transaction: t
-    });
+    // Delete the transactions - use same logic as finding them
+    if (operationId.startsWith('bulk_inventory_') || 
+        operationId.startsWith('bulk_purchase_') || 
+        operationId.startsWith('bulk_corrections_')) {
+      // For bulk operations, delete by exact operationId
+      await Transaction.destroy({
+        where: {
+          operationId: operationId
+        },
+        transaction: t
+      });
+    } else if (operationId.startsWith('individual_')) {
+      // For individual operations, use time-based deletion
+      const operationTime = parseInt(operationId.split('_')[1]);
+      const timeWindow = 3 * 60 * 1000; // 3 minutes
+      
+      await Transaction.destroy({
+        where: {
+          createdAt: {
+            [Op.between]: [
+              new Date(operationTime - timeWindow),
+              new Date(operationTime + timeWindow)
+            ]
+          }
+        },
+        transaction: t
+      });
+    } else {
+      // Legacy: For old timestamp-based operationIds
+      const operationTime = parseInt(operationId);
+      const timeWindow = 3 * 60 * 1000; // 3 minutes
+      
+      await Transaction.destroy({
+        where: {
+          createdAt: {
+            [Op.between]: [
+              new Date(operationTime - timeWindow),
+              new Date(operationTime + timeWindow)
+            ]
+          }
+        },
+        transaction: t
+      });
+    }
 
     await t.commit();
     
