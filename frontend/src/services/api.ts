@@ -123,7 +123,10 @@ export const inventoryApi = {
   },
   clearInventory: () => api.delete('/api/inventory/clear'),
   getRecentTransactions: () => api.get('/api/inventory/recent'),
-  getInventoryDetails: (id: string) => api.get(`/api/inventory/details/${id}`)
+  getInventoryDetails: (id: string) => api.get(`/api/inventory/details/${id}`),
+  getOperationsHistory: () => api.get('/api/inventory/operations'),
+  deleteOperation: (operationId: string) => api.delete(`/api/inventory/operations/${operationId}`),
+  deleteAllOperations: () => api.delete('/api/inventory/operations')
 };
 
 export default api; 

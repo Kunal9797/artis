@@ -10,7 +10,10 @@ import {
   getRecentTransactions,
   bulkUploadPurchaseOrder,
   getInventoryDetails,
-  bulkUploadCorrections
+  bulkUploadCorrections,
+  getOperationsHistory,
+  deleteOperation,
+  deleteAllOperations
 } from '../controllers/inventory.controller';
 import { auth, adminAuth } from '../middleware/auth';
 
@@ -31,5 +34,10 @@ router.delete('/clear', [auth, adminAuth], clearInventory);
 
 // Individual transactions
 router.post('/transaction', [auth, adminAuth], createTransaction);
+
+// Operations management
+router.get('/operations', [auth, adminAuth], getOperationsHistory);
+router.delete('/operations/:operationId', [auth, adminAuth], deleteOperation);
+router.delete('/operations', [auth, adminAuth], deleteAllOperations);
 
 export default router; 

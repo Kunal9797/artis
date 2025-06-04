@@ -44,6 +44,7 @@ import { useTheme } from '../../context/ThemeContext';
 import TransactionDialog from './TransactionDialog';
 import ProductDetailsDialog from './ProductDetailsDialog';
 import BulkUploadDialog from './BulkUploadDialog';
+import ManageOperationsDialog from './ManageOperationsDialog';
 import SearchIcon from '@mui/icons-material/Search';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -110,7 +111,8 @@ const InventoryList: React.FC = () => {
   const [dialogState, setDialogState] = useState({
     transaction: false,
     details: false,
-    bulkUpload: false
+    bulkUpload: false,
+    manageOperations: false
   });
   const [catalogFilter, setCatalogFilter] = useState('');
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
@@ -233,20 +235,8 @@ const InventoryList: React.FC = () => {
     setDialogState(prev => ({ ...prev, bulkUpload: true }));
   };
 
-  const handleClearInventory = async () => {
-    if (window.confirm('Are you sure you want to clear all inventory? This will delete ALL transactions and reset stock levels to zero.')) {
-      try {
-        setLoading(true);
-        await inventoryApi.clearInventory();
-        fetchInventory();
-        // Optional: Show success message
-      } catch (error) {
-        console.error('Error clearing inventory:', error);
-        setError('Failed to clear inventory');
-      } finally {
-        setLoading(false);
-      }
-    }
+  const handleManageOperations = () => {
+    setDialogState(prev => ({ ...prev, manageOperations: true }));
   };
 
   const handleOpenDetails = (id: string) => {
@@ -301,8 +291,8 @@ const InventoryList: React.FC = () => {
     },
     { 
       icon: <DeleteIcon />, 
-      name: 'Clear Inventory',
-      onClick: handleClearInventory
+      name: 'Manage Operations',
+      onClick: handleManageOperations
     },
   ];
 
@@ -774,11 +764,12 @@ const InventoryList: React.FC = () => {
               </Button>
               <Button
                 variant="outlined"
-                color="error"
-                onClick={handleClearInventory}
+                color="primary"
+                onClick={handleManageOperations}
                 sx={{ ml: 'auto' }}
+                startIcon={<SettingsIcon />}
               >
-                Clear All Inventory
+                Manage Operations
               </Button>
             </Box>
 
@@ -1265,6 +1256,12 @@ const InventoryList: React.FC = () => {
           open={dialogState.bulkUpload}
           onClose={() => setDialogState(prev => ({ ...prev, bulkUpload: false }))}
           onSuccess={fetchInventory}
+        />
+
+        <ManageOperationsDialog
+          open={dialogState.manageOperations}
+          onClose={() => setDialogState(prev => ({ ...prev, manageOperations: false }))}
+          onOperationDeleted={fetchInventory}
         />
         
         {/* Mobile dialogs */}

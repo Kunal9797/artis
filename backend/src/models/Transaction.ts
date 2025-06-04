@@ -10,6 +10,8 @@ interface TransactionAttributes {
   date: Date;
   notes?: string;
   includeInAvg: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 class Transaction extends Model {
@@ -20,6 +22,8 @@ class Transaction extends Model {
   public date!: Date;
   public notes?: string;
   public includeInAvg!: boolean;
+  public createdAt!: Date;
+  public updatedAt!: Date;
 }
 
 Transaction.init(

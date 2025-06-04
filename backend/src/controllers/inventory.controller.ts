@@ -473,13 +473,13 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
       }
 
       try {
-        // Create transaction
+        // Create transaction with consistent identifier for purchase orders
         await Transaction.create({
           productId: product.id,
           type: TransactionType.IN,
           quantity: amount,
           date: parsedDate,
-          notes
+          notes: notes ? `Bulk Purchase: ${notes}` : 'Bulk Purchase Order'
         }, { transaction: t });
 
         // Update product stock and lastUpdated
@@ -687,6 +687,318 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
     console.error('Error processing corrections upload:', error);
     res.status(500).json({
       error: 'Failed to process corrections upload',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}; 
+
+// Helper function to determine if a transaction is compatible with an existing operation
+const isTransactionCompatibleWithOperation = (transaction: any, existingOperation: any): boolean => {
+  if (existingOperation.transactions.length === 0) {
+    return true; // Empty operation, always compatible
+  }
+
+  // Get the first transaction to understand the operation type
+  const firstTransaction = existingOperation.transactions[0];
+  
+  // Check for specific operation patterns based on notes
+  const transactionNotes = transaction.notes || '';
+  const firstTransactionNotes = firstTransaction.notes || '';
+  
+  // Initial Stock operations - only group with other Initial Stock
+  if (transactionNotes.includes('Initial Stock') || firstTransactionNotes.includes('Initial Stock')) {
+    return transactionNotes.includes('Initial Stock') && firstTransactionNotes.includes('Initial Stock');
+  }
+  
+  // Monthly Consumption operations - only group with other Monthly Consumption
+  if (transactionNotes.includes('Monthly Consumption') || firstTransactionNotes.includes('Monthly Consumption')) {
+    return transactionNotes.includes('Monthly Consumption') && firstTransactionNotes.includes('Monthly Consumption');
+  }
+  
+  // Bulk Purchase operations - only group with other Bulk Purchase
+  if (transactionNotes.includes('Bulk Purchase') || firstTransactionNotes.includes('Bulk Purchase')) {
+    return transactionNotes.includes('Bulk Purchase') && firstTransactionNotes.includes('Bulk Purchase');
+  }
+  
+  // Correction operations - only group with other corrections
+  if (transaction.type === 'CORRECTION' || firstTransaction.type === 'CORRECTION') {
+    return transaction.type === 'CORRECTION' && firstTransaction.type === 'CORRECTION';
+  }
+  
+  // For other individual transactions, be more restrictive
+  // Only group if they're the same type (IN with IN, OUT with OUT) and have similar notes patterns
+  if (transaction.type !== firstTransaction.type) {
+    return false;
+  }
+  
+  // If they're both individual transactions (no special notes), allow grouping
+  const hasSpecialNotes = (notes: string) => 
+    notes.includes('Initial Stock') || 
+    notes.includes('Monthly Consumption') || 
+    notes.includes('Bulk Purchase') ||
+    notes.includes('Bulk');
+    
+  if (!hasSpecialNotes(transactionNotes) && !hasSpecialNotes(firstTransactionNotes)) {
+    return true;
+  }
+  
+  return false;
+};
+
+export const getOperationsHistory = async (req: Request, res: Response) => {
+  try {
+    // Get transactions grouped by creation time to identify bulk operations
+    const transactions = await Transaction.findAll({
+      include: [{
+        model: Product,
+        attributes: ['artisCodes', 'name', 'supplier']
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: 1000 // Get last 1000 transactions
+    });
+
+    // Group transactions by creation time windows (within 3 minutes = same operation)
+    const operations: { [key: string]: any } = {};
+    const timeWindow = 3 * 60 * 1000; // 3 minutes in milliseconds
+
+    transactions.forEach(transaction => {
+      const createdAt = new Date(transaction.createdAt).getTime();
+      
+      // Find existing operation within time window AND with compatible operation type
+      let operationKey = null;
+      for (const key in operations) {
+        const operationTime = parseInt(key);
+        const existingOp = operations[key];
+        
+        if (Math.abs(createdAt - operationTime) <= timeWindow) {
+          // Check if this transaction is compatible with the existing operation
+          const isCompatible = isTransactionCompatibleWithOperation(transaction, existingOp);
+          if (isCompatible) {
+            operationKey = key;
+            break;
+          }
+        }
+      }
+      
+      // If no existing compatible operation found, create new one
+      if (!operationKey) {
+        operationKey = createdAt.toString();
+        operations[operationKey] = {
+          id: operationKey,
+          timestamp: new Date(createdAt),
+          type: 'individual', // Will be updated based on transaction patterns
+          transactions: [],
+          summary: {
+            totalTransactions: 0,
+            productsAffected: new Set(),
+            totalQuantityIn: 0,
+            totalQuantityOut: 0,
+            totalCorrections: 0
+          }
+        };
+      }
+      
+      // Add transaction to operation
+      operations[operationKey].transactions.push(transaction);
+      operations[operationKey].summary.totalTransactions++;
+      operations[operationKey].summary.productsAffected.add(transaction.productId);
+      
+      if (transaction.type === 'IN') {
+        operations[operationKey].summary.totalQuantityIn += transaction.quantity;
+      } else if (transaction.type === 'OUT') {
+        operations[operationKey].summary.totalQuantityOut += transaction.quantity;
+      } else if (transaction.type === 'CORRECTION') {
+        operations[operationKey].summary.totalCorrections += Math.abs(transaction.quantity);
+      }
+    });
+
+    // Determine operation types and create final response
+    const operationsArray = Object.values(operations).map(op => {
+      // Convert Set to number for response
+      op.summary.productsAffected = op.summary.productsAffected.size;
+      
+      // Determine operation type based on patterns
+      if (op.summary.totalTransactions >= 2) { // Lowered threshold for better detection
+        if (op.transactions.some((t: any) => t.notes?.includes('Initial Stock'))) {
+          op.type = 'bulk_inventory';
+          op.description = 'Bulk Inventory Upload';
+        } else if (op.transactions.some((t: any) => t.notes?.includes('Monthly Consumption'))) {
+          op.type = 'bulk_consumption';
+          op.description = 'Bulk Consumption Update';
+        } else if (op.transactions.some((t: any) => t.notes?.includes('Bulk Purchase'))) {
+          op.type = 'bulk_purchase';
+          op.description = 'Bulk Purchase Order';
+        } else if (op.transactions.every((t: any) => t.type === 'CORRECTION')) {
+          op.type = 'bulk_corrections';
+          op.description = 'Bulk Stock Corrections';
+        } else if (op.transactions.every((t: any) => t.type === 'IN')) {
+          op.type = 'bulk_purchase';
+          op.description = 'Bulk Purchase Operations';
+        } else {
+          op.type = 'bulk_mixed';
+          op.description = 'Bulk Mixed Operations';
+        }
+      } else {
+        op.type = 'individual';
+        if (op.summary.totalTransactions === 1) {
+          const txn = op.transactions[0];
+          if (txn.notes?.includes('Bulk Purchase')) {
+            op.type = 'individual_purchase';
+            op.description = `Purchase Order - ${txn.Product?.name || 'Unknown Product'}`;
+          } else {
+            op.description = `${txn.type === 'IN' ? 'Stock In' : txn.type === 'OUT' ? 'Stock Out' : 'Stock Correction'} - ${txn.Product?.name || 'Unknown Product'}`;
+          }
+        } else {
+          op.description = `${op.summary.totalTransactions} Individual Transactions`;
+        }
+      }
+      
+      return op;
+    });
+
+    // Sort by timestamp (newest first) and limit to recent operations
+    operationsArray.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    res.json({
+      operations: operationsArray.slice(0, 50) // Return last 50 operations
+    });
+  } catch (error) {
+    console.error('Error fetching operations history:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch operations history',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+export const deleteOperation = async (req: Request, res: Response) => {
+  const { operationId } = req.params;
+  const t = await sequelize.transaction();
+  
+  try {
+    const operationTime = parseInt(operationId);
+    const timeWindow = 3 * 60 * 1000; // 3 minutes
+    
+    // Find all transactions within the time window
+    const transactions = await Transaction.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [
+            new Date(operationTime - timeWindow),
+            new Date(operationTime + timeWindow)
+          ]
+        }
+      },
+      include: [{
+        model: Product,
+        attributes: ['id', 'currentStock']
+      }],
+      transaction: t
+    });
+
+    if (transactions.length === 0) {
+      await t.rollback();
+      return res.status(404).json({ error: 'Operation not found' });
+    }
+
+    // Group transactions by product to reverse their effects
+    const productUpdates: { [productId: string]: number } = {};
+    
+    transactions.forEach(txn => {
+      if (!productUpdates[txn.productId]) {
+        productUpdates[txn.productId] = 0;
+      }
+      
+      // Reverse the transaction effect
+      if (txn.type === 'IN') {
+        productUpdates[txn.productId] -= txn.quantity; // Remove the added stock
+      } else if (txn.type === 'OUT') {
+        productUpdates[txn.productId] += txn.quantity; // Add back the consumed stock
+      } else if (txn.type === 'CORRECTION') {
+        productUpdates[txn.productId] -= txn.quantity; // Reverse the correction
+      }
+    });
+
+    // Update product stocks
+    for (const [productId, stockChange] of Object.entries(productUpdates)) {
+      const product = await Product.findByPk(productId, { transaction: t });
+      if (product) {
+        await product.update({
+          currentStock: Number((Number(product.currentStock) + stockChange).toFixed(2)),
+          lastUpdated: new Date()
+        }, { transaction: t });
+        
+        // Recalculate average consumption for affected products
+        await updateProductAverageConsumption(productId, t);
+      }
+    }
+
+    // Delete the transactions
+    await Transaction.destroy({
+      where: {
+        createdAt: {
+          [Op.between]: [
+            new Date(operationTime - timeWindow),
+            new Date(operationTime + timeWindow)
+          ]
+        }
+      },
+      transaction: t
+    });
+
+    await t.commit();
+    
+    res.json({
+      message: 'Operation deleted successfully',
+      deletedTransactions: transactions.length,
+      affectedProducts: Object.keys(productUpdates).length
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error deleting operation:', error);
+    res.status(500).json({
+      error: 'Failed to delete operation',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}; 
+
+export const deleteAllOperations = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  
+  try {
+    // Get count of operations for response
+    const transactionCount = await Transaction.count();
+    const productCount = await Product.count();
+    
+    // Delete all transactions
+    await Transaction.destroy({
+      where: {},
+      transaction: t
+    });
+
+    // Reset all products' current stock and avgConsumption to 0
+    await Product.update({
+      currentStock: 0,
+      avgConsumption: 0,
+      lastUpdated: new Date()
+    }, {
+      where: {},
+      transaction: t
+    });
+
+    await t.commit();
+    
+    res.json({ 
+      message: 'All operations deleted successfully',
+      deletedTransactions: transactionCount,
+      affectedProducts: productCount
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error deleting all operations:', error);
+    res.status(500).json({
+      error: 'Failed to delete all operations',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
