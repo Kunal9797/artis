@@ -127,6 +127,60 @@ const aggregateMonthlyConsumption = (transactions: Transaction[], limitToSixMont
   });
 };
 
+// New function to calculate last 6 months average consumption
+const calculateLast6MonthsAverage = (transactions: Transaction[]) => {
+  const monthOrder: { [key: string]: number } = {
+    'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+    'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+  };
+
+  // Filter only OUT transactions and group by month
+  const monthlyData = transactions.reduce((acc: Record<string, number>, t: Transaction) => {
+    if (t.type === 'OUT') {
+      const month = new Date(t.date).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short' 
+      });
+      acc[month] = (acc[month] || 0) + Number(t.quantity);
+    }
+    return acc;
+  }, {});
+
+  // Convert to array and sort chronologically
+  const sortedEntries = Object.entries(monthlyData)
+    .map(([month, amount]) => ({
+      month,
+      amount,
+      date: new Date(month)
+    }))
+    .sort((a, b) => {
+      const [monthA, yearA] = a.month.split(' ');
+      const [monthB, yearB] = b.month.split(' ');
+      
+      if (yearA !== yearB) {
+        return Number(yearA) - Number(yearB);
+      }
+      
+      return monthOrder[monthA as keyof typeof monthOrder] - monthOrder[monthB as keyof typeof monthOrder];
+    });
+
+  // Take only last 6 months (or fewer if less data available)
+  const last6Months = sortedEntries.slice(-6);
+  
+  if (last6Months.length === 0) {
+    return { average: 0, monthsCount: 0, subtitle: 'No consumption data' };
+  }
+
+  const totalConsumption = last6Months.reduce((sum, entry) => sum + entry.amount, 0);
+  const average = totalConsumption / last6Months.length;
+  
+  return {
+    average: Number(average.toFixed(1)),
+    monthsCount: last6Months.length,
+    subtitle: `Last ${last6Months.length} month${last6Months.length !== 1 ? 's' : ''}`
+  };
+};
+
 const CompactStatsCard: React.FC<{ 
   title: string; 
   value: string | number; 
@@ -699,6 +753,11 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
 
+  // Calculate average consumption from last 6 months of transactions
+  const avgConsumptionData = details?.transactions 
+    ? calculateLast6MonthsAverage(details.transactions)
+    : { average: 0, monthsCount: 0, subtitle: 'No consumption data' };
+
   useEffect(() => {
     if (open && productId) {
       fetchProductDetails();
@@ -766,9 +825,13 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
       <DialogTitle 
         sx={{ 
           borderBottom: 1, 
-          borderColor: 'divider',
-          pb: 2,
-          position: 'relative'
+          borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+          pb: 3,
+          pt: 3,
+          position: 'relative',
+          background: isDarkMode 
+            ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.02) 100%)'
+            : 'linear-gradient(135deg, rgba(25, 118, 210, 0.02) 0%, rgba(25, 118, 210, 0.01) 100%)'
         }}
       >
         {isMobile && (
@@ -776,25 +839,107 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
             onClick={onClose}
             sx={{
               position: 'absolute',
-              right: 8,
-              top: 8,
-              color: 'text.secondary'
+              right: 12,
+              top: 12,
+              color: 'text.secondary',
+              bgcolor: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+              '&:hover': {
+                bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                transform: 'scale(1.05)'
+              },
+              transition: 'all 0.2s ease',
+              width: 36,
+              height: 36
             }}
           >
-            <CloseIcon />
+            <CloseIcon sx={{ fontSize: 18 }} />
           </IconButton>
         )}
-        <Typography variant={isMobile ? "h6" : "h5"} component="div">
-          <Box component="span" sx={{ fontWeight: 'bold', color: isDarkMode ? '#90CAF9' : 'primary.main' }}>
-            {details?.supplierCode}
+        
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              bgcolor: isDarkMode ? 'rgba(25, 118, 210, 0.1)' : 'rgba(25, 118, 210, 0.08)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: 2,
+              borderColor: isDarkMode ? 'rgba(25, 118, 210, 0.3)' : 'rgba(25, 118, 210, 0.2)',
+              flexShrink: 0
+            }}
+          >
+            <InventoryIcon 
+              sx={{ 
+                fontSize: 24, 
+                color: isDarkMode ? '#90CAF9' : 'primary.main'
+              }} 
+            />
           </Box>
-          <Box component="span" sx={{ ml: 2, color: isDarkMode ? 'grey.400' : 'text.secondary' }}>
-            {details?.artisCodes}
+          
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography 
+              variant={isMobile ? "h6" : "h5"} 
+              component="div"
+              sx={{ 
+                fontWeight: 700,
+                mb: 0.5,
+                color: isDarkMode ? '#fff' : '#1a1a1a',
+                lineHeight: 1.2
+              }}
+            >
+              <Box 
+                component="span" 
+                sx={{ 
+                  color: isDarkMode ? '#90CAF9' : 'primary.main',
+                  mr: 1.5
+                }}
+              >
+                {details?.supplierCode}
+              </Box>
+              <Box 
+                component="span" 
+                sx={{ 
+                  color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                  fontWeight: 500,
+                  fontSize: isMobile ? '0.9rem' : '1rem'
+                }}
+              >
+                {details?.artisCodes}
+              </Box>
+            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Chip
+                label={details?.supplier || 'Unknown Supplier'}
+                size="small"
+                sx={{
+                  bgcolor: isDarkMode ? 'rgba(144, 202, 249, 0.1)' : 'rgba(25, 118, 210, 0.1)',
+                  color: isDarkMode ? '#90caf9' : '#1976d2',
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  height: 24,
+                  '& .MuiChip-label': { px: 1 }
+                }}
+              />
+              <Chip
+                label={`${details?.transactions?.length || 0} transactions`}
+                size="small"
+                variant="outlined"
+                sx={{
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                  color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                  fontWeight: 500,
+                  fontSize: '0.7rem',
+                  height: 24,
+                  '& .MuiChip-label': { px: 1 }
+                }}
+              />
+            </Box>
           </Box>
-        </Typography>
-        <Typography variant="subtitle1" color={isDarkMode ? 'grey.400' : 'text.secondary'} sx={{ mt: 1 }}>
-          {details?.supplier}
-        </Typography>
+        </Box>
       </DialogTitle>
 
       <DialogContent sx={{ p: isMobile ? 2 : 3 }}>
@@ -815,17 +960,17 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
                       value={Math.floor(details?.currentStock || 0)}
                       unit="kg"
                       icon={<InventoryIcon />}
-                      subtitle={`${Math.ceil((details?.currentStock || 0) / (product?.avgConsumption || 1))} months supply`}
+                      subtitle={`${Math.ceil((details?.currentStock || 0) / (avgConsumptionData.average || 1))} months supply`}
                       color="#2E7D32"
                     />
                   </Grid>
                   <Grid item xs={6}>
                     <CompactStatsCard
                       title="Avg Consumption"
-                      value={product ? Number(product.avgConsumption).toFixed(1) : '0.0'}
+                      value={avgConsumptionData.average}
                       unit="kg/mo"
                       icon={<ShowChartIcon />}
-                      subtitle="Last 6 months"
+                      subtitle={avgConsumptionData.subtitle}
                       color="#1976d2"
                     />
                   </Grid>
@@ -988,297 +1133,219 @@ const ProductDetailsDialog: React.FC<Props> = ({ open, onClose, productId }) => 
                 </Card>
               </>
             ) : (
-              <Grid container spacing={3} sx={{ mb: 4 }}>
-                {/* Current Stock */}
-                <Grid item xs={12} md={4}>
-                  <Card elevation={3}>
-                    <CardContent>
-                      <Typography variant="h6" color={isDarkMode ? '#90CAF9' : 'primary'} gutterBottom>
-                        Current Stock
-                      </Typography>
-                      <Typography variant="h3" color={isDarkMode ? '#fff' : 'inherit'}>
-                        {Math.floor(details?.currentStock || 0)}
-                        <Typography 
-                          component="span" 
-                          variant="h5" 
-                          color={isDarkMode ? 'grey.400' : 'text.secondary'}
-                          sx={{ ml: 1 }}
-                        >
-                          kgs
-                        </Typography>
-                      </Typography>
-                      <Typography 
-                        variant="h6" 
-                        color={isDarkMode ? 'grey.400' : 'text.secondary'}
-                        sx={{ mt: 2 }}
-                      >
-                        Avg Consumption: {product ? Number(product.avgConsumption).toFixed(2) : '0.00'} kgs/month
-                      </Typography>
-                    </CardContent>
-                  </Card>
+              <>
+                {/* Enhanced Desktop Stats Section */}
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={12} md={3}>
+                    <CompactStatsCard
+                      title="Current Stock"
+                      value={Math.floor(details?.currentStock || 0)}
+                      unit="kg"
+                      icon={<InventoryIcon />}
+                      subtitle={`${Math.ceil((details?.currentStock || 0) / (avgConsumptionData.average || 1))} months supply`}
+                      color="#2E7D32"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <CompactStatsCard
+                      title="Avg Consumption"
+                      value={avgConsumptionData.average}
+                      unit="kg/mo"
+                      icon={<ShowChartIcon />}
+                      subtitle={avgConsumptionData.subtitle}
+                      color="#1976d2"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <CompactStatsCard
+                      title="Total Transactions"
+                      value={details?.transactions?.length || 0}
+                      unit="records"
+                      icon={<HistoryIcon />}
+                      subtitle="All time"
+                      color="#FF7043"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <CompactStatsCard
+                      title="Stock Status"
+                      value={
+                        (details?.currentStock || 0) > (avgConsumptionData.average * 2) ? "Good" :
+                        (details?.currentStock || 0) > avgConsumptionData.average ? "Low" : "Critical"
+                      }
+                      unit=""
+                      icon={
+                        (details?.currentStock || 0) > (avgConsumptionData.average * 2) ? 
+                        <TrendingUpIcon /> : 
+                        (details?.currentStock || 0) > avgConsumptionData.average ? 
+                        <TrendingFlatIcon /> : 
+                        <TrendingDownIcon />
+                      }
+                      subtitle="Based on consumption"
+                      color={
+                        (details?.currentStock || 0) > (avgConsumptionData.average * 2) ? "#4caf50" :
+                        (details?.currentStock || 0) > avgConsumptionData.average ? "#ff9800" : "#f44336"
+                      }
+                    />
+                  </Grid>
                 </Grid>
 
-                {/* Monthly Consumption Chart */}
-                <Grid item xs={12} md={8}>
-                  <Card elevation={3}>
-                    <CardContent>
-                      <Typography variant="h6" color="primary" gutterBottom>
-                        Monthly Consumption
-                      </Typography>
-                      {isMobile ? (
-                        <Grid container spacing={2} sx={{ mb: 3 }}>
-                          <Grid item xs={6}>
-                            <Card 
-                              elevation={3}
-                              sx={{ 
-                                borderRadius: 2,
-                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'background.paper'
-                              }}
-                            >
-                              <CardContent sx={{ p: 2 }}>
-                                <Typography 
-                                  variant="subtitle2" 
-                                  color="textSecondary"
-                                  sx={{ mb: 1 }}
-                                >
-                                  Current Stock
-                                </Typography>
-                                <Typography 
-                                  variant="h6" 
-                                  color={isDarkMode ? '#fff' : 'inherit'}
-                                  sx={{ fontWeight: 600 }}
-                                >
-                                  {Math.floor(details?.currentStock || 0)}
-                                  <Typography 
-                                    component="span" 
-                                    variant="caption"
-                                    color="textSecondary"
-                                    sx={{ ml: 0.5 }}
-                                  >
-                                    kgs
-                                  </Typography>
-                                </Typography>
-                              </CardContent>
-                            </Card>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Card 
-                              elevation={3}
-                              sx={{ 
-                                borderRadius: 2,
-                                bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'background.paper'
-                              }}
-                            >
-                              <CardContent sx={{ p: 2 }}>
-                                <Typography 
-                                  variant="subtitle2" 
-                                  color="textSecondary"
-                                  sx={{ mb: 1 }}
-                                >
-                                  Avg Consumption
-                                </Typography>
-                                <Typography 
-                                  variant="h6" 
-                                  color={isDarkMode ? '#fff' : 'inherit'}
-                                  sx={{ fontWeight: 600 }}
-                                >
-                                  {product ? Number(product.avgConsumption).toFixed(2) : '0.00'}
-                                  <Typography 
-                                    component="span" 
-                                    variant="caption"
-                                    color="textSecondary"
-                                    sx={{ ml: 0.5 }}
-                                  >
-                                    kgs
-                                  </Typography>
-                                </Typography>
-                              </CardContent>
-                            </Card>
-                          </Grid>
-                        </Grid>
-                      ) : (
-                        <ResponsiveContainer width="100%" height={300}>
-                          <ComposedChart
-                            data={aggregateMonthlyConsumption(details?.transactions || [])}
-                            margin={{ top: 40, right: 120, left: 20, bottom: 5 }}
-                          >
-                            <CartesianGrid 
-                              strokeDasharray="3 3" 
-                              stroke={isDarkMode ? '#444' : '#eee'} 
-                              vertical={false}
-                            />
-                            <XAxis 
-                              dataKey="month" 
-                              tick={{ 
-                                fontSize: 12,
-                                fill: isDarkMode ? '#fff' : '#666',
-                                textAnchor: 'middle',
-                              }}
-                              tickLine={false}
-                              axisLine={{ stroke: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)' }}
-                              interval={0}
-                            />
-                            <YAxis 
-                              tick={{ fill: isDarkMode ? '#fff' : '#666' }}
-                              axisLine={{ stroke: isDarkMode ? '#666' : '#888' }}
-                              tickLine={false}
-                            />
-                            <Bar 
-                              dataKey="amount" 
-                              fill={isDarkMode ? '#B39DDB' : '#9575CD'} 
-                              name="Monthly Consumption"
-                              barSize={60}
-                              radius={[4, 4, 0, 0]}
-                              opacity={0.8}
-                              label={{
-                                position: 'top',
-                                content: (props: any) => {
-                                  const { value, x, y } = props;
-                                  return (
-                                    <g transform={`translate(${x},${y})`}>
-                                      <text
-                                        x={30}
-                                        y={-10}
-                                        fill={isDarkMode ? '#fff' : '#333'}
-                                        textAnchor="middle"
-                                        fontSize={14}
-                                        fontWeight="600"
-                                      >
-                                        {`${value} kgs`}
-                                      </text>
-                                    </g>
-                                  );
-                                }
-                              }}
-                            />
-                            <ReferenceLine
-                              y={product ? Number(product.avgConsumption) : 0}
-                              stroke="#FF7043"
-                              strokeDasharray="5 5"
-                              label={{
-                                value: `Avg: ${product ? Number(product.avgConsumption).toFixed(2) : '0.00'} kgs`,
-                                position: 'right',
-                                fill: '#FF7043',
-                                fontSize: 14
-                              }}
-                            />
-                            <Legend
-                              verticalAlign="bottom"
-                              height={36}
-                              iconType="circle"
-                              formatter={(value) => {
-                                return <span style={{ color: isDarkMode ? '#fff' : '#666', fontSize: '14px' }}>{value}</span>;
-                              }}
-                            />
-                          </ComposedChart>
-                        </ResponsiveContainer>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
-            )}
-
-            {/* Desktop Stock Movement Chart */}
-            {!isMobile && (
-              <Card elevation={3} sx={{ mb: 4 }}>
-                <CardContent>
-                  <Typography variant="h6" color="primary" gutterBottom>
-                    Stock Movement
-                  </Typography>
-                  <Box sx={{ height: 300, width: '100%' }}>
-                    <ResponsiveContainer>
-                      <LineChart
-                        data={details?.transactions
-                          .slice() // Create a copy to avoid mutating original array
-                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                          .map(t => ({
-                            date: new Date(t.date).toLocaleDateString(),
+                {/* Enhanced Desktop Charts Section */}
+                <Grid container spacing={3} sx={{ mb: 3 }}>
+                  <Grid item xs={12} md={6}>
+                    <Card 
+                      elevation={0} 
+                      sx={{ 
+                        borderRadius: 2.5,
+                        bgcolor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                        border: 1,
+                        borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                        height: '100%'
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <ShowChartIcon sx={{ mr: 1, color: 'primary.main', fontSize: 20 }} />
+                          <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+                            Monthly Consumption
+                          </Typography>
+                          <Chip 
+                            label={showAllTimeChart ? "All Time" : "Last 6 months"} 
+                            size="small" 
+                            sx={{ 
+                              ml: 'auto',
+                              bgcolor: isDarkMode ? 'rgba(144, 202, 249, 0.1)' : 'rgba(25, 118, 210, 0.1)',
+                              color: isDarkMode ? '#90caf9' : '#1976d2',
+                              fontSize: '0.7rem',
+                              fontWeight: 600
+                            }} 
+                          />
+                        </Box>
+                        <ModernConsumptionChart 
+                          data={aggregateMonthlyConsumption(details?.transactions || [], false)} 
+                          showAllTime={showAllTimeChart}
+                          onToggleTimeRange={() => setShowAllTimeChart(!showAllTimeChart)}
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Card 
+                      elevation={0} 
+                      sx={{ 
+                        borderRadius: 2.5,
+                        bgcolor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                        border: 1,
+                        borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                        height: '100%'
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <TrendingUpIcon sx={{ mr: 1, color: 'primary.main', fontSize: 20 }} />
+                          <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+                            Stock Movement
+                          </Typography>
+                          <Chip 
+                            label="Recent activity" 
+                            size="small" 
+                            sx={{ 
+                              ml: 'auto',
+                              bgcolor: isDarkMode ? 'rgba(144, 202, 249, 0.1)' : 'rgba(25, 118, 210, 0.1)',
+                              color: isDarkMode ? '#90caf9' : '#1976d2',
+                              fontSize: '0.7rem'
+                            }} 
+                          />
+                        </Box>
+                        <ModernStockMovementChart 
+                          data={details?.transactions?.map(t => ({
+                            date: t.date,
                             balance: t.balance,
                             type: t.type,
                             quantity: t.quantity,
                             notes: t.notes
-                          }))}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: isDarkMode ? '#333' : '#fff',
-                            border: '1px solid #ccc'
-                          }}
-                          formatter={(value: any, name: string) => [
-                            `${value} kgs`, 
-                            name === 'balance' ? 'Balance' : name
-                          ]}
+                          })) || []} 
                         />
-                        <Line 
-                          type="monotone" 
-                          dataKey="balance" 
-                          stroke={isDarkMode ? '#90CAF9' : '#1976d2'} 
-                          strokeWidth={2}
-                          dot={(props: any) => {
-                            const { cx, cy, payload } = props;
-                            return (
-                              <circle
-                                cx={cx}
-                                cy={cy}
-                                r={6}
-                                fill={payload.type === 'IN' ? '#4caf50' : '#f44336'}
-                                stroke="none"
-                              />
-                            );
-                          }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </Box>
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </>
             )}
 
-            {/* Desktop Transaction History Table */}
+            {/* Enhanced Desktop Transaction History */}
             {!isMobile && (
-              <Card elevation={3}>
-                <CardContent>
-                  <Typography variant="h6" color="primary" gutterBottom>
-                    Transaction History
-                  </Typography>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell width="50">#</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell>Type</TableCell>
-                          <TableCell align="right">Quantity</TableCell>
-                          <TableCell>Notes</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {details?.transactions.map((transaction, index) => (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>
-                              {new Date(transaction.date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Typography 
-                                color={transaction.type === 'IN' ? 'success.main' : 'error.main'}
-                                fontWeight="medium"
-                              >
-                                {transaction.type}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="right">{transaction.quantity} kgs</TableCell>
-                            <TableCell>{transaction.notes}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+              <Card 
+                elevation={0} 
+                sx={{ 
+                  borderRadius: 2.5,
+                  bgcolor: isDarkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                  border: 1,
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <HistoryIcon sx={{ mr: 1, color: 'primary.main', fontSize: 20 }} />
+                    <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+                      Transaction History
+                    </Typography>
+                    <Badge 
+                      badgeContent={details?.transactions?.length || 0} 
+                      color="primary" 
+                      sx={{ ml: 'auto', mr: 2 }}
+                    >
+                      <Box />
+                    </Badge>
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        if (open && productId) {
+                          fetchProductDetails();
+                        }
+                      }}
+                      sx={{
+                        color: 'primary.main',
+                        bgcolor: isDarkMode ? 'rgba(25, 118, 210, 0.1)' : 'rgba(25, 118, 210, 0.05)',
+                        '&:hover': {
+                          bgcolor: isDarkMode ? 'rgba(25, 118, 210, 0.2)' : 'rgba(25, 118, 210, 0.1)',
+                          transform: 'rotate(180deg)'
+                        },
+                        transition: 'all 0.3s ease',
+                        width: 36,
+                        height: 36
+                      }}
+                    >
+                      <RefreshIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Box>
+                  <Grid container spacing={2}>
+                    {details?.transactions
+                      ?.slice()
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .slice(0, 12) // Show last 12 transactions in desktop view
+                      .map((transaction, index) => (
+                      <Grid item xs={12} md={6} lg={4} key={transaction.id}>
+                        <ModernTransactionCard
+                          transaction={transaction}
+                          index={index}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                  {(details?.transactions?.length || 0) > 12 && (
+                    <Typography 
+                      variant="body2" 
+                      color="textSecondary" 
+                      sx={{ 
+                        textAlign: 'center', 
+                        mt: 3,
+                        fontStyle: 'italic'
+                      }}
+                    >
+                      Showing last 12 transactions of {details?.transactions?.length || 0} total
+                    </Typography>
+                  )}
                 </CardContent>
               </Card>
             )}

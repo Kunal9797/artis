@@ -15,7 +15,7 @@ enum TransactionType {
 
 interface PurchaseOrderRow {
   'Artis Code': string;
-  'Date': string; // Supports both MM/DD/YY and MM/DD/YYYY formats
+  'Date': string;
   'Amount (Kgs)': string | number;
   'Notes'?: string;
 }
@@ -23,7 +23,7 @@ interface PurchaseOrderRow {
 // Add this interface for correction bulk uploads
 interface CorrectionRow {
   'Artis Code': string;
-  'Date (MM/DD/YY)': string; // Supports both MM/DD/YY and MM/DD/YYYY formats
+  'Date (MM/DD/YY)': string;
   'Correction Amount': string | number;
   'Reason': string;
 }
@@ -183,7 +183,6 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedProducts: string[] = [];
-  const operationId = `bulk_inventory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -284,8 +283,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
               quantity: initialStock,
               date: new Date('2024-01-09'),
               notes: 'Initial Stock',
-              includeInAvg: false,
-              operationId
+              includeInAvg: false
             }, { transaction: t });
           }
         }
@@ -302,8 +300,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
             quantity: consumption,
             date,
             notes: `Monthly Consumption - ${date.toLocaleDateString()}`,
-            includeInAvg: true,
-            operationId
+            includeInAvg: true
           }, { transaction: t });
         }
 
@@ -424,7 +421,6 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedOrders: string[] = [];
-  const operationId = `bulk_purchase_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -433,20 +429,9 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
 
     for (const row of data) {
       const artisCode = row['Artis Code']?.toString();
-      let rawDate = row['Date']?.toString();
+      const rawDate = row['Date']?.toString();
       const amount = parseFloat(row['Amount (Kgs)'].toString());
       const notes = row['Notes']?.toString() || '';
-
-      // Handle Excel date numbers (like 45045 which represents a date)
-      if (rawDate && !isNaN(Number(rawDate)) && Number(rawDate) > 1000) {
-        // This looks like an Excel date serial number
-        const excelDate = new Date((Number(rawDate) - 25569) * 86400 * 1000);
-        const month = excelDate.getMonth() + 1;
-        const day = excelDate.getDate();
-        const year = excelDate.getFullYear() % 100; // Get 2-digit year
-        rawDate = `${month}/${day}/${year}`;
-        console.log(`Converted Excel date ${row['Date']} to ${rawDate}`);
-      }
 
       if (!artisCode || !rawDate || isNaN(amount)) {
         skippedRows.push({
@@ -456,69 +441,15 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
         continue;
       }
 
-      // Parse date - handle flexible formats: M/D/YY, MM/DD/YYYY, etc.
-      let parsedDate: Date;
-      try {
-        // Debug logging to see what we're actually getting
-        console.log(`Processing date for ${artisCode}: rawDate="${rawDate}", length=${rawDate.length}, charCodes=[${Array.from(rawDate).map(c => c.charCodeAt(0)).join(', ')}]`);
-        
-        const dateParts = rawDate.trim().split('/');
-        console.log(`Date parts: [${dateParts.map(p => `"${p}"`).join(', ')}], count=${dateParts.length}`);
-        
-        if (dateParts.length !== 3) {
-          throw new Error(`Date must have month, day, and year separated by / (got ${dateParts.length} parts: ${dateParts.join('|')})`);
-        }
-        
-        const [monthStr, dayStr, yearStr] = dateParts;
-        
-        // Parse month (1-12)
-        const month = parseInt(monthStr.trim());
-        if (isNaN(month) || month < 1 || month > 12) {
-          throw new Error('Invalid month - must be 1-12');
-        }
-        
-        // Parse day (1-31)
-        const day = parseInt(dayStr.trim());
-        if (isNaN(day) || day < 1 || day > 31) {
-          throw new Error('Invalid day - must be 1-31');
-        }
-        
-        // Parse year - handle both 2-digit and 4-digit years
-        const yearTrimmed = yearStr.trim();
-        let fullYear: number;
-        
-        if (yearTrimmed.length === 2) {
-          // Handle YY format (2-digit year)
-          const yearNum = parseInt(yearTrimmed);
-          if (isNaN(yearNum)) {
-            throw new Error('Invalid 2-digit year');
-          }
-          // Assume years 00-30 are 2000-2030, 31-99 are 1931-1999
-          fullYear = yearNum <= 30 ? 2000 + yearNum : 1900 + yearNum;
-        } else if (yearTrimmed.length === 4) {
-          // Handle YYYY format (4-digit year)
-          fullYear = parseInt(yearTrimmed);
-          if (isNaN(fullYear)) {
-            throw new Error('Invalid 4-digit year');
-          }
-        } else {
-          throw new Error('Year must be 2 or 4 digits');
-        }
-        
-        // Create the date object
-        parsedDate = new Date(fullYear, month - 1, day);
-        
-        // Validate the date is real (handles cases like Feb 30)
-        if (isNaN(parsedDate.getTime()) || 
-            parsedDate.getFullYear() !== fullYear ||
-            parsedDate.getMonth() !== month - 1 ||
-            parsedDate.getDate() !== day) {
-          throw new Error('Invalid date - day does not exist in the specified month/year');
-        }
-      } catch (dateError) {
+      // Parse date
+      const [month, day, year] = rawDate.split('/');
+      const fullYear = parseInt('20' + year);
+      const parsedDate = new Date(fullYear, parseInt(month) - 1, parseInt(day));
+
+      if (isNaN(parsedDate.getTime())) {
         skippedRows.push({
           artisCode: artisCode || 'unknown',
-          reason: `Date parsing error: ${dateError instanceof Error ? dateError.message : 'Invalid date format'}`
+          reason: 'Invalid date'
         });
         continue;
       }
@@ -542,14 +473,13 @@ export const bulkUploadPurchaseOrder = async (req: Request, res: Response) => {
       }
 
       try {
-        // Create transaction with consistent identifier for purchase orders
+        // Create transaction
         await Transaction.create({
           productId: product.id,
           type: TransactionType.IN,
           quantity: amount,
           date: parsedDate,
-          notes: notes ? `Bulk Purchase: ${notes}` : 'Bulk Purchase Order',
-          operationId
+          notes
         }, { transaction: t });
 
         // Update product stock and lastUpdated
@@ -652,7 +582,6 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedCorrections: string[] = [];
-  const operationId = `bulk_corrections_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -683,64 +612,20 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
         continue;
       }
 
-      // Parse the date - handle flexible formats: M/D/YY, MM/DD/YYYY, etc.
+      // Parse the date (MM/DD/YY format)
       let parsedDate: Date;
       try {
-        const dateParts = rawDate.trim().split('/');
-        if (dateParts.length !== 3) {
-          throw new Error('Date must have month, day, and year separated by /');
+        const [month, day, year] = rawDate.split('/');
+        const fullYear = parseInt('20' + year);
+        parsedDate = new Date(fullYear, parseInt(month) - 1, parseInt(day));
+
+        if (isNaN(parsedDate.getTime())) {
+          throw new Error('Invalid date format');
         }
-        
-        const [monthStr, dayStr, yearStr] = dateParts;
-        
-        // Parse month (1-12)
-        const month = parseInt(monthStr.trim());
-        if (isNaN(month) || month < 1 || month > 12) {
-          throw new Error('Invalid month - must be 1-12');
-        }
-        
-        // Parse day (1-31)
-        const day = parseInt(dayStr.trim());
-        if (isNaN(day) || day < 1 || day > 31) {
-          throw new Error('Invalid day - must be 1-31');
-        }
-        
-        // Parse year - handle both 2-digit and 4-digit years
-        const yearTrimmed = yearStr.trim();
-        let fullYear: number;
-        
-        if (yearTrimmed.length === 2) {
-          // Handle YY format (2-digit year)
-          const yearNum = parseInt(yearTrimmed);
-          if (isNaN(yearNum)) {
-            throw new Error('Invalid 2-digit year');
-          }
-          // Assume years 00-30 are 2000-2030, 31-99 are 1931-1999
-          fullYear = yearNum <= 30 ? 2000 + yearNum : 1900 + yearNum;
-        } else if (yearTrimmed.length === 4) {
-          // Handle YYYY format (4-digit year)
-          fullYear = parseInt(yearTrimmed);
-          if (isNaN(fullYear)) {
-            throw new Error('Invalid 4-digit year');
-          }
-        } else {
-          throw new Error('Year must be 2 or 4 digits');
-        }
-        
-        // Create the date object
-        parsedDate = new Date(fullYear, month - 1, day);
-        
-        // Validate the date is real (handles cases like Feb 30)
-        if (isNaN(parsedDate.getTime()) || 
-            parsedDate.getFullYear() !== fullYear ||
-            parsedDate.getMonth() !== month - 1 ||
-            parsedDate.getDate() !== day) {
-          throw new Error('Invalid date - day does not exist in the specified month/year');
-        }
-      } catch (dateError) {
+      } catch (error) {
         skippedRows.push({
           artisCode,
-          reason: `Date parsing error: ${dateError instanceof Error ? dateError.message : 'Invalid date format'}`
+          reason: 'Invalid date format. Use MM/DD/YY'
         });
         continue;
       }
@@ -772,8 +657,7 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
           quantity: correctionAmount,
           date: parsedDate,
           notes: reason,
-          includeInAvg: false, // Corrections should never affect consumption averages
-          operationId
+          includeInAvg: false // Corrections should never affect consumption averages
         }, { transaction: t });
 
         // Update product stock - add the correction amount (positive or negative)
@@ -803,442 +687,6 @@ export const bulkUploadCorrections = async (req: Request, res: Response) => {
     console.error('Error processing corrections upload:', error);
     res.status(500).json({
       error: 'Failed to process corrections upload',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-}; 
-
-// Helper function to determine if a transaction is compatible with an existing operation
-// Stricter compatibility checking for legacy transactions without operationId
-const isLegacyTransactionStrictlyCompatible = (transaction: any, existingOperation: any): boolean => {
-  const existingTxns = existingOperation.transactions;
-  if (!existingTxns || existingTxns.length === 0) return true;
-  
-  const firstExistingTxn = existingTxns[0];
-  
-  // Must be exact same transaction type
-  if (transaction.type !== firstExistingTxn.type) return false;
-  
-  // Must have very similar notes or both be null/empty
-  const transactionNotes = transaction.notes || '';
-  const existingNotes = firstExistingTxn.notes || '';
-  
-  // If both have notes, they must be identical patterns
-  if (transactionNotes && existingNotes) {
-    return transactionNotes === existingNotes;
-  }
-  
-  // If one has notes and other doesn't, they're incompatible
-  if (!!transactionNotes !== !!existingNotes) return false;
-  
-  return true;
-};
-
-const isTransactionCompatibleWithOperation = (transaction: any, existingOperation: any): boolean => {
-  if (existingOperation.transactions.length === 0) {
-    return true; // Empty operation, always compatible
-  }
-
-  // Get the first transaction to understand the operation type
-  const firstTransaction = existingOperation.transactions[0];
-  
-  // Check for specific operation patterns based on notes
-  const transactionNotes = transaction.notes || '';
-  const firstTransactionNotes = firstTransaction.notes || '';
-  
-  // Initial Stock operations - only group with other Initial Stock
-  if (transactionNotes.includes('Initial Stock') || firstTransactionNotes.includes('Initial Stock')) {
-    return transactionNotes.includes('Initial Stock') && firstTransactionNotes.includes('Initial Stock');
-  }
-  
-  // Monthly Consumption operations - only group with other Monthly Consumption
-  if (transactionNotes.includes('Monthly Consumption') || firstTransactionNotes.includes('Monthly Consumption')) {
-    return transactionNotes.includes('Monthly Consumption') && firstTransactionNotes.includes('Monthly Consumption');
-  }
-  
-  // Bulk Purchase operations - only group with other Bulk Purchase
-  if (transactionNotes.includes('Bulk Purchase') || firstTransactionNotes.includes('Bulk Purchase')) {
-    return transactionNotes.includes('Bulk Purchase') && firstTransactionNotes.includes('Bulk Purchase');
-  }
-  
-  // Correction operations - only group with other corrections
-  if (transaction.type === 'CORRECTION' || firstTransaction.type === 'CORRECTION') {
-    return transaction.type === 'CORRECTION' && firstTransaction.type === 'CORRECTION';
-  }
-  
-  // For other individual transactions, be more restrictive
-  // Only group if they're the same type (IN with IN, OUT with OUT) and have similar notes patterns
-  if (transaction.type !== firstTransaction.type) {
-    return false;
-  }
-  
-  // If they're both individual transactions (no special notes), allow grouping
-  const hasSpecialNotes = (notes: string) => 
-    notes.includes('Initial Stock') || 
-    notes.includes('Monthly Consumption') || 
-    notes.includes('Bulk Purchase') ||
-    notes.includes('Bulk');
-    
-  if (!hasSpecialNotes(transactionNotes) && !hasSpecialNotes(firstTransactionNotes)) {
-    return true;
-  }
-  
-  return false;
-};
-
-export const getOperationsHistory = async (req: Request, res: Response) => {
-  try {
-    // Get transactions grouped by operationId first, then by creation time for individual transactions
-    const transactions = await Transaction.findAll({
-      include: [{
-        model: Product,
-        attributes: ['artisCodes', 'name', 'supplier']
-      }],
-      order: [['createdAt', 'DESC']],
-      limit: 1000 // Get last 1000 transactions
-    });
-
-    const operations: { [key: string]: any } = {};
-    const timeWindow = 3 * 60 * 1000; // 3 minutes for individual transactions only
-
-    transactions.forEach(transaction => {
-      let operationKey: string;
-      
-      // If transaction has an operationId, use that for perfect grouping
-      if (transaction.operationId) {
-        operationKey = transaction.operationId;
-      } else {
-        // For individual transactions without operationId (legacy or manual transactions)
-        const createdAt = new Date(transaction.createdAt).getTime();
-        
-        // For legacy transactions, use stricter grouping to prevent cross-contamination
-        // Only group transactions if they have identical notes pattern and are very close in time
-        let foundKey = null;
-        for (const key in operations) {
-          if (key.startsWith('individual_')) {
-            const operationTime = parseInt(key.split('_')[1]);
-            const timeDiff = Math.abs(createdAt - operationTime);
-            
-            // Reduce time window for legacy transactions to prevent mixing
-            if (timeDiff <= 30000) { // 30 seconds instead of 3 minutes
-              const existingOp = operations[key];
-              
-              // Much stricter compatibility checking for legacy transactions
-              const isVeryCompatible = isLegacyTransactionStrictlyCompatible(transaction, existingOp);
-              if (isVeryCompatible) {
-                foundKey = key;
-                break;
-              }
-            }
-          }
-        }
-        
-        operationKey = foundKey || `individual_${createdAt}_${Math.random().toString(36).substr(2, 9)}`;
-      }
-      
-      // Create operation if it doesn't exist
-      if (!operations[operationKey]) {
-        operations[operationKey] = {
-          id: operationKey,
-          timestamp: new Date(transaction.createdAt),
-          type: 'individual',
-          transactions: [],
-          summary: {
-            totalTransactions: 0,
-            productsAffected: new Set(),
-            totalQuantityIn: 0,
-            totalQuantityOut: 0,
-            totalCorrections: 0
-          }
-        };
-      }
-      
-      // Add transaction to operation
-      operations[operationKey].transactions.push(transaction);
-      operations[operationKey].summary.totalTransactions++;
-      operations[operationKey].summary.productsAffected.add(transaction.productId);
-      
-      if (transaction.type === 'IN') {
-        operations[operationKey].summary.totalQuantityIn += transaction.quantity;
-      } else if (transaction.type === 'OUT') {
-        operations[operationKey].summary.totalQuantityOut += transaction.quantity;
-      } else if (transaction.type === 'CORRECTION') {
-        operations[operationKey].summary.totalCorrections += Math.abs(transaction.quantity);
-      }
-    });
-
-    // Determine operation types and create final response
-    const operationsArray = Object.values(operations).map(op => {
-      // Convert Set to number for response
-      op.summary.productsAffected = op.summary.productsAffected.size;
-      
-      // Determine operation type based on operationId pattern first, then fallback to content analysis
-      if (op.id.startsWith('bulk_inventory_')) {
-        op.type = 'bulk_inventory';
-        op.description = 'Bulk Inventory Upload';
-      } else if (op.id.startsWith('bulk_purchase_')) {
-        op.type = 'bulk_purchase';
-        op.description = 'Bulk Purchase Order';
-      } else if (op.id.startsWith('bulk_corrections_')) {
-        op.type = 'bulk_corrections';
-        op.description = 'Bulk Stock Corrections';
-      } else if (op.summary.totalTransactions >= 2) { // Legacy detection for transactions without operationId
-        if (op.transactions.some((t: any) => t.notes?.includes('Initial Stock'))) {
-          op.type = 'bulk_inventory';
-          op.description = 'Bulk Inventory Upload';
-        } else if (op.transactions.some((t: any) => t.notes?.includes('Monthly Consumption'))) {
-          op.type = 'bulk_consumption';
-          op.description = 'Bulk Consumption Update';
-        } else if (op.transactions.some((t: any) => t.notes?.includes('Bulk Purchase'))) {
-          op.type = 'bulk_purchase';
-          op.description = 'Bulk Purchase Order';
-        } else if (op.transactions.every((t: any) => t.type === 'CORRECTION')) {
-          op.type = 'bulk_corrections';
-          op.description = 'Bulk Stock Corrections';
-        } else if (op.transactions.every((t: any) => t.type === 'IN')) {
-          op.type = 'bulk_purchase';
-          op.description = 'Bulk Purchase Operations';
-        } else {
-          op.type = 'bulk_mixed';
-          op.description = 'Bulk Mixed Operations';
-        }
-      } else {
-        op.type = 'individual';
-        if (op.summary.totalTransactions === 1) {
-          const txn = op.transactions[0];
-          if (txn.notes?.includes('Bulk Purchase')) {
-            op.type = 'individual_purchase';
-            op.description = `Purchase Order - ${txn.Product?.name || 'Unknown Product'}`;
-          } else {
-            op.description = `${txn.type === 'IN' ? 'Stock In' : txn.type === 'OUT' ? 'Stock Out' : 'Stock Correction'} - ${txn.Product?.name || 'Unknown Product'}`;
-          }
-        } else {
-          op.description = `${op.summary.totalTransactions} Individual Transactions`;
-        }
-      }
-      
-      return op;
-    });
-
-    // Sort by timestamp (newest first) and limit to recent operations
-    operationsArray.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    
-    res.json({
-      operations: operationsArray.slice(0, 50) // Return last 50 operations
-    });
-  } catch (error) {
-    console.error('Error fetching operations history:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch operations history',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-};
-
-export const deleteOperation = async (req: Request, res: Response) => {
-  const { operationId } = req.params;
-  const t = await sequelize.transaction();
-  
-  try {
-    let transactions;
-    
-    // If operationId starts with a known pattern, use exact operationId matching
-    if (operationId.startsWith('bulk_inventory_') || 
-        operationId.startsWith('bulk_purchase_') || 
-        operationId.startsWith('bulk_corrections_') ||
-        operationId.startsWith('individual_')) {
-      
-      // For operations with operationId, find all transactions with that exact operationId
-      if (operationId.startsWith('individual_')) {
-        // For individual operations, use time-based approach as fallback
-        const operationTime = parseInt(operationId.split('_')[1]);
-        const timeWindow = 3 * 60 * 1000; // 3 minutes
-        
-        transactions = await Transaction.findAll({
-          where: {
-            createdAt: {
-              [Op.between]: [
-                new Date(operationTime - timeWindow),
-                new Date(operationTime + timeWindow)
-              ]
-            }
-          },
-          include: [{
-            model: Product,
-            attributes: ['id', 'currentStock']
-          }],
-          transaction: t
-        });
-      } else {
-        // For bulk operations, use exact operationId match
-        transactions = await Transaction.findAll({
-          where: {
-            operationId: operationId
-          },
-          include: [{
-            model: Product,
-            attributes: ['id', 'currentStock']
-          }],
-          transaction: t
-        });
-      }
-    } else {
-      // Legacy: For old timestamp-based operationIds
-      const operationTime = parseInt(operationId);
-      const timeWindow = 3 * 60 * 1000; // 3 minutes
-      
-      transactions = await Transaction.findAll({
-        where: {
-          createdAt: {
-            [Op.between]: [
-              new Date(operationTime - timeWindow),
-              new Date(operationTime + timeWindow)
-            ]
-          }
-        },
-        include: [{
-          model: Product,
-          attributes: ['id', 'currentStock']
-        }],
-        transaction: t
-      });
-    }
-
-    if (transactions.length === 0) {
-      await t.rollback();
-      return res.status(404).json({ error: 'Operation not found' });
-    }
-
-    // Group transactions by product to reverse their effects
-    const productUpdates: { [productId: string]: number } = {};
-    
-    transactions.forEach(txn => {
-      if (!productUpdates[txn.productId]) {
-        productUpdates[txn.productId] = 0;
-      }
-      
-      // Reverse the transaction effect
-      if (txn.type === 'IN') {
-        productUpdates[txn.productId] -= txn.quantity; // Remove the added stock
-      } else if (txn.type === 'OUT') {
-        productUpdates[txn.productId] += txn.quantity; // Add back the consumed stock
-      } else if (txn.type === 'CORRECTION') {
-        productUpdates[txn.productId] -= txn.quantity; // Reverse the correction
-      }
-    });
-
-    // Update product stocks
-    for (const [productId, stockChange] of Object.entries(productUpdates)) {
-      const product = await Product.findByPk(productId, { transaction: t });
-      if (product) {
-        await product.update({
-          currentStock: Number((Number(product.currentStock) + stockChange).toFixed(2)),
-          lastUpdated: new Date()
-        }, { transaction: t });
-        
-        // Recalculate average consumption for affected products
-        await updateProductAverageConsumption(productId, t);
-      }
-    }
-
-    // Delete the transactions - use same logic as finding them
-    if (operationId.startsWith('bulk_inventory_') || 
-        operationId.startsWith('bulk_purchase_') || 
-        operationId.startsWith('bulk_corrections_')) {
-      // For bulk operations, delete by exact operationId
-      await Transaction.destroy({
-        where: {
-          operationId: operationId
-        },
-        transaction: t
-      });
-    } else if (operationId.startsWith('individual_')) {
-      // For individual operations, use time-based deletion
-      const operationTime = parseInt(operationId.split('_')[1]);
-      const timeWindow = 3 * 60 * 1000; // 3 minutes
-      
-      await Transaction.destroy({
-        where: {
-          createdAt: {
-            [Op.between]: [
-              new Date(operationTime - timeWindow),
-              new Date(operationTime + timeWindow)
-            ]
-          }
-        },
-        transaction: t
-      });
-    } else {
-      // Legacy: For old timestamp-based operationIds
-      const operationTime = parseInt(operationId);
-      const timeWindow = 3 * 60 * 1000; // 3 minutes
-      
-      await Transaction.destroy({
-        where: {
-          createdAt: {
-            [Op.between]: [
-              new Date(operationTime - timeWindow),
-              new Date(operationTime + timeWindow)
-            ]
-          }
-        },
-        transaction: t
-      });
-    }
-
-    await t.commit();
-    
-    res.json({
-      message: 'Operation deleted successfully',
-      deletedTransactions: transactions.length,
-      affectedProducts: Object.keys(productUpdates).length
-    });
-  } catch (error) {
-    await t.rollback();
-    console.error('Error deleting operation:', error);
-    res.status(500).json({
-      error: 'Failed to delete operation',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-}; 
-
-export const deleteAllOperations = async (req: Request, res: Response) => {
-  const t = await sequelize.transaction();
-  
-  try {
-    // Get count of operations for response
-    const transactionCount = await Transaction.count();
-    const productCount = await Product.count();
-    
-    // Delete all transactions
-    await Transaction.destroy({
-      where: {},
-      transaction: t
-    });
-
-    // Reset all products' current stock and avgConsumption to 0
-    await Product.update({
-      currentStock: 0,
-      avgConsumption: 0,
-      lastUpdated: new Date()
-    }, {
-      where: {},
-      transaction: t
-    });
-
-    await t.commit();
-    
-    res.json({ 
-      message: 'All operations deleted successfully',
-      deletedTransactions: transactionCount,
-      affectedProducts: productCount
-    });
-  } catch (error) {
-    await t.rollback();
-    console.error('Error deleting all operations:', error);
-    res.status(500).json({
-      error: 'Failed to delete all operations',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
