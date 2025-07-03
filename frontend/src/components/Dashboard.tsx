@@ -32,6 +32,7 @@ import UserManagement from './Users/UserManagement';
 import SalesTeamManagement from './SalesTeamManagement';
 import LeadManagement from './Leads/LeadManagement';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import DatabaseIndicator from './DatabaseIndicator';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -163,6 +164,10 @@ const Dashboard: React.FC = () => {
                 onClick={() => handlePageChange('home')}
               />
             </Box>
+            {/* Database indicator - only show in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <DatabaseIndicator />
+            )}
           </Box>
 
           <Button

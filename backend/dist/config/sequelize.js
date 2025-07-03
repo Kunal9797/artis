@@ -1,12 +1,9 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const sequelize_1 = require("sequelize");
-const dotenv_1 = __importDefault(require("dotenv"));
+var sequelize_1 = require("sequelize");
+var dotenv_1 = require("dotenv");
 dotenv_1.default.config();
-let sequelize;
+var sequelize;
 if (process.env.NODE_ENV === 'production') {
     // Production: Use DATABASE_URL
     sequelize = new sequelize_1.Sequelize(process.env.DATABASE_URL || '', {

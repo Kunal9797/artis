@@ -6,6 +6,7 @@ import Attendance from './Attendance';
 import Message from './Message';
 import Product from './Product';
 import Transaction from './Transaction';
+import BulkOperation from './BulkOperation';
 
 export {
   User,
@@ -15,5 +16,6 @@ export {
   Attendance,
   Message,
   Product,
-  Transaction
+  Transaction,
+  BulkOperation
 }; 

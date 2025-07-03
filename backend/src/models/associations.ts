@@ -1,6 +1,6 @@
 import Product from './Product';
 import Transaction from './Transaction';
-import { Lead, User, SalesTeam } from './index';
+import { Lead, User, SalesTeam, BulkOperation } from './index';
 
 export const initializeAssociations = () => {
   Product.hasMany(Transaction, {
@@ -26,5 +26,21 @@ export const initializeAssociations = () => {
   SalesTeam.hasMany(Lead, {
     as: 'assignedLeads',
     foreignKey: 'assignedTo'
+  });
+
+  // BulkOperation associations
+  BulkOperation.belongsTo(User, {
+    foreignKey: 'uploadedBy',
+    as: 'uploader'
+  });
+
+  BulkOperation.hasMany(Transaction, {
+    foreignKey: 'operationId',
+    as: 'transactions'
+  });
+
+  Transaction.belongsTo(BulkOperation, {
+    foreignKey: 'operationId',
+    as: 'operation'
   });
 }; 

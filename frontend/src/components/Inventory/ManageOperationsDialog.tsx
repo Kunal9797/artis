@@ -39,16 +39,26 @@ import { useTheme as useCustomTheme } from '../../context/ThemeContext';
 
 interface Operation {
   id: string;
-  timestamp: string;
-  type: string;
-  description: string;
-  transactions: any[];
-  summary: {
-    totalTransactions: number;
-    productsAffected: number;
-    totalQuantityIn: number;
-    totalQuantityOut: number;
-    totalCorrections: number;
+  type: 'inventory' | 'consumption' | 'purchase' | 'correction';
+  uploadedBy?: string;
+  uploadedAt: string;
+  fileName: string;
+  monthStart?: string;
+  monthEnd?: string;
+  recordsTotal: number;
+  recordsProcessed: number;
+  recordsFailed: number;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'partial';
+  errorLog?: string;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
+  uploader?: {
+    id: string;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
   };
 }
 
@@ -79,7 +89,8 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
       setLoading(true);
       setError(null);
       const response = await inventoryApi.getOperationsHistory();
-      setOperations(response.data.operations);
+      // The API returns the operations array directly
+      setOperations(response.data || []);
     } catch (error) {
       console.error('Error fetching operations:', error);
       setError('Failed to load operations history');
@@ -138,18 +149,14 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
 
   const getOperationIcon = (type: string) => {
     switch (type) {
-      case 'bulk_inventory':
+      case 'inventory':
         return <InventoryIcon />;
-      case 'bulk_consumption':
+      case 'consumption':
         return <TrendingDownIcon />;
-      case 'bulk_purchase':
+      case 'purchase':
         return <TrendingUpIcon />;
-      case 'bulk_corrections':
+      case 'correction':
         return <EditIcon />;
-      case 'individual_purchase':
-        return <TrendingUpIcon />;
-      case 'individual':
-        return <AssessmentIcon />;
       default:
         return <HistoryIcon />;
     }
@@ -157,18 +164,14 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
 
   const getOperationColor = (type: string) => {
     switch (type) {
-      case 'bulk_inventory':
+      case 'inventory':
         return '#2196f3';
-      case 'bulk_consumption':
+      case 'consumption':
         return '#f44336';
-      case 'bulk_purchase':
+      case 'purchase':
         return '#4caf50';
-      case 'bulk_corrections':
+      case 'correction':
         return '#ff9800';
-      case 'individual_purchase':
-        return '#4caf50';
-      case 'individual':
-        return '#9c27b0';
       default:
         return '#757575';
     }
@@ -176,6 +179,16 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
 
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
+  };
+
+  const getOperationDescription = (operation: Operation) => {
+    const typeLabels = {
+      inventory: 'Inventory Upload',
+      consumption: 'Consumption Data',
+      purchase: 'Purchase Orders',
+      correction: 'Stock Corrections'
+    };
+    return `${typeLabels[operation.type]} - ${operation.fileName}`;
   };
 
   return (
@@ -227,7 +240,7 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
           </Box>
         ) : (
           <Box sx={{ p: 2 }}>
-            {operations.length === 0 ? (
+            {!operations || operations.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <HistoryIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                 <Typography variant="h6" color="text.secondary">
@@ -290,7 +303,7 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
                                 fontSize: '1rem'
                               }}
                             >
-                              {operation.description}
+                              {getOperationDescription(operation)}
                             </Typography>
                             
                             <Typography 
@@ -298,41 +311,39 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
                               color="text.secondary"
                               sx={{ mb: 1.5, fontSize: '0.85rem' }}
                             >
-                              {formatDate(operation.timestamp)}
+                              {formatDate(operation.uploadedAt)}
+                              {operation.uploader && ` by ${operation.uploader.firstName} ${operation.uploader.lastName}`}
                             </Typography>
 
                             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
                               <Chip
                                 size="small"
-                                label={`${operation.summary.totalTransactions} transactions`}
+                                label={`${operation.recordsProcessed} processed`}
                                 sx={{ fontSize: '0.7rem' }}
                               />
-                              <Chip
-                                size="small"
-                                label={`${operation.summary.productsAffected} products`}
-                                sx={{ fontSize: '0.7rem' }}
-                              />
-                              {operation.summary.totalQuantityIn > 0 && (
+                              {operation.recordsFailed > 0 && (
                                 <Chip
                                   size="small"
-                                  label={`+${operation.summary.totalQuantityIn}kg IN`}
-                                  color="success"
-                                  sx={{ fontSize: '0.7rem' }}
-                                />
-                              )}
-                              {operation.summary.totalQuantityOut > 0 && (
-                                <Chip
-                                  size="small"
-                                  label={`-${operation.summary.totalQuantityOut}kg OUT`}
+                                  label={`${operation.recordsFailed} failed`}
                                   color="error"
                                   sx={{ fontSize: '0.7rem' }}
                                 />
                               )}
-                              {operation.summary.totalCorrections > 0 && (
+                              <Chip
+                                size="small"
+                                label={operation.status}
+                                color={
+                                  operation.status === 'completed' ? 'success' :
+                                  operation.status === 'failed' ? 'error' :
+                                  operation.status === 'partial' ? 'warning' :
+                                  'default'
+                                }
+                                sx={{ fontSize: '0.7rem' }}
+                              />
+                              {operation.metadata?.transactionsCreated && (
                                 <Chip
                                   size="small"
-                                  label={`${operation.summary.totalCorrections}kg corrections`}
-                                  color="warning"
+                                  label={`${operation.metadata.transactionsCreated} transactions`}
                                   sx={{ fontSize: '0.7rem' }}
                                 />
                               )}
@@ -386,7 +397,7 @@ const ManageOperationsDialog: React.FC<Props> = ({ open, onClose, onOperationDel
           onClick={handleDeleteAll}
           variant="outlined"
           color="error"
-          disabled={deletingAll || operations.length === 0}
+          disabled={deletingAll || !operations || operations.length === 0}
           startIcon={deletingAll ? <CircularProgress size={16} /> : <WarningIcon />}
           sx={{ mr: 'auto' }}
         >

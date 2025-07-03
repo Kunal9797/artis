@@ -41,13 +41,24 @@ export const getAllInventory = async (req: Request, res: Response) => {
         model: Transaction,
         as: 'transactions',
         attributes: ['id', 'type', 'quantity', 'date', 'notes'],
-        required: false
+        required: false,
+        order: [['date', 'DESC']]
       }],
-      order: [['lastUpdated', 'DESC']]
+      order: [['artisCodes', 'ASC']]
     });
 
+    console.log(`Found ${products.length} products`);
     if (products.length > 0) {
-      console.log('Sample product:', JSON.stringify(products[0], null, 2));
+      // Find a product with transactions to log as sample
+      const sampleProduct = products.find(p => (p as any).transactions && (p as any).transactions.length > 0);
+      if (sampleProduct) {
+        console.log('Sample product with transactions:', {
+          artisCodes: sampleProduct.artisCodes,
+          currentStock: sampleProduct.currentStock,
+          avgConsumption: sampleProduct.avgConsumption,
+          transactionCount: (sampleProduct as any).transactions.length
+        });
+      }
     }
 
     res.json(products);
@@ -176,23 +187,34 @@ export const getProductTransactions = async (req: Request, res: Response) => {
 };
 
 export const bulkUploadInventory = async (req: Request, res: Response) => {
+  console.log('=== bulkUploadInventory called ===');
+  
   if (!req.file) {
+    console.log('No file uploaded');
     return res.status(400).json({ error: 'No file uploaded' });
   }
+
+  console.log('File received:', req.file.originalname, 'Size:', req.file.size);
 
   const t = await sequelize.transaction();
   const skippedRows: { artisCode: string; reason: string }[] = [];
   const processedProducts: string[] = [];
 
   try {
+    console.log('Reading Excel file...');
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    console.log('Excel file parsed successfully');
     
     const rawData = XLSX.utils.sheet_to_json(worksheet, { 
       header: 1,
       blankrows: false
     }) as Array<Array<string | number>>;
 
+    console.log('Raw data rows:', rawData.length);
+    console.log('First row:', rawData[0]);
+    console.log('Second row:', rawData[1]);
+    
     const [firstRow, secondRow] = rawData;
     
     // Map your Excel columns to the expected format
@@ -214,13 +236,30 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
     // Convert dates to consumption date format
     const consumptionDates = headers
       .map((header: string, index: number) => {
-        if (typeof header === 'string' && header.includes('/')) {
-          const [day, month, year] = header.split('/');
-          return {
-            date: new Date(parseInt('20' + year), parseInt(month) - 1, parseInt(day)),
-            column: header,
-            index
-          };
+        if (typeof header === 'string') {
+          // Check if it's an Excel serial number
+          if (!isNaN(Number(header)) && !header.includes('/')) {
+            const excelSerialNumber = parseInt(header);
+            const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
+            const parsedDate = new Date(excelEpoch.getTime() + excelSerialNumber * 24 * 60 * 60 * 1000);
+            
+            if (!isNaN(parsedDate.getTime())) {
+              console.log(`Header Excel serial ${excelSerialNumber} converted to: ${parsedDate.toISOString().split('T')[0]}`);
+              return {
+                date: parsedDate,
+                column: header,
+                index
+              };
+            }
+          } else if (header.includes('/')) {
+            // Parse as DD/MM/YY format
+            const [day, month, year] = header.split('/');
+            return {
+              date: new Date(parseInt('20' + year), parseInt(month) - 1, parseInt(day)),
+              column: header,
+              index
+            };
+          }
         }
         return null;
       })
@@ -234,6 +273,9 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
         return obj;
       }, {});
     });
+
+    console.log('Processed data rows:', data.length);
+    console.log('Sample data row:', data[0]);
 
     // Process each row
     await Promise.all(data.map(async (row: any) => {
@@ -269,27 +311,30 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
 
         const isInitialInventory = headers.some(h => h === 'IN' || h === 'OPEN');
 
-        if (isInitialInventory) {
-          // Reset current stock only for initial inventory upload
+        // For consumption-only uploads, use current stock from database
+        // currentStock is DECIMAL type which Sequelize returns as string
+        let newStock = typeof product.currentStock === 'string' 
+          ? parseFloat(product.currentStock) 
+          : Number(product.currentStock) || 0;
+        
+        if (isInitialInventory && initialStock > 0) {
+          // Only process initial stock if this is an inventory upload with IN column
           await product.update({
             currentStock: 0,
             lastUpdated: new Date()
           }, { transaction: t });
 
-          if (initialStock > 0) {
-            await Transaction.create({
-              productId: product.id,
-              type: TransactionType.IN,
-              quantity: initialStock,
-              date: new Date('2024-01-09'),
-              notes: 'Initial Stock',
-              includeInAvg: false
-            }, { transaction: t });
-          }
+          await Transaction.create({
+            productId: product.id,
+            type: TransactionType.IN,
+            quantity: initialStock,
+            date: new Date('2024-01-09'),
+            notes: 'Initial Stock',
+            includeInAvg: false
+          }, { transaction: t });
+          
+          newStock = initialStock;
         }
-
-        // For consumption updates, don't reset current stock
-        let newStock = isInitialInventory ? initialStock : product.currentStock;
 
         // Record consumption transactions (OUT)
         for (const { date, column } of consumptionDates) {
@@ -312,7 +357,7 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
         }, 0);
 
         newStock = Number((newStock - totalConsumption).toFixed(2));
-        console.log(`Initial stock: ${initialStock}, Total consumption: ${totalConsumption}, Final stock: ${newStock}`);
+        console.log(`Product ${artisCode}: Initial stock: ${initialStock}, Total consumption: ${totalConsumption}, Final stock: ${newStock}`);
 
         // Update product's current stock
         await product.update({
@@ -334,14 +379,24 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
     }));
 
     await t.commit();
-    res.json({
+    
+    console.log('=== Upload completed ===');
+    console.log(`Processed: ${processedProducts.length} products`);
+    console.log(`Skipped: ${skippedRows.length} products`);
+    
+    const response = {
       success: true,
       processed: processedProducts,
       skipped: skippedRows
-    });
+    };
+    
+    console.log('Sending response:', JSON.stringify(response).substring(0, 100) + '...');
+    res.json(response);
+    console.log('Response sent');
 
   } catch (error) {
     await t.rollback();
+    console.error('=== Upload error ===', error);
     res.status(500).json({
       error: 'Failed to process inventory upload',
       details: error instanceof Error ? error.message : 'Unknown error'

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Transaction = exports.Product = exports.Message = exports.Attendance = exports.Lead = exports.DealerVisit = exports.SalesTeam = exports.User = void 0;
+exports.BulkOperation = exports.Transaction = exports.Product = exports.Message = exports.Attendance = exports.Lead = exports.DealerVisit = exports.SalesTeam = exports.User = void 0;
 const User_1 = __importDefault(require("./User"));
 exports.User = User_1.default;
 const SalesTeam_1 = __importDefault(require("./SalesTeam"));
@@ -20,3 +20,5 @@ const Product_1 = __importDefault(require("./Product"));
 exports.Product = Product_1.default;
 const Transaction_1 = __importDefault(require("./Transaction"));
 exports.Transaction = Transaction_1.default;
+const BulkOperation_1 = __importDefault(require("./BulkOperation"));
+exports.BulkOperation = BulkOperation_1.default;

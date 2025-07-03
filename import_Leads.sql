@@ -1,0 +1,4 @@
+-- Import data for Leads table
+
+INSERT INTO public."Leads" (status, notes, "createdAt", "updatedAt", "customerName", "phoneNumber", "enquiryDetails", "assignedTo", "assignedBy", location, "notesHistory", id) VALUES ('NEW', NULL, '2025-02-16 18:54:23.37+00', '2025-02-16 18:54:23.37+00', 'Lead Test #1', '1234567555', 'Prodcution build lead test 1', '89864eba-3fc3-46b4-a148-462f344d1fb5', '00000000-0000-0000-0000-000000000000', 'Delhi', '[]'::jsonb, 'eae8a4ac-6a12-4200-8de5-5fc177518fc4');
+INSERT INTO public."Leads" (status, notes, "createdAt", "updatedAt", "customerName", "phoneNumber", "enquiryDetails", "assignedTo", "assignedBy", location, "notesHistory", id) VALUES ('NEW', NULL, '2025-02-16 18:55:37.578+00', '2025-02-16 18:55:37.578+00', 'Lead Test #2', '1234354434', 'test 2 after changing role to zonal', '89864eba-3fc3-46b4-a148-462f344d1fb5', '00000000-0000-0000-0000-000000000000', 'Agra', '[]'::jsonb, '6a1dc60f-25b5-4016-bbc6-3e480ce1f442');

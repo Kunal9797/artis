@@ -13,6 +13,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { initializeAssociations } from './models/associations';
 import salesRoutes from './routes/sales.routes';
+import statsRoutes from './routes/stats.routes';
 import { auth } from './middleware/auth';
 
 const execAsync = promisify(exec);
@@ -67,6 +68,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/distributors', distributorRoutes);
 app.use('/api/sales', salesRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Test route
 app.get('/api/test', (req: Request, res: Response) => {
@@ -87,8 +89,17 @@ app.get('/api/health', async (req: Request, res: Response) => {
 initializeAssociations();
 
 const PORT = parseInt(process.env.PORT || '8099', 10);
+
+// Determine database source
+const isDatabaseUrlSet = !!process.env.DATABASE_URL;
+const isSupabase = process.env.DATABASE_URL?.includes('supabase');
+const databaseSource = isDatabaseUrlSet 
+  ? (isSupabase ? 'Supabase' : 'Render') 
+  : 'Local PostgreSQL';
+
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+  console.log(`🗄️  Database: ${databaseSource}`);
   try {
     await sequelize.authenticate();
     console.log('✓ Database connected');
@@ -107,8 +118,13 @@ app.listen(PORT, '0.0.0.0', async () => {
       }
     }
 
-    await sequelize.sync({ alter: true });
-    console.log('✓ Models synced successfully');
+    // Skip sync for Supabase - schema is already set up
+    if (!isSupabase) {
+      await sequelize.sync({ alter: true });
+      console.log('✓ Models synced successfully');
+    } else {
+      console.log('✓ Using existing Supabase schema');
+    }
   } catch (error) {
     console.error('Database initialization failed:', error);
     process.exit(1);

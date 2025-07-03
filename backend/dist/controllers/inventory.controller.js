@@ -72,12 +72,24 @@ const getAllInventory = (req, res) => __awaiter(void 0, void 0, void 0, function
                     model: Transaction_1.default,
                     as: 'transactions',
                     attributes: ['id', 'type', 'quantity', 'date', 'notes'],
-                    required: false
+                    required: false,
+                    limit: 5,
+                    order: [['date', 'DESC']]
                 }],
-            order: [['lastUpdated', 'DESC']]
+            order: [['artisCodes', 'ASC']]
         });
+        console.log(`Found ${products.length} products`);
         if (products.length > 0) {
-            console.log('Sample product:', JSON.stringify(products[0], null, 2));
+            // Find a product with transactions to log as sample
+            const sampleProduct = products.find(p => p.transactions && p.transactions.length > 0);
+            if (sampleProduct) {
+                console.log('Sample product with transactions:', {
+                    artisCodes: sampleProduct.artisCodes,
+                    currentStock: sampleProduct.currentStock,
+                    avgConsumption: sampleProduct.avgConsumption,
+                    transactionCount: sampleProduct.transactions.length
+                });
+            }
         }
         res.json(products);
     }
@@ -195,19 +207,27 @@ const getProductTransactions = (req, res) => __awaiter(void 0, void 0, void 0, f
 });
 exports.getProductTransactions = getProductTransactions;
 const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('=== bulkUploadInventory called ===');
     if (!req.file) {
+        console.log('No file uploaded');
         return res.status(400).json({ error: 'No file uploaded' });
     }
+    console.log('File received:', req.file.originalname, 'Size:', req.file.size);
     const t = yield sequelize_2.default.transaction();
     const skippedRows = [];
     const processedProducts = [];
     try {
+        console.log('Reading Excel file...');
         const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        console.log('Excel file parsed successfully');
         const rawData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             blankrows: false
         });
+        console.log('Raw data rows:', rawData.length);
+        console.log('First row:', rawData[0]);
+        console.log('Second row:', rawData[1]);
         const [firstRow, secondRow] = rawData;
         // Map your Excel columns to the expected format
         const columnMap = {
@@ -247,6 +267,8 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
                 return obj;
             }, {});
         });
+        console.log('Processed data rows:', data.length);
+        console.log('Sample data row:', data[0]);
         // Process each row
         yield Promise.all(data.map((row) => __awaiter(void 0, void 0, void 0, function* () {
             var _a;
@@ -277,25 +299,27 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
                     return;
                 }
                 const isInitialInventory = headers.some(h => h === 'IN' || h === 'OPEN');
-                if (isInitialInventory) {
-                    // Reset current stock only for initial inventory upload
+                // For consumption-only uploads, use current stock from database
+                // currentStock is DECIMAL type which Sequelize returns as string
+                let newStock = typeof product.currentStock === 'string'
+                    ? parseFloat(product.currentStock)
+                    : Number(product.currentStock) || 0;
+                if (isInitialInventory && initialStock > 0) {
+                    // Only process initial stock if this is an inventory upload with IN column
                     yield product.update({
                         currentStock: 0,
                         lastUpdated: new Date()
                     }, { transaction: t });
-                    if (initialStock > 0) {
-                        yield Transaction_1.default.create({
-                            productId: product.id,
-                            type: TransactionType.IN,
-                            quantity: initialStock,
-                            date: new Date('2024-01-09'),
-                            notes: 'Initial Stock',
-                            includeInAvg: false
-                        }, { transaction: t });
-                    }
+                    yield Transaction_1.default.create({
+                        productId: product.id,
+                        type: TransactionType.IN,
+                        quantity: initialStock,
+                        date: new Date('2024-01-09'),
+                        notes: 'Initial Stock',
+                        includeInAvg: false
+                    }, { transaction: t });
+                    newStock = initialStock;
                 }
-                // For consumption updates, don't reset current stock
-                let newStock = isInitialInventory ? initialStock : product.currentStock;
                 // Record consumption transactions (OUT)
                 for (const { date, column } of consumptionDates) {
                     const consumption = parseFloat(row[column]) || 0;
@@ -315,7 +339,7 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
                     return sum + consumption;
                 }, 0);
                 newStock = Number((newStock - totalConsumption).toFixed(2));
-                console.log(`Initial stock: ${initialStock}, Total consumption: ${totalConsumption}, Final stock: ${newStock}`);
+                console.log(`Product ${artisCode}: Initial stock: ${initialStock}, Total consumption: ${totalConsumption}, Final stock: ${newStock}`);
                 // Update product's current stock
                 yield product.update({
                     currentStock: newStock,
@@ -334,14 +358,21 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
             }
         })));
         yield t.commit();
-        res.json({
+        console.log('=== Upload completed ===');
+        console.log(`Processed: ${processedProducts.length} products`);
+        console.log(`Skipped: ${skippedRows.length} products`);
+        const response = {
             success: true,
             processed: processedProducts,
             skipped: skippedRows
-        });
+        };
+        console.log('Sending response:', JSON.stringify(response).substring(0, 100) + '...');
+        res.json(response);
+        console.log('Response sent');
     }
     catch (error) {
         yield t.rollback();
+        console.error('=== Upload error ===', error);
         res.status(500).json({
             error: 'Failed to process inventory upload',
             details: error instanceof Error ? error.message : 'Unknown error'

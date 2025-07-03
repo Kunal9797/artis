@@ -1,0 +1,4990 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.9 (Debian 16.9-1.pgdg120+1)
+-- Dumped by pg_dump version 16.9 (Debian 16.9-1.pgdg120+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+ALTER TABLE IF EXISTS ONLY public."Transactions" DROP CONSTRAINT IF EXISTS "Transactions_productId_fkey";
+ALTER TABLE IF EXISTS ONLY public."SalesTeams" DROP CONSTRAINT IF EXISTS "SalesTeams_userId_fkey";
+ALTER TABLE IF EXISTS ONLY public."SalesTeams" DROP CONSTRAINT IF EXISTS "SalesTeams_reportingTo_fkey";
+ALTER TABLE IF EXISTS ONLY public."Messages" DROP CONSTRAINT IF EXISTS "Messages_senderId_fkey";
+ALTER TABLE IF EXISTS ONLY public."Messages" DROP CONSTRAINT IF EXISTS "Messages_receiverId_fkey";
+ALTER TABLE IF EXISTS ONLY public."Leads" DROP CONSTRAINT IF EXISTS "Leads_assignedTo_fkey";
+ALTER TABLE IF EXISTS ONLY public."Leads" DROP CONSTRAINT IF EXISTS "Leads_assignedBy_fkey";
+ALTER TABLE IF EXISTS ONLY public."DealerVisits" DROP CONSTRAINT IF EXISTS "DealerVisits_salesTeamId_fkey";
+ALTER TABLE IF EXISTS ONLY public."Attendances" DROP CONSTRAINT IF EXISTS "Attendances_salesTeamId_fkey";
+ALTER TABLE IF EXISTS ONLY public."Attendance" DROP CONSTRAINT IF EXISTS "Attendance_salesTeamId_fkey_new";
+DROP INDEX IF EXISTS public.messages_sender_id;
+DROP INDEX IF EXISTS public.messages_receiver_id;
+DROP INDEX IF EXISTS public.messages_is_read;
+DROP INDEX IF EXISTS public.messages_created_at;
+DROP INDEX IF EXISTS public.dealer_visits_visit_date;
+DROP INDEX IF EXISTS public.dealer_visits_sales_team_id_visit_date;
+DROP INDEX IF EXISTS public.dealer_visits_sales_team_id;
+DROP INDEX IF EXISTS public.dealer_visits_offline_id;
+DROP INDEX IF EXISTS public.dealer_visits_is_offline_entry_synced_at;
+DROP INDEX IF EXISTS public.attendances_sales_team_id_date;
+DROP INDEX IF EXISTS public.attendance_status;
+DROP INDEX IF EXISTS public.attendance_sales_team_id;
+DROP INDEX IF EXISTS public.attendance_date;
+ALTER TABLE IF EXISTS ONLY public."Products" DROP CONSTRAINT IF EXISTS unique_supplier_code_constraint;
+ALTER TABLE IF EXISTS ONLY public."Attendance" DROP CONSTRAINT IF EXISTS unique_attendance_per_day;
+ALTER TABLE IF EXISTS ONLY public.distributors DROP CONSTRAINT IF EXISTS distributors_pkey;
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key99";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key98";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key97";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key96";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key95";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key94";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key93";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key92";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key91";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key90";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key9";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key89";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key88";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key87";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key86";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key85";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key84";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key83";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key82";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key81";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key80";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key8";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key79";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key78";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key77";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key76";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key75";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key74";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key73";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key72";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key71";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key70";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key7";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key69";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key68";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key67";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key66";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key65";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key64";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key63";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key62";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key61";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key60";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key6";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key59";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key58";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key57";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key56";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key55";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key54";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key53";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key52";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key51";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key50";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key5";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key49";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key48";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key47";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key46";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key45";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key44";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key43";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key42";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key41";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key40";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key4";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key39";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key38";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key37";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key36";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key35";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key34";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key33";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key32";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key31";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key30";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key3";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key29";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key28";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key27";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key26";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key25";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key24";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key23";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key22";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key21";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key20";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key2";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key19";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key18";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key17";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key16";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key15";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key14";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key13";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key12";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key11";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key107";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key106";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key105";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key104";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key103";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key102";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key101";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key100";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key10";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key1";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_username_key";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_pkey";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key99";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key98";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key97";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key96";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key95";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key94";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key93";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key92";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key91";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key90";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key9";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key89";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key88";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key87";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key86";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key85";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key84";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key83";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key82";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key81";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key80";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key8";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key79";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key78";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key77";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key76";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key75";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key74";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key73";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key72";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key71";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key70";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key7";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key69";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key68";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key67";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key66";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key65";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key64";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key63";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key62";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key61";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key60";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key6";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key59";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key58";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key57";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key56";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key55";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key54";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key53";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key52";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key51";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key50";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key5";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key49";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key48";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key47";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key46";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key45";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key44";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key43";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key42";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key41";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key40";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key4";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key39";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key38";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key37";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key36";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key35";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key34";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key33";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key32";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key31";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key30";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key3";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key29";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key28";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key27";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key26";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key25";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key24";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key23";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key22";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key21";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key20";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key2";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key19";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key18";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key17";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key16";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key15";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key14";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key13";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key12";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key11";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key107";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key106";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key105";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key104";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key103";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key102";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key101";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key100";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key10";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key1";
+ALTER TABLE IF EXISTS ONLY public."Users" DROP CONSTRAINT IF EXISTS "Users_email_key";
+ALTER TABLE IF EXISTS ONLY public."Transactions" DROP CONSTRAINT IF EXISTS "Transactions_pkey";
+ALTER TABLE IF EXISTS ONLY public."SequelizeMeta" DROP CONSTRAINT IF EXISTS "SequelizeMeta_pkey";
+ALTER TABLE IF EXISTS ONLY public."SalesTeams" DROP CONSTRAINT IF EXISTS "SalesTeams_pkey";
+ALTER TABLE IF EXISTS ONLY public."Products" DROP CONSTRAINT IF EXISTS "Products_pkey";
+ALTER TABLE IF EXISTS ONLY public."Messages" DROP CONSTRAINT IF EXISTS "Messages_pkey";
+ALTER TABLE IF EXISTS ONLY public."Leads" DROP CONSTRAINT IF EXISTS "Leads_pkey";
+ALTER TABLE IF EXISTS ONLY public."DealerVisits" DROP CONSTRAINT IF EXISTS "DealerVisits_pkey";
+ALTER TABLE IF EXISTS ONLY public."Attendances" DROP CONSTRAINT IF EXISTS "Attendances_pkey";
+ALTER TABLE IF EXISTS ONLY public."Attendance" DROP CONSTRAINT IF EXISTS "Attendance_pkey";
+ALTER TABLE IF EXISTS public.distributors ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE IF EXISTS public.distributors_id_seq;
+DROP TABLE IF EXISTS public.distributors;
+DROP TABLE IF EXISTS public."Users";
+DROP TABLE IF EXISTS public."Transactions";
+DROP TABLE IF EXISTS public."SequelizeMeta";
+DROP TABLE IF EXISTS public."SalesTeams";
+DROP TABLE IF EXISTS public."Products";
+DROP TABLE IF EXISTS public."Messages";
+DROP TABLE IF EXISTS public."Leads";
+DROP TABLE IF EXISTS public."DealerVisits";
+DROP TABLE IF EXISTS public."Attendances";
+DROP TABLE IF EXISTS public."Attendance";
+DROP TYPE IF EXISTS public."enum_Users_role";
+DROP TYPE IF EXISTS public."enum_Transactions_type";
+DROP TYPE IF EXISTS public."enum_SalesTeams_role";
+DROP TYPE IF EXISTS public."enum_Leads_status";
+DROP TYPE IF EXISTS public."enum_Attendances_status";
+DROP TYPE IF EXISTS public."enum_Attendance_status";
+-- *not* dropping schema, since initdb creates it
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
+-- Name: enum_Attendance_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."enum_Attendance_status" AS ENUM (
+    'PRESENT',
+    'ABSENT'
+);
+
+
+--
+-- Name: enum_Attendances_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."enum_Attendances_status" AS ENUM (
+    'PRESENT',
+    'ABSENT'
+);
+
+
+--
+-- Name: enum_Leads_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."enum_Leads_status" AS ENUM (
+    'NEW',
+    'CONTACTED',
+    'QUALIFIED',
+    'PROPOSAL',
+    'FOLLOWUP',
+    'NEGOTIATION',
+    'CLOSED_WON',
+    'CLOSED_LOST',
+    'CLOSED'
+);
+
+
+--
+-- Name: enum_SalesTeams_role; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."enum_SalesTeams_role" AS ENUM (
+    'SALES_EXECUTIVE',
+    'ZONAL_HEAD',
+    'COUNTRY_HEAD'
+);
+
+
+--
+-- Name: enum_Transactions_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."enum_Transactions_type" AS ENUM (
+    'IN',
+    'OUT',
+    'CORRECTION'
+);
+
+
+--
+-- Name: enum_Users_role; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public."enum_Users_role" AS ENUM (
+    'admin',
+    'user',
+    'SALES_EXECUTIVE',
+    'ZONAL_HEAD',
+    'COUNTRY_HEAD'
+);
+
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: Attendance; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."Attendance" (
+    id uuid NOT NULL,
+    "salesTeamId" uuid NOT NULL,
+    date date NOT NULL,
+    location jsonb NOT NULL,
+    status public."enum_Attendance_status" DEFAULT 'PRESENT'::public."enum_Attendance_status" NOT NULL,
+    "checkInTime" timestamp with time zone NOT NULL,
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: Attendances; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."Attendances" (
+    id uuid NOT NULL,
+    "salesTeamId" uuid NOT NULL,
+    date date NOT NULL,
+    location json NOT NULL,
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL,
+    status public."enum_Attendances_status" DEFAULT 'PRESENT'::public."enum_Attendances_status" NOT NULL
+);
+
+
+--
+-- Name: DealerVisits; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."DealerVisits" (
+    id uuid NOT NULL,
+    "salesTeamId" uuid NOT NULL,
+    location json NOT NULL,
+    "visitDate" timestamp with time zone NOT NULL,
+    "photoUrl" character varying(255),
+    notes text,
+    "isOfflineEntry" boolean DEFAULT false NOT NULL,
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL,
+    "offlineId" character varying(255),
+    "syncedAt" timestamp with time zone,
+    "dealerNames" character varying(255)[] DEFAULT (ARRAY[]::character varying[])::character varying(255)[] NOT NULL,
+    sales json DEFAULT '{"liner":0,"artvio08":0,"woodrica08":0,"artis1":0}'::json NOT NULL
+);
+
+
+--
+-- Name: Leads; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."Leads" (
+    status public."enum_Leads_status" DEFAULT 'NEW'::public."enum_Leads_status" NOT NULL,
+    notes text,
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL,
+    "customerName" character varying(255) NOT NULL,
+    "phoneNumber" character varying(255) NOT NULL,
+    "enquiryDetails" text NOT NULL,
+    "assignedTo" uuid NOT NULL,
+    "assignedBy" uuid NOT NULL,
+    location character varying(255) NOT NULL,
+    "notesHistory" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    id uuid NOT NULL
+);
+
+
+--
+-- Name: Messages; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."Messages" (
+    id uuid NOT NULL,
+    "senderId" uuid NOT NULL,
+    "receiverId" uuid NOT NULL,
+    message text NOT NULL,
+    "isRead" boolean DEFAULT false NOT NULL,
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: Products; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."Products" (
+    id uuid NOT NULL,
+    name character varying(255),
+    "supplierCode" character varying(255) NOT NULL,
+    supplier character varying(255) NOT NULL,
+    category character varying(255),
+    gsm character varying(255),
+    texture character varying(255),
+    thickness character varying(255),
+    catalogs character varying(255)[] DEFAULT (ARRAY[]::character varying[])::character varying(255)[] NOT NULL,
+    "currentStock" numeric(10,2) DEFAULT 0 NOT NULL,
+    "avgConsumption" numeric(10,2) DEFAULT 0 NOT NULL,
+    "lastUpdated" timestamp with time zone NOT NULL,
+    "minStockLevel" numeric(10,2),
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL,
+    "artisCodes" character varying(255)[] NOT NULL
+);
+
+
+--
+-- Name: SalesTeams; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."SalesTeams" (
+    id uuid NOT NULL,
+    "userId" uuid NOT NULL,
+    role public."enum_SalesTeams_role" NOT NULL,
+    territory character varying(255),
+    "reportingTo" uuid,
+    "targetQuarter" integer,
+    "targetYear" integer,
+    "targetAmount" numeric(10,2),
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: SequelizeMeta; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."SequelizeMeta" (
+    name character varying(255) NOT NULL
+);
+
+
+--
+-- Name: Transactions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."Transactions" (
+    id uuid NOT NULL,
+    "productId" uuid NOT NULL,
+    type public."enum_Transactions_type" NOT NULL,
+    quantity numeric(10,2) NOT NULL,
+    date timestamp with time zone NOT NULL,
+    notes character varying(255),
+    "includeInAvg" boolean DEFAULT false,
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL,
+    "operationId" character varying(255)
+);
+
+
+--
+-- Name: Users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."Users" (
+    id uuid NOT NULL,
+    username character varying(255) NOT NULL,
+    email character varying(255) NOT NULL,
+    password character varying(255) NOT NULL,
+    role public."enum_Users_role" DEFAULT 'user'::public."enum_Users_role",
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
+    "firstName" character varying(255) NOT NULL,
+    "lastName" character varying(255) NOT NULL,
+    "phoneNumber" character varying(255) NOT NULL
+);
+
+
+--
+-- Name: distributors; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.distributors (
+    id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    city character varying(255) NOT NULL,
+    state character varying(255) NOT NULL,
+    "phoneNumber" character varying(255) NOT NULL,
+    catalogs character varying(255)[] DEFAULT (ARRAY[]::character varying[])::character varying(255)[],
+    latitude double precision,
+    longitude double precision,
+    "createdAt" timestamp with time zone NOT NULL,
+    "updatedAt" timestamp with time zone NOT NULL
+);
+
+
+--
+-- Name: distributors_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.distributors_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: distributors_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.distributors_id_seq OWNED BY public.distributors.id;
+
+
+--
+-- Name: distributors id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distributors ALTER COLUMN id SET DEFAULT nextval('public.distributors_id_seq'::regclass);
+
+
+--
+-- Data for Name: Attendance; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Attendance" (id, "salesTeamId", date, location, status, "checkInTime", "createdAt", "updatedAt") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Attendances; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Attendances" (id, "salesTeamId", date, location, "createdAt", "updatedAt", status) FROM stdin;
+38f16db8-628e-4e4f-b0a3-df8290320657	89864eba-3fc3-46b4-a148-462f344d1fb5	2025-03-04	{"latitude":28.66972299501901,"longitude":77.13820089951801}	2025-03-04 03:33:32.539+00	2025-03-04 03:33:32.539+00	PRESENT
+\.
+
+
+--
+-- Data for Name: DealerVisits; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."DealerVisits" (id, "salesTeamId", location, "visitDate", "photoUrl", notes, "isOfflineEntry", "createdAt", "updatedAt", "offlineId", "syncedAt", "dealerNames", sales) FROM stdin;
+\.
+
+
+--
+-- Data for Name: Leads; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Leads" (status, notes, "createdAt", "updatedAt", "customerName", "phoneNumber", "enquiryDetails", "assignedTo", "assignedBy", location, "notesHistory", id) FROM stdin;
+NEW		2025-02-16 18:54:23.37+00	2025-02-16 18:54:23.37+00	Lead Test #1	1234567555	Prodcution build lead test 1	89864eba-3fc3-46b4-a148-462f344d1fb5	00000000-0000-0000-0000-000000000000	Delhi	[]	eae8a4ac-6a12-4200-8de5-5fc177518fc4
+NEW		2025-02-16 18:55:37.578+00	2025-02-16 18:55:37.578+00	Lead Test #2	1234354434	test 2 after changing role to zonal	89864eba-3fc3-46b4-a148-462f344d1fb5	00000000-0000-0000-0000-000000000000	Agra	[]	6a1dc60f-25b5-4016-bbc6-3e480ce1f442
+\.
+
+
+--
+-- Data for Name: Messages; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Messages" (id, "senderId", "receiverId", message, "isRead", "createdAt", "updatedAt") FROM stdin;
+\.
+
+
+--
+-- Data for Name: Products; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Products" (id, name, "supplierCode", supplier, category, gsm, texture, thickness, catalogs, "currentStock", "avgConsumption", "lastUpdated", "minStockLevel", "createdAt", "updatedAt", "artisCodes") FROM stdin;
+8421a0f1-ccbc-40f1-a781-19f620c84eab	DARK CHEVRON	9122-D	MBEE	Abstract	65	\N	\N	{Artvio}	84.00	0.00	2025-06-04 15:17:48.098+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.2+00	{909}
+4c65ac22-e2d3-4df3-83f9-962b3574e85b	SHADOW WOOD	9020-A	MBEE	Wooden	55	\N	\N	{Artvio,Woodrica}	398.00	214.56	2025-06-04 15:17:48.101+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.281+00	{917,504}
+26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	TROPICAL TEAK	UD-10279	UNIQUE DÉCOR	Wooden	52	\N	\N	{Artvio}	305.00	60.00	2025-06-04 15:17:48.2+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.381+00	{968}
+4037f584-89a4-41ac-9f68-28bb72216538	HIGHLAND WOOD	9042-B	MBEE	Wooden	60	\N	\N	{Artvio,Woodrica}	35.00	30.67	2025-06-04 15:17:48.201+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.382+00	{969,515}
+239425e4-90bf-4048-9f7e-6aa4f5a8365e	GOLDEN MAPLE	4061-01	MATCH GRAPHICS	Wooden	60	\N	\N	{Artvio,Woodrica}	246.00	162.44	2025-06-04 15:17:48.201+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.382+00	{970,551}
+20f5d863-c219-485f-ba56-4b7cbace2645	ONYX RUSH	4060-4	MATCH GRAPHICS	Wooden	55	\N	\N	{Artvio}	70.00	18.38	2025-06-04 15:17:48.202+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.383+00	{971}
+5fd052eb-9eb1-4dd0-854d-00af93c252ef	AVALON TEAK	9011-03	INFINIAA DÉCOR	Wooden	\N	\N	\N	{Artvio}	351.00	152.44	2025-06-04 15:17:48.205+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.386+00	{976}
+70809504-e675-4650-8c6c-69e13c5dc199	MOCHA TEAK	UD-10119	UNIQUE DÉCOR	Wooden	50	\N	\N	{Woodrica}	237.00	9.60	2025-06-04 15:17:48.289+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.401+00	{552}
+db15050e-1566-4aad-b957-1f67746c468a	MAHOGANY OAK	9137-D	MBEE	Wooden	60	\N	\N	{Woodrica}	37.00	12.63	2025-06-04 15:17:48.29+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.402+00	{555}
+3df90a4d-62ba-4dee-b10e-3ff8bc6550a5		6137-37-D	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1021}
+4e4e32e9-17ec-41fe-8109-b9939be0561d	TAMO ASH BURL	4162-01	MATCH GRAPHICS	Wooden	65	\N	\N	{Woodrica}	126.00	13.14	2025-06-04 15:17:48.29+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.403+00	{559}
+7bfdb1b2-3b09-410c-a614-f6f877b18895		8296-34-D	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1022}
+267a90e8-cca5-4c53-8f47-73d8b7836272	PROVINCIAL HONEY	4162-02	MATCH GRAPHICS	Wooden	55	\N	\N	{Woodrica}	157.00	11.44	2025-06-04 15:17:48.291+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.403+00	{560}
+b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	SUCUPIRA WALNUT	4041-03	MATCH GRAPHICS	Wooden	55	\N	\N	{Woodrica}	267.00	38.89	2025-06-04 15:17:48.292+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.404+00	{561}
+82e68c33-2f5c-4482-9063-8f98243fec03	COLUMBIA WALNUT	4051-04	MATCH GRAPHICS	Wooden	55	\N	\N	{Woodrica}	153.00	41.78	2025-06-04 15:17:48.292+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.481+00	{562}
+40a09f66-dd19-4b48-afb7-efe1ea353a41	CHESTNUT WOOD	4163-02	MATCH GRAPHICS	Wooden	60	\N	\N	{Woodrica}	85.00	21.56	2025-06-04 15:17:48.293+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.482+00	{563}
+4e319128-6d79-411b-b07f-7cf04613c0e5	MOCHA WALNUT	4163-03	MATCH GRAPHICS	Wooden	60	\N	\N	{Woodrica}	295.00	29.71	2025-06-04 15:17:48.293+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.483+00	{564}
+7ddaf7ef-d1ae-4bf0-9399-bc5bea38e469		8296-35-D	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1023}
+3eed05c2-733d-4916-9e03-c3b9ed2322c1		9339-5	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1024}
+a0944a17-3513-4f30-ad8b-024f871b901a		7632-1	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1025}
+de597681-af82-43fa-8f80-10090540abf6		3136-5	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1026}
+2ce31090-b19e-4557-905c-29481463b25b		16109-6F	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1027}
+bbcb03dc-3fe7-47f9-acd6-b748095e0103	SAVINA WOOD	4129-02	MATCH GRAPHICS	Wooden	60	\N	\N	{Woodrica}	162.00	8.80	2025-06-04 15:17:48.294+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.483+00	{565}
+fe625b93-f72a-49c2-b2f5-1617a2402fc0	ESTELLE OAK	4129-03	MATCH GRAPHICS	Wooden	55	\N	\N	{Woodrica}	477.00	22.20	2025-06-04 15:17:48.294+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.484+00	{566}
+67190dce-2601-4780-8660-ae8f696d7006	WHITE TORANO	4157-01	MATCH GRAPHICS	Marble	80	\N	\N	{Woodrica}	517.00	139.44	2025-06-04 15:17:48.296+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.486+00	{573}
+31b095f3-d72f-4870-b711-8681ebfaa0b4	LIVID STONE	4149-02	MATCH GRAPHICS	Marble	70	\N	\N	{Woodrica}	198.00	40.56	2025-06-04 15:17:48.296+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.487+00	{574}
+b82deb6a-925d-4ece-a1b4-51e8e80a2460	PICASSO GREY	4149-04	MATCH GRAPHICS	Marble	70	\N	\N	{Woodrica}	418.00	21.89	2025-06-04 15:17:48.297+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.487+00	{575}
+3067b9fd-6966-4161-96ec-3d2faabe3d87	SAVANNAH WALNUT	9106-B	MBEE	Wooden	\N	\N	\N	{Woodrica}	528.00	170.50	2025-06-04 15:17:48.3+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.491+00	{583}
+dafcc2c6-7438-4350-a808-d0908244de6b	IMPERIAL MARQUES OAK	D7548-12	ARIHANT	Wooden	\N	\N	\N	{Woodrica}	682.00	190.17	2025-06-04 15:17:48.301+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.492+00	{585}
+e6126504-c564-454a-b29c-d93b3edff9f8	FLUTE CARARA	1038-01	INFINIAA DÉCOR	Abstract	70	\N	\N	{Woodrica}	307.00	0.00	2025-06-04 15:17:48.302+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.493+00	{591}
+2641f227-6220-4f0c-890b-a5441940c926		CD 18221-2Y	ARIHANT	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1028}
+54bdcfdf-4712-43b7-88dd-d26659514a15		CD 18221-4Y	ARIHANT	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1029}
+84dd578b-2e21-4a25-8b52-24cc0e0fee58		T90151-1	DILON	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1018}
+9dbc7f56-ffcf-42e2-9319-43ccf27f727e	FLUTE HERMES	1038-05	INFINIAA DÉCOR	Abstract	70	\N	\N	{Woodrica}	330.00	11.50	2025-06-04 15:17:48.302+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.494+00	{592}
+133fd452-75ea-45c0-9023-b22711b64da0	HONEY HERRINGBONE	7027-B	MBEE	Abstract	\N	\N	\N	{Artvio,Woodrica}	121.00	65.33	2025-06-04 15:17:48.303+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.494+00	{958,593}
+ff7fe54a-8ebf-4002-ac3c-13c3f99aea41		3330-3	DILON	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1019}
+37bacb51-78d6-438c-9ceb-b30ae52e7376		6805-7	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1020}
+b9db925a-e9e0-4688-b301-af9143c00daa	MELLOW OAK	7002-A	MBEE	Wooden	75	\N	\N	{Artvio}	26.00	13.00	2025-06-04 15:17:48.105+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.288+00	{928}
+709f6326-0e0f-485a-9965-66f8d11bcbc0	RIVER STONE	UD-10035	UNIQUE DÉCOR	Stone	75	\N	\N	{Artvio}	252.00	20.00	2025-06-04 15:17:48.186+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.298+00	{940}
+94d7482a-b13f-4527-b57c-4edd6c630257	COSMIC MARMO	UD-953	UNIQUE DÉCOR	Marble	70	\N	\N	{Artvio,Woodrica}	101.00	128.00	2025-06-04 15:17:48.186+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.298+00	{941,526}
+4d2a92c3-afa4-4492-aa57-7a5d730b48a2	EBONY HERRIGNBONE	7027-C	MBEE	Abstract	\N	\N	\N	{Artvio,Woodrica}	263.00	62.11	2025-06-04 15:17:48.38+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.495+00	{959,594}
+c41c8950-8578-435c-83f1-8aca424fe012	SIROCCO GRAIN	9239-A	MBEE	Wooden	\N	\N	\N	{Woodrica}	76.00	33.40	2025-06-04 15:17:48.385+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.497+00	{598}
+b7dd6bec-ef9a-4a9f-9852-0788444f8e46	INDUSTRIAL GREY	INDUSTRIAL GREY	ARIHANT	Acrylic	80	\N	\N	{Woodrica}	103.00	70.29	2025-06-04 15:17:48.387+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.499+00	{204}
+37223484-5648-4f06-92de-7eaa33d317f8	IVORY	2019	FAKIRSONS	Plain Colours	70	\N	\N	{Artvio,Woodrica}	504.00	75.33	2025-06-04 15:17:48.392+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.586+00	{703,103}
+90fe4f69-0e6e-4b0a-9527-7f08ece06a85	ORANGE	UDS-011	UNIQUE DÉCOR	Plain Colours	75	\N	\N	{Artvio,Woodrica}	346.00	53.56	2025-06-04 15:17:48.393+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.587+00	{704,104}
+881bef50-07c0-49bb-9cd1-fd77401f5746	RED	UDS-012	UNIQUE DÉCOR	Plain Colours	70	\N	\N	{Artvio,Woodrica}	155.00	52.56	2025-06-04 15:17:48.393+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.587+00	{705,105}
+8b9bc0fa-0898-4f06-a212-b69d24563e01	PINK	UDS-013	UNIQUE DÉCOR	Plain Colours	75	\N	\N	{Artvio,Woodrica}	292.00	18.33	2025-06-04 15:17:48.394+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.589+00	{706,106}
+cd2f2713-2c16-46e2-91a6-a46d34166527	GREEN	UDS-008	UNIQUE DÉCOR	Plain Colours	70	\N	\N	{Artvio,Woodrica}	0.00	37.89	2025-06-04 15:17:48.395+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.589+00	{707,107}
+e84ce1cf-a0e8-4210-bb46-a95e62804fb3	PEACOCK GREEN	UDS-28	FAKIRSONS	Plain Colours	65	\N	\N	{Artvio,Woodrica}	325.00	68.00	2025-06-04 15:17:48.395+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.59+00	{708,108}
+9ec636d6-2773-4a7a-b8a6-26ab852155ba	DARK GREEN	5003	FAKIRSONS	Plain Colours	80	\N	\N	{Artvio,Woodrica}	230.00	15.33	2025-06-04 15:17:48.396+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.59+00	{709,109}
+7f99ee7f-9612-40d1-89e7-f20588aeea0c	BEIGE	4017	FAKIRSONS	Plain Colours	80	\N	\N	{Artvio,Woodrica}	225.00	232.11	2025-06-04 15:17:48.396+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.591+00	{710,110}
+193bb0a9-5e47-439a-95b5-91bd5fe9ee65	NAVY BLUE	6007	FAKIRSONS	Plain Colours	80	\N	\N	{Artvio,Woodrica}	450.00	67.67	2025-06-04 15:17:48.397+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.592+00	{711,111}
+3149c741-4dd9-4c6b-b31a-f1c5e232f65a	CHARCOAL	CHARCOAL	KING DÉCOR	Plain Colours	80	\N	\N	{Artvio,Woodrica}	111.00	129.00	2025-06-04 15:17:48.402+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.597+00	{719,119}
+e852932d-64b6-40ba-b4e6-b000b1782f13	CERAMIC BEIGE	CERAMIC BEIGE	KING DÉCOR	Plain Colours	70	\N	\N	{Artvio,Woodrica}	-180.00	123.00	2025-06-04 15:17:48.403+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.598+00	{720,120}
+1efa20b9-506e-47f2-b3e2-d2fc6c56b332	GOTHIC GREY	GOTHIC GREY	KING DÉCOR	Plain Colours	70	\N	\N	{Artvio,Woodrica}	-367.00	83.89	2025-06-04 15:17:48.404+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.599+00	{721,121}
+7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	TERRCOTTA	4323-75	FAKIRSONS	Plain Colours	75	\N	\N	{Artvio,Woodrica}	581.00	48.89	2025-06-04 15:17:48.404+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.6+00	{722,122}
+5054a542-2406-4a73-9b22-5fdeb5f5f642	PASTEL GREEN	PASTEL GREEN	ARIHANT	Plain Colours	70	\N	\N	{Artvio,Woodrica}	108.00	65.86	2025-06-04 15:17:48.406+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.602+00	{125}
+1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	 FROSTY WHITE (65)	ANTIQUE WHITE (65)	ITC	Plain Colours	\N	\N	\N	{Liner}	428.00	479.20	2025-06-04 15:17:48.411+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.686+00	{9002-65}
+a3cac384-7ef5-4e60-92ab-dbe191cba8d2	HIGHLAND PINE DARK	9009	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	218.00	171.60	2025-06-04 15:17:48.414+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.688+00	{9026}
+6b39aa6c-f45d-4fed-83ce-e52cb6405a1f	FLOWERY WENGE	9007	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	466.00	77.00	2025-06-04 15:17:48.415+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.689+00	{9027}
+3176c92d-701d-4ad3-b33d-69351138bc92	BROWN WENGE	UD-11001/006	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	701.00	46.80	2025-06-04 15:17:48.481+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.69+00	{9028}
+11046707-e54b-44e5-8d87-0c1ab5b5d34d	NAINA TEAK	079 / 171301	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	594.00	138.20	2025-06-04 15:17:48.482+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.691+00	{9031}
+74143383-eaff-438b-973e-f36bccd350d0	BURMA TEAK	180402	JDC	Wooden	\N	\N	\N	{Liner}	618.00	78.40	2025-06-04 15:17:48.483+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.692+00	{9032}
+0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	LIGHT OAK	176001	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	596.00	100.40	2025-06-04 15:17:48.485+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.692+00	{9033}
+1353dc63-9c99-4a11-aca6-b04daaee59b9	SMOKED OAK	176002	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	375.00	13.25	2025-06-04 15:17:48.485+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.693+00	{9034}
+18dfeade-9fbc-4ad5-a026-fc57f3c7f057	IVORY CAMBRIC	UD	UNIQUE DÉCOR	Fabric	\N	\N	\N	{Liner}	1596.00	1073.60	2025-06-04 15:17:48.498+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.698+00	{9082}
+1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	LIGHT FABRIC	9022A	UNIQUE DÉCOR	Fabric	\N	\N	\N	{Liner}	508.00	241.20	2025-06-04 15:17:48.499+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.699+00	{9087}
+ed47c77a-f8c6-424f-a06a-e73e8e7c0063	CLASSIC FABRIC	RD-041	ROYAL DÉCOR	Fabric	\N	\N	\N	{Liner}	449.00	392.40	2025-06-04 15:17:48.5+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.7+00	{9089}
+d7931935-f352-48e1-b2b3-198d95bb615d	GREY KHADI	RD-011	ROYAL DÉCOR	Fabric	\N	\N	\N	{Liner}	370.00	438.60	2025-06-04 15:17:48.501+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.701+00	{9090}
+255586d4-5afd-424b-84fd-6a1ae34bed3e	ELITE KHADI	34103	MATCH GRAPHICS	Fabric	\N	\N	\N	{Liner}	349.00	180.60	2025-06-04 15:17:48.502+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.781+00	{9091}
+5698162c-9d89-467a-ae2c-2767b6a15ead	HEXA LUXE	4076-01	MATCH GRAPHICS	Abstract	60	\N	\N	{Artvio}	0.00	32.57	2025-04-25 07:04:20.829+00	\N	2025-04-22 11:25:16.622+00	2025-04-25 07:04:21.6+00	{912}
+38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	MIDNIGHT ASH	10271-002	TANISH	Wooden	75	\N	\N	{Artvio}	264.00	5.00	2025-06-04 15:17:48.1+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.202+00	{915}
+d77449a9-6533-40ad-b711-af427fc5d53e	PALE TIMBER	S-3804	SURFACE	Wooden	65	\N	\N	{Artvio}	27.00	4.63	2025-06-04 15:17:48.101+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.202+00	{916}
+8a6295c5-a8a1-459e-95e5-3a99537f792b	SNOW COROBA	9054-A	MBEE	Wooden	63	\N	\N	{Artvio,Woodrica}	453.00	59.89	2025-06-04 15:17:48.102+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.284+00	{919,501}
+9d7f2d3b-4ee9-4c02-aafc-14cefe559557	CREAM MARMO	UD-872	UNIQUE DÉCOR	Marble	60	\N	\N	{Artvio,Woodrica}	265.00	136.89	2025-06-04 15:17:48.187+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.299+00	{942,530}
+4a74547a-da83-41eb-a462-ead451407e61	MOCHA CHROME	187/19	MICROTECH	Metallics	65	\N	\N	{Artvio,Woodrica}	188.00	47.56	2025-06-04 15:17:48.188+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.301+00	{945,542}
+f985c888-f64f-4e62-b52e-a20264cda995	BYZANTINE BRONZE	187/04	MICROTECH	Metallics	65	\N	\N	{Artvio,Woodrica}	301.00	40.11	2025-06-04 15:17:48.189+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.301+00	{946,543}
+f75d2a64-2710-4546-8e9c-d0a5c8008c75	SUNSET COPPER	187/12	MICROTECH	Metallics	70	\N	\N	{Artvio,Woodrica}	324.00	55.44	2025-06-04 15:17:48.189+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.302+00	{947,544}
+26912293-b83f-425a-b7c6-8090d90c62ab	BLACK CURRENT	BLACK CURRENT	UNIQUE DÉCOR	Sparkles	60	\N	\N	{Artvio,Woodrica}	119.00	32.13	2025-06-04 15:17:48.192+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.305+00	{952,533}
+6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	MAROON	MAROON	UNIQUE DÉCOR	Sparkles	75	\N	\N	{Artvio,Woodrica}	196.00	26.29	2025-06-04 15:17:48.193+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.306+00	{953,537}
+f10eee81-3438-4965-8c14-4640f17c903b	CREAMY BIRCH	9000-A	MBEE	Wooden	70	\N	\N	{Artvio}	31.00	11.25	2025-06-04 15:17:48.194+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.306+00	{960}
+d858dc83-8e69-4b5d-ac91-4efe1cc965a7	ONYX FLUTES	4140-4	MATCH GRAPHICS	Abstract	55	\N	\N	{Artvio}	162.00	58.67	2025-06-04 15:17:48.195+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.308+00	{964}
+552ecb22-8606-4783-8186-f6510c82fe0c		MY 21015-1	ARIHANT	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1030}
+d271ec0d-e54d-4c57-80b3-bb409036031a		4332-1	HPL	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1301}
+2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	BLENDED GEY FABRIC	9191-B	MBEE	Fabric	\N	\N	\N	{Liner}	353.00	189.00	2025-06-04 15:17:48.504+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.782+00	{9094}
+388076d1-5f9b-4c9b-be03-5930aebfa7a5		18322-3	ARIHANT	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1302}
+c7e059bb-90ec-4b00-87dc-703d097a8694		591-21	HPL	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1303}
+3101f24e-322b-4a36-8499-698393193a9e	DAINTY DARK	9049-C	MBEE	Wooden	60	\N	\N	{Artvio,Woodrica}	1257.00	411.33	2025-06-04 15:17:48.099+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.201+00	{910,512}
+90d3abe5-d026-4ba5-8d65-4d86b20b609c	EARTHY BLISS	40059-004	TANISH	Wooden	65	\N	\N	{Artvio}	85.00	7.38	2025-06-04 15:17:48.104+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.287+00	{924}
+e6eaaa59-cd1c-4100-b4c5-e1c2436076be	CANBERRA WOOD	S-12001	SURFACE	Wooden	60	\N	\N	{Artvio,Woodrica}	90.00	41.78	2025-06-04 15:17:48.104+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.287+00	{927,520}
+c688e992-127e-4be0-8f40-5b03a31d9939	ROASTED WOOD	4060-02	MATCH GRAPHICS	Wooden	50	\N	\N	{Artvio,Woodrica}	54.00	73.33	2025-06-04 15:17:48.106+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.289+00	{930,510}
+bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	WOODEN CREMA	9020-E	MBEE	Wooden	60	\N	\N	{Artvio,Woodrica}	96.00	50.44	2025-06-04 15:17:48.181+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.291+00	{935,503}
+7e93b44a-7620-463d-9de2-8ed44f9be58d	GREY CREEK	9090-A	MBEE	Marble	65	\N	\N	{Artvio,Woodrica}	642.00	80.00	2025-06-04 15:17:48.183+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.292+00	{937,571}
+ec262571-6900-4cdb-8f74-e40b14b17d80	MINERAL STONE	UD-10033	UNIQUE DÉCOR	Stone	65	\N	\N	{Artvio}	76.00	18.33	2025-06-04 15:17:48.184+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.293+00	{939}
+8ed81c0f-150e-4eef-8dee-e206374cb86b	BLACK	BLACK	JDC	Sparkles	60	\N	\N	{Artvio,Woodrica}	223.00	28.78	2025-06-04 15:17:48.192+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.304+00	{950,532}
+06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	ZIRICOTE	4125-03	MATCH GRAPHICS	Wooden	60	\N	\N	{Artvio,Woodrica}	262.00	45.33	2025-06-04 15:17:48.2+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.381+00	{967,570}
+6802b141-d15a-4ded-b1af-e51c89c3cae5	ACACIA LIGHT	9018-A	MBEE	Wooden	65	\N	\N	{Woodrica}	433.00	22.43	2025-06-04 15:17:48.283+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.395+00	{506}
+71578227-eb61-4a5b-9e77-b0fb6820f6d5	PRINCELY BROWN	9014-D	MBEE	Wooden	50	\N	\N	{Woodrica}	280.00	58.00	2025-06-04 15:17:48.284+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.396+00	{508}
+22e71b98-2a32-4077-b0d3-d0882a2674d5	PURIST OAK	9014-E	MBEE	Wooden	70	\N	\N	{Woodrica}	119.00	44.88	2025-06-04 15:17:48.284+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.396+00	{509}
+9987a243-da19-45ae-8099-dda63c577d11	BREWED WOOD	9000-C	MBEE	Wooden	65	\N	\N	{Woodrica}	73.00	262.67	2025-06-04 15:17:48.286+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.397+00	{516}
+8f8c1dab-1010-47a4-9931-7b7858e4a11c	EARTHEN WOOD	9001-E	MBEE	Wooden	70	\N	\N	{Woodrica}	68.00	27.63	2025-06-04 15:17:48.287+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.398+00	{518}
+0c7d088e-3454-4924-9b68-e70142714a17	BREWSKI OAK	50054-003	TANISH	Wooden	65	\N	\N	{Woodrica}	0.00	36.63	2025-06-04 15:17:48.287+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.399+00	{521}
+ee40ba6a-5b01-4a1f-8249-f31f6589c414	GREY MARMO	UD-552	UNIQUE DÉCOR	Marble	75	\N	\N	{Woodrica}	337.00	25.33	2025-06-04 15:17:48.288+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.4+00	{529}
+96f76fcf-65c1-4e1b-b3c8-2a9f4477dbf8		MY 61110-1	ARIHANT	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1004}
+aee970e7-4c74-4c64-a861-11e5fb5f8094		6835-6	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1005}
+ceffdb7f-4863-4a8e-b5c9-6a80cd849202		88137-3	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1006}
+19826d0f-59d6-4c0e-a14e-bb853ab6873b		88137-1	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1007}
+bdbbd59e-d136-4620-9df7-f982a1b38cba		12045-1	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1008}
+5126660b-ae39-4171-82b7-5221093167ca		12045-7	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1009}
+11ba1f03-417c-4693-bd57-7ef1f21246b6		20038-2ZY	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1010}
+d18c8d75-5a80-4831-a6d5-23db69252cce		20038-4ZY	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1011}
+82d68610-6a62-4675-ba31-0dd0c61acd1f		H1844-81H	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1012}
+76d22422-7b2c-4153-a216-53a8564e1387		1806-4H	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1013}
+0500a63b-23c9-466f-9a90-a85fbf5f7e94		63005-4	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1014}
+b530221d-1d9c-4dc1-b9b0-a8bc113f6b02		99100-4	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1015}
+83484a23-e3b6-4efd-8835-0b962a86bf7b		6121-11-D	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1016}
+ad8b73f5-a6db-4515-aa0d-60558da65f42		6121-9-D	HPL	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1017}
+da1173e5-62f4-4efe-a384-322defb2a02a		9009-1H	HPL	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1503}
+ada56bfb-646b-4509-85b4-f0cfd7be9687		9009-3H	HPL	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1504}
+bb956ef2-12d3-4f47-bdcb-a683c19826c5		21018-6Y	HPL	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1505}
+4152130e-faf7-4fa0-9008-c596bda388dc		21018-5Y	HPL	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1506}
+3e422169-58de-4aba-b5fd-524ebff5834a		T16113-5	HPL	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1507}
+0625aacb-0847-481b-92c5-a8cf8861ecfc		T16113-7	HPL	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1508}
+ff1d95ce-bcbd-48b9-9bbb-84b4950a639a		J70127-4Y	DILON	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1509}
+b2a7761c-3479-4fd8-b914-7cb1b466aeef	OLIVE ASH BURL	9038-04	INFINIAA DÉCOR	Wooden	65	\N	\N	{Woodrica}	-225.00	42.22	2025-06-04 15:17:48.295+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.484+00	{567}
+0fff1be0-c4ae-4b09-a56a-94795b6ee450	GREEN EBONY	9023-06	BAYA	Wooden	55	\N	\N	{Woodrica}	109.00	8.00	2025-06-04 15:17:48.295+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.485+00	{569}
+c6fb1acf-5369-4e71-9057-348d89b49478		J70127-1Y	DILON	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1510}
+f04fe47e-582d-41df-814a-04123eb50a12		LS686-3	ARIHANT	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1511}
+25e28307-54b0-43a6-89a3-988681f1557b		SL5387-HY	ARIHANT	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1512}
+a1435625-70a9-416f-8d73-394b3f0c7524		MY 61110-2	ARIHANT	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1001}
+191a0447-3ffa-4140-aabb-d166806c08d0		MY 61110-3	ARIHANT	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1002}
+e0f853a9-3e07-4def-8317-ecd5aa78641b		MY 61110-4	ARIHANT	Wooden	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1003}
+8990c077-2853-41c8-97fb-cbb78b90d9e4		591-23B	HPL	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1304}
+28e1531a-8541-468b-b335-0fd0a8c2de6a		MY 32016-3	ARIHANT	Stone	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1305}
+44582705-1bce-4209-93af-f6db9891b2bc		MY 32016-1	ARIHANT	Stone	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1306}
+9c1d26fd-513f-4101-a593-7a20f79aef50		91457T	ARIHANT	Stone	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1307}
+31573da6-c195-4573-9d77-2992d0bc4d6b		35012-2Y	HPL	Stone	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1308}
+b521e786-d0f3-4221-a02f-b61c727422e7		4338-3	HPL	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1309}
+6e96435d-f9b4-4456-96f1-23c1a2a50b70		4348-2	HPL	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1310}
+51e8bdf9-938e-457d-9390-31379be3a676		69005-4	HPL	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1311}
+89ea49be-5acf-4957-bb0b-b32705d0b37a		62107-1	ARIHANT	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1312}
+62c7d386-af44-4e25-9308-a712ab5c6e08		3291-113	HPL	Marble	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1313}
+8c6e0e66-8eec-4103-a2e2-1327df942981		J70138-3	DILON	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1501}
+9beeb26e-737e-481d-8aef-c4047cff4a3b		J70138-2Y	DILON	Abstract	\N	\N	\N	{Artis}	0.00	0.00	2025-04-25 07:02:46.423+00	\N	2025-04-22 11:25:39.916+00	2025-04-25 07:02:46.424+00	{1502}
+8b446b13-5977-4382-80f1-c145c4ff8c28	LUSTROUS WHITE	SHELL 	ARIHANT	Acrylic	110	\N	\N	{Woodrica}	163.00	209.17	2025-06-04 15:17:48.386+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.498+00	{201}
+b3c6683f-bad1-40ac-9d37-f16dadc0e55e	BEIGE GEM	BEIGE GEM	ARIHANT	Acrylic	85	\N	\N	{Woodrica}	80.00	101.71	2025-06-04 15:17:48.386+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.498+00	{202}
+71108d69-b791-4b1d-9cae-7ebd91dec569	SAND GLOW	SAND GLOW	ARIHANT	Acrylic	85	\N	\N	{Woodrica}	182.00	73.71	2025-06-04 15:17:48.387+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.499+00	{203}
+dee70458-7a73-41d5-95f5-7a833350f3aa	PISTACHIO GREEN	WATER GREEN	ARIHANT	Plain Colours	70	\N	\N	{Artvio,Woodrica}	81.00	54.00	2025-06-04 15:17:48.407+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.682+00	{127}
+5e9023f5-f412-42ea-a178-e1975fb13c19	BLUE BELL	BLUE BELL	ARIHANT	Plain Colours	80	\N	\N	{Artvio,Woodrica}	146.00	53.86	2025-06-04 15:17:48.409+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.684+00	{129}
+3367f8cc-7c4d-4119-bc1f-b763d8d55dbd	BEIGE	3153	FAKIRSONS	Plain Colours	\N	\N	\N	{Liner}	117.00	39.67	2025-06-04 15:17:48.412+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.686+00	{9010}
+3520b985-7a28-4781-8893-3f442cc6d9b6	HIGHLAND PINE LIGHT	9010	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	573.00	141.75	2025-06-04 15:17:48.412+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.687+00	{9024}
+a787e796-4385-412c-b2c5-27c9247f9894	BAVARIAN BEECH	9025	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	451.00	109.80	2025-06-04 15:17:48.413+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.687+00	{9025}
+76caa84f-1750-4310-a140-cec3684c5ee0	CAMBRIC FAB	36501	MATCH GRAPHICS	Fabric	\N	\N	\N	{Liner}	579.00	187.60	2025-06-04 15:17:48.507+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.783+00	{9096}
+f00e13b1-5879-4c4f-821a-927b76c20aef	LUMEN OAK	9238-A	MBEE	Wooden	\N	\N	\N	{Woodrica}	299.00	38.00	2025-06-04 15:17:48.381+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.495+00	{595}
+e6febfc1-c57a-4459-a72b-89a4357ed21a	MOROCCAN MOCHA	9238-D	MBEE	Wooden	\N	\N	\N	{Woodrica}	248.00	39.60	2025-06-04 15:17:48.382+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.496+00	{596}
+76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	DUNE RADIENCE	9239-E	MBEE	Wooden	\N	\N	\N	{Woodrica}	87.00	30.40	2025-06-04 15:17:48.383+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.497+00	{597}
+0a4da614-dba2-47b9-9a9d-f0675aeb0f96	DEW GREEN	DEW GREEN	ARIHANT	Acrylic	85	\N	\N	{Woodrica}	37.00	62.00	2025-06-04 15:17:48.388+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.5+00	{205}
+a9d95b92-b40b-477e-9fad-90d174617f80	GREEN BAY	GREEN BAY	ARIHANT	Acrylic	85	\N	\N	{Woodrica}	116.00	112.57	2025-06-04 15:17:48.389+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.581+00	{206}
+3927e84b-e35f-4c88-bb49-93aa3370eb6b	VOLVO BLUE	VOLVO BLUE	ARIHANT	Acrylic	80	\N	\N	{Woodrica}	98.00	82.71	2025-06-04 15:17:48.389+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.582+00	{207}
+bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	SNOW WHITE	4005	FAKIRSONS	Plain Colours	80	\N	\N	{Artvio,Woodrica}	278.00	275.67	2025-06-04 15:17:48.39+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.584+00	{701,101}
+d3ca9255-2b14-42d7-8940-f11eedbfa16d	BLUE	4319-85	FAKIRSONS	Plain Colours	85	\N	\N	{Artvio,Woodrica}	0.00	176.67	2025-06-04 15:17:48.398+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.592+00	{712,118}
+190becbb-2919-4ebf-aa19-619a06a12fe5	BLACK CURRENT	UDS015	UNIQUE DÉCOR	Plain Colours	70	\N	\N	{Artvio,Woodrica}	394.00	13.75	2025-06-04 15:17:48.399+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.593+00	{713,112}
+dfd9ce83-5efc-4b18-a502-72b530d6fa1a	DARK GREY	5005	FAKIRSONS	Plain Colours	70	\N	\N	{Artvio,Woodrica}	779.00	390.44	2025-06-04 15:17:48.4+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.595+00	{715,114}
+661c2cb7-b78f-4584-a043-a4ca8873ec25	BLACK	BLACK	MATCH GRAPHICS	Plain Colours	\N	\N	\N	{Artvio,Woodrica,Liner}	131.00	158.78	2025-06-04 15:17:48.401+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.596+00	{717,116,9008}
+d2a5608b-c8ef-4461-be88-fe0e2bd85a01	MAROON	4301 - MAROON	FAKIRSONS	Plain Colours	70	\N	\N	{Artvio,Woodrica}	89.00	22.38	2025-06-04 15:17:48.401+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.597+00	{718,117}
+33b804dd-22bc-4504-9a36-9c840b35aa08	SATIN TEAK	4203-01	MATCH GRAPHICS	Wooden	\N	\N	\N	{Artvio}	570.00	77.89	2025-06-04 15:17:48.205+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.387+00	{977}
+1c14eed6-b659-4435-821d-1cfa0d52c2f4	CLOUD WHITE	7015-A	MBEE	Marble	70	\N	\N	{Artvio}	379.00	124.00	2025-06-04 15:17:48.207+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.389+00	{980}
+013663d3-e71d-46c2-b4b4-f8b9cb042d8c	SAPELI	9004	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	495.00	34.50	2025-06-04 15:17:48.486+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.693+00	{9035}
+f5465b38-1aa7-486a-a7de-465c89565a2e	ROSE WOOD	RD-L-007	ROYAL DÉCOR	Wooden	\N	\N	\N	{Liner}	184.00	37.80	2025-06-04 15:17:48.487+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.694+00	{9036}
+056aec11-d847-4816-9217-898f31bbd4fb	SPANISH OAK	40701	MATCH GRAPHICS	Wooden	\N	\N	\N	{Liner}	41.00	144.40	2025-06-04 15:17:48.488+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.694+00	{9051}
+5ddf1010-2b30-459e-9a5a-377d0de9381e	FINE OAK LIGHT	40001	MATCH GRAPHICS	Wooden	\N	\N	\N	{Liner}	341.00	193.60	2025-06-04 15:17:48.49+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.695+00	{9052}
+56e305de-ba92-4e70-9dcc-6e38303920c0	CLASSIC CREAM MARBLE	40901	MATCH GRAPHICS	Marble	\N	\N	\N	{Liner}	107.00	31.40	2025-06-04 15:17:48.492+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.696+00	{9061}
+a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	GREY FLURRY MARBLE	40903	MATCH GRAPHICS	Marble	\N	\N	\N	{Liner}	240.00	25.40	2025-06-04 15:17:48.493+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.697+00	{9062}
+64a4936d-1945-4964-bd49-b281eb85fb6c	LIGHT KHADI	9026A	UNIQUE DÉCOR	Fabric	\N	\N	\N	{Liner}	987.00	611.20	2025-06-04 15:17:48.494+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.698+00	{9080}
+84e10830-9923-4bd8-a704-75b8a62d18c7	GREY GARNET	4080-02	MATCH GRAPHICS	Stone	65	\N	\N	{Artvio}	183.00	31.22	2025-06-04 15:17:48.095+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.197+00	{901}
+12e8c770-8592-4d69-9b4e-873b88b0124f	MIDNIGHT GREY	4080-04	MATCH GRAPHICS	Stone	65	\N	\N	{Artvio}	227.00	26.78	2025-06-04 15:17:48.096+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.198+00	{902}
+16bfeff9-7c35-4570-9ea8-5c624361a8b2	GREY MOONSTONE	9125-A	MBEE	Stone	60	\N	\N	{Artvio}	55.00	19.00	2025-06-04 15:17:48.097+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.198+00	{903}
+6bb361ed-d52b-4c0d-a920-dbb09c7ec814	SILK CHEVRON	4066-01	MATCH GRAPHICS	Abstract	65	\N	\N	{Artvio}	87.00	68.89	2025-06-04 15:17:48.097+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.198+00	{906}
+21eb31d1-ac0c-488f-bbfa-c1b660a6239e	GILDED CHEVRON	9122-C	MBEE	Abstract	60	\N	\N	{Artvio}	96.00	8.63	2025-06-04 15:17:48.098+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.2+00	{908}
+f3957def-9de6-4e72-9960-9a9ceac670ab	LIGHT IRISH TEAK	32401	MATCH GRAPHICS	Wooden	63	\N	\N	{Artvio}	286.00	40.88	2025-06-04 15:17:48.198+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.309+00	{965}
+cafac31f-e7cb-4f48-b704-df84d5e84ad8	ROSEWOOD EMBER	32404	MATCH GRAPHICS	Wooden	55	\N	\N	{Artvio}	208.00	83.33	2025-06-04 15:17:48.198+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.38+00	{966}
+db090aec-b37c-40ce-83c5-a82fe8d884b8	MOCHA CHEVRON	4066-04	MATCH GRAPHICS	Abstract	55	\N	\N	{Artvio}	705.00	95.67	2025-06-04 15:17:48.098+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.199+00	{907}
+690d8675-5f55-4faa-b512-c706ccc5afde	KINTSUKI GOLD	9067-D	MBEE	Wooden	65	\N	\N	{Artvio,Woodrica}	203.00	101.11	2025-06-04 15:17:48.103+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.286+00	{920,558}
+bf9253b2-c833-4c27-a3f2-e6150aab0c6b	EMPEROR TIMBER	UD-932	UNIQUE DÉCOR	Wooden	55	\N	\N	{Artvio,Woodrica}	34.00	125.44	2025-06-04 15:17:48.103+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.286+00	{922,522}
+cf65c8a6-2a27-4f0e-a52e-f87148b9411b	MERLOT OAK	9049-B	MBEE	Wooden	65	\N	\N	{Artvio,Woodrica}	892.00	349.67	2025-06-04 15:17:48.106+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.29+00	{931,553}
+c4e8031d-faad-4e83-93eb-b3e7e33fcb48	BOURBON WOOD	9009-C	MBEE	Wooden	55	\N	\N	{Artvio,Woodrica}	-474.00	189.11	2025-06-04 15:17:48.107+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.29+00	{932,513}
+e15a84df-6a31-4d9d-845a-f5d56c398d3d	SCOT SPRUCE	9090-E	MBEE	Marble	65	\N	\N	{Artvio,Woodrica}	187.00	77.22	2025-06-04 15:17:48.183+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.293+00	{938,572}
+3fe8e967-024f-4dd7-9926-6bc51b91c1b0	REGAL OAK	9017-05	INFINIAA DÉCOR	Wooden	\N	\N	\N	{Woodrica}	81.00	69.83	2025-06-04 15:17:48.288+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.401+00	{550}
+9057c24b-9e04-4fd9-bbc3-a6ee796f9761	CHOCO COROBA	9054-F	MBEE	Wooden	65	\N	\N	{Artvio,Woodrica}	208.00	64.44	2025-06-04 15:17:48.102+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.283+00	{918,502}
+aa20c5be-abd9-4c33-afa3-90f33a3b4e78	VENETIAN RUBY	187/03	MICROTECH	Metallics	70	\N	\N	{Artvio,Woodrica}	348.00	34.00	2025-06-04 15:17:48.19+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.303+00	{954,545}
+c6aea81b-f27e-4831-a801-bc256f699290	FROSTY WHITE	FROSTY WHITE	JDC	Sparkles	70	\N	\N	{Artvio,Woodrica}	1.00	81.89	2025-06-04 15:17:48.19+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.304+00	{948,534}
+4fec1fbc-1190-42d7-b569-d7f1580561b7	RED	RED	UNIQUE DÉCOR	Sparkles	75	\N	\N	{Artvio,Woodrica}	263.00	17.63	2025-06-04 15:17:48.193+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.305+00	{951,531}
+7dae25a0-08b2-422a-bfd9-84ca60c1223a	SANDSTONE FLUTES	4140-1	MATCH GRAPHICS	Abstract	65	\N	\N	{Artvio}	24.00	72.22	2025-06-04 15:17:48.194+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.307+00	{963}
+538fa5f1-f7cf-4706-9711-197079e80529	MERLOT WALNUT	50013-08	TANISH	Wooden	\N	\N	\N	{Artvio,Woodrica}	185.00	94.78	2025-06-04 15:17:48.204+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.386+00	{975,590}
+74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	MARQUINA BROWN	4132-03	MATCH GRAPHICS	Marble	70	\N	\N	{Woodrica}	220.00	22.75	2025-06-04 15:17:48.297+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.488+00	{577}
+49219c9c-1b07-4057-b363-cb55c8d2fcaa	EMERALD CREST	4233-03	MATCH GRAPHICS	Marble	\N	\N	\N	{Woodrica}	80.00	73.33	2025-06-04 15:17:48.298+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.489+00	{580}
+10667ae4-4839-4c17-88a3-c9b9a202d6cb	WALNUT	9017	UNIQUE DÉCOR	Wooden	\N	\N	\N	{Liner}	177.00	343.60	2025-06-04 15:17:48.482+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.691+00	{9030}
+7ad9a54b-9a6f-4bf7-969b-7baec42d6ef6	FINE OAK BROWN	40003	MATCH GRAPHICS	Wooden	\N	\N	\N	{Liner}	213.00	45.00	2025-06-04 15:17:48.491+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.696+00	{9053}
+9c7487c5-4437-4c71-94de-4958578e6252	HAZEL FABRIC	9023A	UNIQUE DÉCOR	Fabric	\N	\N	\N	{Liner}	0.00	26.40	2025-06-04 15:17:48.499+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.699+00	{9088}
+aff2a5a9-1324-4beb-a479-106b2c5979d7	DOT FAB	9191-A	MBEE	Fabric	\N	\N	\N	{Liner}	606.00	357.60	2025-06-04 15:17:48.503+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.781+00	{9093}
+9a94fcd6-aaad-4420-b82a-7ac28528b598	WEN DARK FABRIC	39504	MATCH GRAPHICS	Fabric	\N	\N	\N	{Liner}	462.00	165.00	2025-06-04 15:17:48.506+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.783+00	{9095}
+6b8141d6-1c53-4788-a0de-938429be7e67	NEOLITHIC CALACUTTA	9114-B	MBEE	Marble	65	\N	\N	{Artvio,Woodrica}	208.00	237.89	2025-06-04 15:17:48.182+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.292+00	{936,578}
+b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	ELYSIAN WHITE	187/10	MICROTECH	Metallics	82	\N	\N	{Artvio,Woodrica}	449.00	323.56	2025-06-04 15:17:48.187+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.299+00	{943,540}
+af4259c9-07df-435a-a936-b69495916dda	GRAPHITE GREY	187/11	MICROTECH	Metallics	70	\N	\N	{Artvio,Woodrica}	717.00	246.56	2025-06-04 15:17:48.188+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.3+00	{944,541}
+a81a5cd7-1d01-49e0-987c-419d628472f2	DARK ELM	4207-03	MATCH GRAPHICS	Wooden	\N	\N	\N	{Artvio}	524.00	253.44	2025-06-04 15:17:48.203+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.385+00	{973}
+937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OPULENT TEAK	4203-03	MATCH GRAPHICS	Wooden	\N	\N	\N	{Artvio}	255.00	120.44	2025-06-04 15:17:48.206+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.387+00	{978}
+619c37b6-0b66-422a-916e-be96eb242f77	BLACK GALAXY	7015-C	MBEE	Marble	55	\N	\N	{Artvio}	172.00	33.00	2025-06-04 15:17:48.207+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.39+00	{981}
+9d84fa50-480c-4c5a-9114-ca89723cfe37	CHAMPAGNE OAK	4194-01	MATCH GRAPHICS	Wooden	\N	\N	\N	{Artvio,Woodrica}	601.00	156.89	2025-06-04 15:17:48.282+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.393+00	{987,587}
+15efc96f-2728-4830-937d-5d4f529bdd4b	MANDARIN OAK	4194-03	MATCH GRAPHICS	Wooden	\N	\N	\N	{Artvio,Woodrica}	455.00	167.89	2025-06-04 15:17:48.282+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.394+00	{988,588}
+02aaa1b1-cd1f-4df8-9578-3e8598b26f32	 UMBER	 UMBER	ARIHANT	Plain Colours	70	\N	\N	{Artvio,Woodrica}	276.00	32.14	2025-06-04 15:17:48.406+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.601+00	{124}
+1985e7d8-91f8-45a6-9377-445a0052056a	BRUNIE BARK	S-8104	SURFACE	Wooden	65	\N	\N	{Artvio,Woodrica}	414.00	209.00	2025-06-04 15:17:48.099+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.201+00	{913,519}
+182e431b-ee09-42e3-a93c-f62c289cf3d7	GREEN TOURMALINE	9035-A	MBEE	Stone	62	\N	\N	{Artvio}	67.00	34.56	2025-06-04 15:17:48.28+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.391+00	{984}
+40888ace-1283-4b98-a9d9-70200531558b	FERN GREEN	FERN GREEN	ARIHANT	Plain Colours	70	\N	\N	{Artvio,Woodrica}	108.00	58.43	2025-06-04 15:17:48.407+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.681+00	{126}
+4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	WHITE  	POLAR WHITE	ITC	Plain Colours	\N	\N	\N	{Liner}	1773.00	1012.00	2025-06-04 15:17:48.41+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.685+00	{9001}
+e51cc773-61dd-4219-a85b-7803c1e676c3	 FROSTY WHITE (60)	ANTIQUE WHITE (60)	ITC	Plain Colours	\N	\N	\N	{Liner}	3163.00	4551.00	2025-06-04 15:17:48.411+00	\N	2025-04-22 11:25:46.691+00	2025-06-04 15:17:49.685+00	{9002-60}
+5afe5513-aa31-4b59-8734-cac79b685f3f	ECLAT MOSIAC	7003-1	BAYA	Abstract	63	\N	\N	{Artvio}	144.00	35.22	2025-06-04 15:17:48.208+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.39+00	{982}
+b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	LUXOR MOSIAC	7003-2	BAYA	Abstract	66	\N	\N	{Artvio}	0.00	39.33	2025-06-04 15:17:48.208+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.391+00	{983}
+c904d337-67b8-450c-964f-39ab2c70eaa3	EMERALD ISLE	1042-02	INFINIAA DÉCOR	Marble	\N	\N	\N	{Artvio}	733.00	177.33	2025-06-04 15:17:48.281+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.392+00	{985}
+10122c70-0fd8-4889-b2c6-2a6252569200	ARMANI BLACK	4010-02	MATCH GRAPHICS	Marble	60	\N	\N	{Artvio,Woodrica}	136.00	139.67	2025-06-04 15:17:48.281+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.392+00	{986,576}
+bb444182-207f-45de-a3f8-c90e29ad90ad	BLUSH PINK	PARIS PINK	ARIHANT	Plain Colours	70	\N	\N	{Artvio,Woodrica}	155.00	59.33	2025-06-04 15:17:48.405+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.601+00	{123}
+043246cc-f78d-49c8-bcab-8e9f42257178	ROMAN CRÈME MARBLE	1031-01	INFINIAA DÉCOR	Marble	\N	\N	\N	{Woodrica}	334.00	97.71	2025-06-04 15:17:48.299+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.49+00	{581}
+957b389a-df69-4b4a-803e-aa6aed47312e	AMBERWOOD ROYALE	9035-04	INFINIAA DÉCOR	Wooden	\N	\N	\N	{Woodrica}	255.00	168.86	2025-06-04 15:17:48.299+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.49+00	{582}
+5211ee64-e872-4b32-8ce3-1c1a118f9373	MOLTEN MAPPLE	9124-01	INFINIAA DÉCOR	Wooden	\N	\N	\N	{Woodrica}	189.00	55.67	2025-06-04 15:17:48.3+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.492+00	{584}
+a5876edb-57b3-4c7b-9554-091a8d25d099	NATURAL OAK	9018-D	MBEE	Wooden	55	\N	\N	{Woodrica}	37.00	43.38	2025-06-04 15:17:48.283+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.395+00	{507}
+af619843-42f3-4ccb-a145-54c64adf4f6f	MALT WOOD	9007-B	MBEE	Wooden	50	\N	\N	{Woodrica}	350.00	42.38	2025-06-04 15:17:48.285+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.397+00	{514}
+e4dfccb6-ac5e-4990-b5ed-620cc928dacf	CARAMEL ASH	UD-10028	UNIQUE DÉCOR	Wooden	60	\N	\N	{Woodrica}	86.00	66.67	2025-06-04 15:17:48.289+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.402+00	{554}
+8331a016-472e-47ef-a62a-f0f97780a8ac	FROSTY WHITE	4011	FAKIRSONS	Plain Colours	80	\N	\N	{Artvio,Woodrica}	0.00	662.67	2025-06-04 15:17:48.392+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.585+00	{702,102}
+2af25b32-de64-4886-afd3-63d44c3db648	GREY 	5001	FAKIRSONS	Plain Colours	\N	\N	\N	{Artvio,Woodrica,Liner}	154.00	465.78	2025-06-04 15:17:48.399+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.594+00	{714,113,9004}
+ab54ac15-dfb7-4edb-802c-a02562188e54	COFFEE	3051	FAKIRSONS	Plain Colours	\N	\N	\N	{Artvio,Woodrica,Liner}	395.00	116.78	2025-06-04 15:17:48.4+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.595+00	{716,115,9011}
+d1116894-2f0b-4473-b907-11f837669963	GOLDEN ELM	4207-02	MATCH GRAPHICS	Wooden	\N	\N	\N	{Artvio}	84.00	182.44	2025-06-04 15:17:48.202+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.384+00	{972}
+26a9d26e-acef-4519-b22d-79556b4d62ea	CUBAN MAHOGANY	9035-02	INFINIAA DÉCOR	Wooden	70	\N	\N	{Artvio,Woodrica}	679.00	516.56	2025-06-04 15:17:48.203+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.385+00	{974,568}
+41fd7109-37a5-45e0-9c87-0656bf194cc9	CANDESSA BIRCH	9008-01	BAYA	Wooden	\N	\N	\N	{Artvio,Woodrica}	273.00	241.11	2025-06-04 15:17:48.206+00	\N	2025-04-22 11:25:16.622+00	2025-06-04 15:17:49.388+00	{979,589}
+7465e001-52c5-44e0-a3aa-2caa680bb44e	WHITE STATUARIO	217 / FT - 08	MICROTECH	Marble	\N	\N	\N	{Woodrica}	345.00	117.00	2025-06-04 15:17:48.298+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.489+00	{579}
+e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	SIENNA OAK	9206-C	MBEE	Wooden	\N	\N	\N	{Woodrica}	346.00	121.20	2025-06-04 15:17:48.302+00	\N	2025-04-22 11:25:26.499+00	2025-06-04 15:17:49.493+00	{586}
+c48004c1-4854-4845-a1fb-cca95861e90a	OCEAN BLUE	AIR FORCE BLUE	ARIHANT	Plain Colours	70	\N	\N	{Artvio,Woodrica}	130.00	70.33	2025-06-04 15:17:48.408+00	\N	2025-04-22 11:25:07.233+00	2025-06-04 15:17:49.682+00	{128}
+\.
+
+
+--
+-- Data for Name: SalesTeams; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."SalesTeams" (id, "userId", role, territory, "reportingTo", "targetQuarter", "targetYear", "targetAmount", "createdAt", "updatedAt") FROM stdin;
+89864eba-3fc3-46b4-a148-462f344d1fb5	9e83a1d9-4a48-49d2-b645-46d35d63f895	SALES_EXECUTIVE	del	\N	1	2025	10000.00	2025-02-16 07:13:24.198+00	2025-02-16 18:54:46.822+00
+\.
+
+
+--
+-- Data for Name: SequelizeMeta; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."SequelizeMeta" (name) FROM stdin;
+20240315000000-create-products.js
+20240315000001-merge-inventory-into-products.js
+20240315000002-update-product-structure.js
+20240315000003-create-transactions.js
+20240315000004-fix-null-catalogs.js
+20240315000005-make-name-optional.js
+20240315000006-create-users.js
+20240315000007-add-admin-user.js
+20240320000001-add-version-to-users.js
+20240320000002-reset-admin-password.js
+20240320000003-add-sales-roles-and-team.js
+20240320000004-create-dealer-visits.js
+20240320000005-create-leads.js
+20240320000006-create-attendance.js
+20240320000007-create-messages.js
+20240320000008-add-user-details.js
+20240321000000-fix-sales-team-references.js
+20240321000001-reset-leads-table.js
+20240321000002-update-users-table.js
+20240321000003-cleanup-lead-enums.js
+20240321000004-add-remaining-user-fields.js
+20240321000006-cleanup-all-enums-final.js
+20240321000007-final-enum-cleanup.js
+20240321000008-add-missing-firstname.js
+20240322000001-fix-leads-id-type.js
+20240430000001-add-correction-transaction-type.js
+20250423084624-add-correction-transaction-type.js
+20240604000001-add-operation-id-to-transactions.js
+\.
+
+
+--
+-- Data for Name: Transactions; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Transactions" (id, "productId", type, quantity, date, notes, "includeInAvg", "createdAt", "updatedAt", "operationId") FROM stdin;
+ba93d3a8-7d4c-461c-be66-2235f1b15378	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	537.00	2025-01-04 00:00:00+00		f	2025-04-25 07:03:49.934+00	2025-04-25 07:03:49.934+00	\N
+dee5102f-42d5-4b07-a7f9-793f54d3044b	2af25b32-de64-4886-afd3-63d44c3db648	IN	536.00	2025-01-04 00:00:00+00		f	2025-04-25 07:03:49.943+00	2025-04-25 07:03:49.943+00	\N
+52bd5d8a-745b-4684-9d31-5e2b2a6f3829	8a6295c5-a8a1-459e-95e5-3a99537f792b	IN	237.00	2025-01-20 00:00:00+00		f	2025-04-25 07:03:49.947+00	2025-04-25 07:03:49.947+00	\N
+22ec6c50-475c-4ee9-a0c6-9e76db1833af	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	IN	271.00	2025-01-04 00:00:00+00		f	2025-04-25 07:03:49.953+00	2025-04-25 07:03:49.953+00	\N
+1ba57d7c-fd3f-4e6f-8fb9-1c99579b7db7	c688e992-127e-4be0-8f40-5b03a31d9939	IN	257.00	2025-01-04 00:00:00+00		f	2025-04-25 07:03:49.958+00	2025-04-25 07:03:49.958+00	\N
+6055354b-6914-4204-88c2-eac1d6a82a4b	3101f24e-322b-4a36-8499-698393193a9e	IN	334.00	2025-01-27 00:00:00+00		f	2025-04-25 07:03:49.964+00	2025-04-25 07:03:49.964+00	\N
+3ca1e666-55d9-4e91-b2c6-ca37b3714ab7	67190dce-2601-4780-8660-ae8f696d7006	IN	293.00	2025-01-07 00:00:00+00		f	2025-04-25 07:03:49.981+00	2025-04-25 07:03:49.981+00	\N
+2cf21100-98c3-47de-af3f-f70ec06ec583	dafcc2c6-7438-4350-a808-d0908244de6b	IN	215.00	2025-01-28 00:00:00+00		f	2025-04-25 07:03:50.022+00	2025-04-25 07:03:50.022+00	\N
+75f0a56c-402c-4155-94a1-1616cce064dd	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	IN	1056.00	2025-01-04 00:00:00+00		f	2025-04-25 07:03:50.027+00	2025-04-25 07:03:50.027+00	\N
+d70eb085-f0be-439b-843d-f70f64e916ce	af4259c9-07df-435a-a936-b69495916dda	IN	576.00	2025-01-30 00:00:00+00		f	2025-04-25 07:03:50.034+00	2025-04-25 07:03:50.034+00	\N
+6adce5b8-a342-407a-849c-e63ca1b989cc	a81a5cd7-1d01-49e0-987c-419d628472f2	IN	501.00	2025-01-27 00:00:00+00		f	2025-04-25 07:03:50.041+00	2025-04-25 07:03:50.041+00	\N
+5c20b09b-607e-41cc-9455-3b1fb360c299	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	IN	277.00	2025-01-27 00:00:00+00		f	2025-04-25 07:03:50.05+00	2025-04-25 07:03:50.05+00	\N
+75690b09-69f3-4e51-9536-2217156c4be9	15efc96f-2728-4830-937d-5d4f529bdd4b	IN	266.00	2025-01-27 00:00:00+00		f	2025-04-25 07:03:50.056+00	2025-04-25 07:03:50.056+00	\N
+c4c9d4d5-a5b7-4550-abec-87e359d9aa3a	8b446b13-5977-4382-80f1-c145c4ff8c28	IN	60.00	2025-01-27 00:00:00+00		f	2025-04-25 07:03:50.063+00	2025-04-25 07:03:50.063+00	\N
+7c6a40b3-b89c-448f-8632-54f5dc2f6fb4	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	IN	125.00	2025-01-30 00:00:00+00		f	2025-04-25 07:03:50.124+00	2025-04-25 07:03:50.124+00	\N
+809bc859-8d48-4c07-aa87-1df560960161	71108d69-b791-4b1d-9cae-7ebd91dec569	IN	108.00	2025-01-30 00:00:00+00		f	2025-04-25 07:03:50.13+00	2025-04-25 07:03:50.13+00	\N
+d9584a02-f2c4-41e1-9e3d-ac690f91cf48	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	IN	109.00	2025-01-30 00:00:00+00		f	2025-04-25 07:03:50.135+00	2025-04-25 07:03:50.135+00	\N
+2af64b04-24e2-4f76-98bf-0bdd07792ccd	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	IN	124.00	2025-01-30 00:00:00+00		f	2025-04-25 07:03:50.14+00	2025-04-25 07:03:50.14+00	\N
+c097278b-72c0-4445-a7a0-24d5331fe2b0	a9d95b92-b40b-477e-9fad-90d174617f80	IN	126.00	2025-01-30 00:00:00+00		f	2025-04-25 07:03:50.145+00	2025-04-25 07:03:50.145+00	\N
+027659ca-5b1c-4fd8-a5be-c57d3672e5e9	3927e84b-e35f-4c88-bb49-93aa3370eb6b	IN	131.00	2025-01-30 00:00:00+00		f	2025-04-25 07:03:50.15+00	2025-04-25 07:03:50.15+00	\N
+42abbe31-d47a-4fdf-8db5-f9dbc04a20bc	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	IN	475.00	2025-02-03 00:00:00+00		f	2025-04-25 07:03:50.18+00	2025-04-25 07:03:50.18+00	\N
+ffa9a65a-9b03-4a54-afe0-eb37215923fd	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	IN	541.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.218+00	2025-04-25 07:03:50.218+00	\N
+268647d6-e3f2-4724-9d87-c84e7fc132e9	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	1079.00	2025-02-22 00:00:00+00		f	2025-04-25 07:03:50.223+00	2025-04-25 07:03:50.223+00	\N
+22994b8f-46a8-4474-a040-aee4e36fdd9e	7f99ee7f-9612-40d1-89e7-f20588aeea0c	IN	544.00	2025-02-06 00:00:00+00		f	2025-04-25 07:03:50.228+00	2025-04-25 07:03:50.228+00	\N
+971a4248-52e9-444d-8d06-62892b40dcf3	2af25b32-de64-4886-afd3-63d44c3db648	IN	535.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.234+00	2025-04-25 07:03:50.234+00	\N
+c43d5273-1521-4474-b053-2231eeac775b	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	504.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.239+00	2025-04-25 07:03:50.239+00	\N
+4bdbc98d-e217-4f9d-8baf-89e58b3631ca	661c2cb7-b78f-4584-a043-a4ca8873ec25	IN	499.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.244+00	2025-04-25 07:03:50.244+00	\N
+17d1197e-b82d-4b3f-b1a7-6debabf0d1b6	d3ca9255-2b14-42d7-8940-f11eedbfa16d	IN	525.00	2025-02-19 00:00:00+00		f	2025-04-25 07:03:50.285+00	2025-04-25 07:03:50.285+00	\N
+c5af313f-50fd-465d-9504-549b48c496a8	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	IN	533.00	2025-02-03 00:00:00+00		f	2025-04-25 07:03:50.29+00	2025-04-25 07:03:50.29+00	\N
+28b23254-8ad4-4035-9b20-2ce87e59e801	c688e992-127e-4be0-8f40-5b03a31d9939	IN	208.00	2025-02-24 00:00:00+00		f	2025-04-25 07:03:50.295+00	2025-04-25 07:03:50.295+00	\N
+092222a4-4627-4d56-9261-fbf735621d11	1985e7d8-91f8-45a6-9377-445a0052056a	IN	517.00	2025-02-24 00:00:00+00		f	2025-04-25 07:03:50.3+00	2025-04-25 07:03:50.3+00	\N
+a03fe862-39ef-42a9-ae1c-d9760acb7bbb	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	IN	444.00	2025-02-12 00:00:00+00		f	2025-04-25 07:03:50.32+00	2025-04-25 07:03:50.32+00	\N
+7166a210-ad2f-4df4-baa2-a8c5277ac505	26912293-b83f-425a-b7c6-8090d90c62ab	IN	214.00	2025-02-12 00:00:00+00		f	2025-04-25 07:03:50.325+00	2025-04-25 07:03:50.325+00	\N
+29056c24-43f7-44e8-9973-07f6d5cc123a	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	IN	251.00	2025-02-12 00:00:00+00		f	2025-04-25 07:03:50.393+00	2025-04-25 07:03:50.393+00	\N
+7b4a7b6a-4b11-4633-abaa-f2f320a7e06e	239425e4-90bf-4048-9f7e-6aa4f5a8365e	IN	449.00	2025-02-24 00:00:00+00		f	2025-04-25 07:03:50.406+00	2025-04-25 07:03:50.406+00	\N
+6781bf09-1ded-4189-a8ee-39406062526f	82e68c33-2f5c-4482-9063-8f98243fec03	IN	295.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.412+00	2025-04-25 07:03:50.412+00	\N
+0f016a0f-c75a-447a-a8ac-7bb92598d950	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	230.00	2025-02-13 00:00:00+00		f	2025-04-25 07:03:50.417+00	2025-04-25 07:03:50.417+00	\N
+7b0b87cc-eafe-49e5-a9b0-793a3d01ec27	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	1101.00	2025-02-19 00:00:00+00		f	2025-04-25 07:03:50.422+00	2025-04-25 07:03:50.422+00	\N
+9443808e-dde6-4578-8c44-28e182c57be5	957b389a-df69-4b4a-803e-aa6aed47312e	IN	478.00	2025-02-26 00:00:00+00		f	2025-04-25 07:03:50.427+00	2025-04-25 07:03:50.427+00	\N
+4e501d52-37c6-4f06-9684-f97bf65337f0	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	IN	211.00	2025-02-24 00:00:00+00		f	2025-04-25 07:03:50.484+00	2025-04-25 07:03:50.484+00	\N
+6a41e02f-93c4-4bef-9ea8-22e51da22b54	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	IN	1176.00	2025-02-05 00:00:00+00		f	2025-04-25 07:03:50.492+00	2025-04-25 07:03:50.492+00	\N
+20727b1e-f318-415d-bbac-df6399c0528a	7dae25a0-08b2-422a-bfd9-84ca60c1223a	IN	268.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.5+00	2025-04-25 07:03:50.5+00	\N
+f2d45713-778f-4920-95c7-82c4fce3e70f	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	IN	257.00	2025-02-24 00:00:00+00		f	2025-04-25 07:03:50.506+00	2025-04-25 07:03:50.506+00	\N
+a4e94718-597c-41c3-a79e-0d64bc20dfbe	f3957def-9de6-4e72-9960-9a9ceac670ab	IN	286.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.514+00	2025-04-25 07:03:50.514+00	\N
+2d44cbb3-050d-4f45-8202-80f94da0b192	538fa5f1-f7cf-4706-9711-197079e80529	IN	346.00	2025-02-26 00:00:00+00		f	2025-04-25 07:03:50.522+00	2025-04-25 07:03:50.522+00	\N
+e4ff4d82-19f3-40c9-99f2-ddcd592503c2	15efc96f-2728-4830-937d-5d4f529bdd4b	IN	526.00	2025-02-11 00:00:00+00		f	2025-04-25 07:03:50.536+00	2025-04-25 07:03:50.536+00	\N
+7198e098-03ca-4169-a85e-62fefe18b11a	bb444182-207f-45de-a3f8-c90e29ad90ad	IN	181.00	2025-02-03 00:00:00+00		f	2025-04-25 07:03:50.582+00	2025-04-25 07:03:50.582+00	\N
+8bf48b9b-7b3f-46a6-abfd-5ba41bf7ee25	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	IN	145.00	2025-02-03 00:00:00+00		f	2025-04-25 07:03:50.588+00	2025-04-25 07:03:50.588+00	\N
+48b7a6a0-e852-405d-919f-9f153cbd2ee9	40888ace-1283-4b98-a9d9-70200531558b	IN	335.00	2025-02-18 00:00:00+00		f	2025-04-25 07:03:50.593+00	2025-04-25 07:03:50.593+00	\N
+b8db52c8-8f6d-4767-9a3c-8b5e50bea58d	dee70458-7a73-41d5-95f5-7a833350f3aa	IN	182.00	2025-02-17 00:00:00+00		f	2025-04-25 07:03:50.599+00	2025-04-25 07:03:50.599+00	\N
+8e73d7ee-b826-4bd4-9f8d-2496b37ac842	c48004c1-4854-4845-a1fb-cca95861e90a	IN	193.00	2025-02-17 00:00:00+00		f	2025-04-25 07:03:50.607+00	2025-04-25 07:03:50.607+00	\N
+37478396-bdd9-4aaa-abd7-69bb0e3bd9db	5e9023f5-f412-42ea-a178-e1975fb13c19	IN	203.00	2025-02-18 00:00:00+00		f	2025-04-25 07:03:50.614+00	2025-04-25 07:03:50.614+00	\N
+0d1f8b22-a391-4059-81e6-89beccd15240	8b446b13-5977-4382-80f1-c145c4ff8c28	IN	122.00	2025-02-13 00:00:00+00		f	2025-04-25 07:03:50.619+00	2025-04-25 07:03:50.619+00	\N
+f7e4c31a-3d79-4467-81bb-4e71472c6136	8b446b13-5977-4382-80f1-c145c4ff8c28	IN	581.00	2025-02-24 00:00:00+00		f	2025-04-25 07:03:50.685+00	2025-04-25 07:03:50.685+00	\N
+9920ad09-a433-4839-ae98-d7fdd164dc93	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	IN	240.00	2025-02-18 00:00:00+00		f	2025-04-25 07:03:50.691+00	2025-04-25 07:03:50.691+00	\N
+e925ce66-ed26-4341-94ba-632967e7ed70	71108d69-b791-4b1d-9cae-7ebd91dec569	IN	249.00	2025-02-18 00:00:00+00		f	2025-04-25 07:03:50.699+00	2025-04-25 07:03:50.699+00	\N
+5c1f5a6c-8225-4983-bd22-42ad0414f9c3	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	IN	240.00	2025-02-18 00:00:00+00		f	2025-04-25 07:03:50.706+00	2025-04-25 07:03:50.706+00	\N
+d6dd6b89-28d6-4b02-919b-3cd27d104386	a9d95b92-b40b-477e-9fad-90d174617f80	IN	227.00	2025-02-18 00:00:00+00		f	2025-04-25 07:03:50.78+00	2025-04-25 07:03:50.78+00	\N
+a8178ff7-125d-48ad-9ad2-7277171133a2	84e10830-9923-4bd8-a704-75b8a62d18c7	IN	233.00	2025-03-11 00:00:00+00		f	2025-04-25 07:03:50.787+00	2025-04-25 07:03:50.787+00	\N
+255a0ba6-e2c5-43e2-8538-2f3870d51fdf	3101f24e-322b-4a36-8499-698393193a9e	IN	253.00	2025-03-08 00:00:00+00		f	2025-04-25 07:03:50.793+00	2025-04-25 07:03:50.793+00	\N
+b5a4ef9d-107c-414c-8356-ac920ac0e530	3101f24e-322b-4a36-8499-698393193a9e	IN	508.00	2025-03-27 00:00:00+00		f	2025-04-25 07:03:50.799+00	2025-04-25 07:03:50.799+00	\N
+4eeedddf-c6c0-4121-982e-0e105617eb46	4c65ac22-e2d3-4df3-83f9-962b3574e85b	IN	500.00	2025-03-08 00:00:00+00		f	2025-04-25 07:03:50.805+00	2025-04-25 07:03:50.805+00	\N
+97ac4ac8-2346-4526-8958-a4e881ad5fcc	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	IN	499.00	2025-03-29 00:00:00+00		f	2025-04-25 07:03:50.81+00	2025-04-25 07:03:50.81+00	\N
+70265c6f-8282-4931-be64-864cba0acc14	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	IN	261.00	2025-03-27 00:00:00+00		f	2025-04-25 07:03:50.881+00	2025-04-25 07:03:50.881+00	\N
+4b672701-2447-403d-aa08-297f183f8303	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	IN	261.00	2025-03-27 00:00:00+00		f	2025-04-25 07:03:50.89+00	2025-04-25 07:03:50.89+00	\N
+c3c86871-9eb7-4d88-a231-0c4998bacef3	94d7482a-b13f-4527-b57c-4edd6c630257	IN	400.00	2025-03-29 00:00:00+00		f	2025-04-25 07:03:50.897+00	2025-04-25 07:03:50.897+00	\N
+a0fb5ec8-4197-4bac-85e1-5e1e217dbbdf	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	IN	492.00	2025-03-28 00:00:00+00		f	2025-04-25 07:03:50.904+00	2025-04-25 07:03:50.904+00	\N
+77334899-2d0f-4d2a-bab6-1a77f567922f	a81a5cd7-1d01-49e0-987c-419d628472f2	IN	509.00	2025-03-18 00:00:00+00		f	2025-04-25 07:03:50.911+00	2025-04-25 07:03:50.911+00	\N
+4ffc3416-b27f-4e64-a10f-b3cda34df590	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	IN	208.00	2025-03-18 00:00:00+00		f	2025-04-25 07:03:50.918+00	2025-04-25 07:03:50.918+00	\N
+477b58b3-3dfd-4214-977e-c3500089c988	7465e001-52c5-44e0-a3aa-2caa680bb44e	IN	523.00	2025-03-27 00:00:00+00		f	2025-04-25 07:03:50.925+00	2025-04-25 07:03:50.925+00	\N
+80c1e341-028f-4e16-b83f-ffd30a54dc58	3067b9fd-6966-4161-96ec-3d2faabe3d87	IN	517.00	2025-03-08 00:00:00+00		f	2025-04-25 07:03:50.981+00	2025-04-25 07:03:50.981+00	\N
+0add088f-a905-4939-9087-429b3fd534b9	dafcc2c6-7438-4350-a808-d0908244de6b	IN	233.00	2025-03-08 00:00:00+00		f	2025-04-25 07:03:50.988+00	2025-04-25 07:03:50.988+00	\N
+a4adbcf9-1d24-4868-a405-8fa164ab37a7	133fd452-75ea-45c0-9023-b22711b64da0	IN	179.00	2025-03-20 00:00:00+00		f	2025-04-25 07:03:50.996+00	2025-04-25 07:03:50.996+00	\N
+0b3f24e3-7d55-411a-90b0-fd6053935684	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	IN	223.00	2025-03-08 00:00:00+00		f	2025-04-25 07:03:51.002+00	2025-04-25 07:03:51.002+00	\N
+1577f604-236d-4ae2-8499-ff47d6d8948e	a9d95b92-b40b-477e-9fad-90d174617f80	IN	221.00	2025-03-11 00:00:00+00		f	2025-04-25 07:03:51.008+00	2025-04-25 07:03:51.008+00	\N
+9940b3d0-58b0-4a39-b6f0-a6524cbcc62c	3927e84b-e35f-4c88-bb49-93aa3370eb6b	IN	254.00	2025-03-08 00:00:00+00		f	2025-04-25 07:03:51.013+00	2025-04-25 07:03:51.013+00	\N
+db4bdb55-d105-40a9-bada-70d38d05c4d3	37223484-5648-4f06-92de-7eaa33d317f8	IN	504.00	2025-03-13 00:00:00+00		f	2025-04-25 07:03:51.084+00	2025-04-25 07:03:51.084+00	\N
+9fadd8eb-cb3b-4485-99d8-ee5b40c4809d	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	IN	486.00	2025-03-12 00:00:00+00		f	2025-04-25 07:03:51.089+00	2025-04-25 07:03:51.089+00	\N
+fc25a8b2-75cd-4b8b-bdc9-bae5e400209b	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	465.00	2025-03-13 00:00:00+00		f	2025-04-25 07:03:51.094+00	2025-04-25 07:03:51.094+00	\N
+a104d633-5e32-4603-8cd5-e8bc703f188c	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	IN	550.00	2025-03-13 00:00:00+00		f	2025-04-25 07:03:51.098+00	2025-04-25 07:03:51.098+00	\N
+4d973209-48fd-4fe7-8371-4b339ae28083	bb444182-207f-45de-a3f8-c90e29ad90ad	IN	190.00	2025-03-11 00:00:00+00		f	2025-04-25 07:03:51.103+00	2025-04-25 07:03:51.103+00	\N
+1a25fed6-59d4-43ea-8510-b229651f0267	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	IN	275.00	2025-03-20 00:00:00+00		f	2025-04-25 07:03:51.107+00	2025-04-25 07:03:51.107+00	\N
+c9f827cf-6779-4de6-bf97-739d102375b9	5054a542-2406-4a73-9b22-5fdeb5f5f642	IN	91.00	2025-03-08 00:00:00+00		f	2025-04-25 07:03:51.112+00	2025-04-25 07:03:51.112+00	\N
+9d0a04d0-bc3c-46ba-8259-dd9aa2d022d0	dee70458-7a73-41d5-95f5-7a833350f3aa	IN	187.00	2025-03-29 00:00:00+00		f	2025-04-25 07:03:51.116+00	2025-04-25 07:03:51.116+00	\N
+1afa6e26-0fb3-4c62-8670-521c2cd99c86	c48004c1-4854-4845-a1fb-cca95861e90a	IN	99.00	2025-03-20 00:00:00+00		f	2025-04-25 07:03:51.189+00	2025-04-25 07:03:51.189+00	\N
+6192c40a-6457-4afc-9300-335eb4b52da5	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	2410.00	2025-01-06 00:00:00+00		f	2025-04-25 07:04:09.139+00	2025-04-25 07:04:09.139+00	\N
+8154e9be-e8b4-4a32-954d-d12cd7620d16	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	2320.00	2025-01-16 00:00:00+00		f	2025-04-25 07:04:09.221+00	2025-04-25 07:04:09.221+00	\N
+7e45c64d-f144-4d76-8695-1819ed316c35	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	2710.00	2025-01-24 00:00:00+00		f	2025-04-25 07:04:09.326+00	2025-04-25 07:04:09.326+00	\N
+5647fdfc-f044-4576-a3c9-90894640d454	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	IN	456.00	2025-01-06 00:00:00+00		f	2025-04-25 07:04:09.331+00	2025-04-25 07:04:09.331+00	\N
+52565276-07e2-4f97-9b9e-6ddf0723e675	3176c92d-701d-4ad3-b33d-69351138bc92	IN	519.00	2025-01-14 00:00:00+00		f	2025-04-25 07:04:09.628+00	2025-04-25 07:04:09.628+00	\N
+1b0c2b44-8aae-4299-baee-7d8df9d6fe2e	3176c92d-701d-4ad3-b33d-69351138bc92	IN	323.00	2025-01-28 00:00:00+00		f	2025-04-25 07:04:09.922+00	2025-04-25 07:04:09.922+00	\N
+507329be-1cdb-40ed-900d-74cd65ef6f08	74143383-eaff-438b-973e-f36bccd350d0	IN	402.00	2025-01-16 00:00:00+00		f	2025-04-25 07:04:09.928+00	2025-04-25 07:04:09.928+00	\N
+b7130016-8ead-4ff9-aff8-c86afb6da939	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	IN	556.00	2025-01-17 00:00:00+00		f	2025-04-25 07:04:09.935+00	2025-04-25 07:04:09.935+00	\N
+8d94d2bd-04f3-40dd-801d-b8036869c226	aff2a5a9-1324-4beb-a479-106b2c5979d7	IN	520.00	2025-01-27 00:00:00+00		f	2025-04-25 07:04:09.94+00	2025-04-25 07:04:09.94+00	\N
+8156e397-f5f4-49b5-a460-43142e31a880	76caa84f-1750-4310-a140-cec3684c5ee0	IN	513.00	2025-01-04 00:00:00+00		f	2025-04-25 07:04:09.946+00	2025-04-25 07:04:09.946+00	\N
+bc6aa4e4-2258-4a33-a7d5-d4984a831936	056aec11-d847-4816-9217-898f31bbd4fb	IN	519.00	2025-01-04 00:00:00+00		f	2025-04-25 07:04:09.951+00	2025-04-25 07:04:09.951+00	\N
+0a707afe-ed69-4380-92be-9958ba636e47	5ddf1010-2b30-459e-9a5a-377d0de9381e	IN	522.00	2025-01-27 00:00:00+00		f	2025-04-25 07:04:09.958+00	2025-04-25 07:04:09.958+00	\N
+60ecd438-b437-434f-b8e8-60db894522ee	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	IN	996.00	2025-02-19 00:00:00+00		f	2025-04-25 07:04:09.968+00	2025-04-25 07:04:09.968+00	\N
+c7ffcd2e-08b9-4023-a2bf-dcbe41ea871f	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	2686.00	2025-02-06 00:00:00+00		f	2025-04-25 07:04:10.026+00	2025-04-25 07:04:10.026+00	\N
+5c6f2d25-9e85-4e0e-94b0-f79e0a93c7bb	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	948.00	2025-02-11 00:00:00+00		f	2025-04-25 07:04:10.032+00	2025-04-25 07:04:10.032+00	\N
+55c16c0a-5f5f-4545-b1e0-5a4bee26a5b2	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	IN	862.00	2025-02-17 00:00:00+00		f	2025-04-25 07:04:10.041+00	2025-04-25 07:04:10.041+00	\N
+88d5a833-ae87-4457-916e-dd9b57fc3853	64a4936d-1945-4964-bd49-b281eb85fb6c	IN	548.00	2025-02-12 00:00:00+00		f	2025-04-25 07:04:10.046+00	2025-04-25 07:04:10.046+00	\N
+dba067a7-6a33-4954-b0eb-f4842ecc265a	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	IN	605.00	2025-02-15 00:00:00+00		f	2025-04-25 07:04:10.053+00	2025-04-25 07:04:10.053+00	\N
+c24a6cfc-9224-4de1-b26a-62730427f659	d7931935-f352-48e1-b2b3-198d95bb615d	IN	553.00	2025-02-15 00:00:00+00		f	2025-04-25 07:04:10.118+00	2025-04-25 07:04:10.118+00	\N
+ef5186dd-dca3-465f-bbf0-1c651bb96abf	255586d4-5afd-424b-84fd-6a1ae34bed3e	IN	236.00	2025-02-24 00:00:00+00		f	2025-04-25 07:04:10.124+00	2025-04-25 07:04:10.124+00	\N
+de630f5e-8d57-4e79-9ce4-b4f65c51e0d9	aff2a5a9-1324-4beb-a479-106b2c5979d7	IN	537.00	2025-02-26 00:00:00+00		f	2025-04-25 07:04:10.13+00	2025-04-25 07:04:10.13+00	\N
+9ca4e282-c163-44fd-a5a1-d05e7558906d	9a94fcd6-aaad-4420-b82a-7ac28528b598	IN	523.00	2025-02-11 00:00:00+00		f	2025-04-25 07:04:10.136+00	2025-04-25 07:04:10.136+00	\N
+19cd6d5d-8590-4ba9-b11c-a6f6a1547d75	a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	IN	280.00	2025-02-24 00:00:00+00		f	2025-04-25 07:04:10.142+00	2025-04-25 07:04:10.142+00	\N
+0e6365e5-9dc8-4917-8952-33f37854fdac	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	IN	1011.00	2025-03-22 00:00:00+00		f	2025-04-25 07:04:10.148+00	2025-04-25 07:04:10.148+00	\N
+a9735f99-f942-4e2c-834a-3ac5499a47de	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	3086.00	2025-03-11 00:00:00+00		f	2025-04-25 07:04:10.22+00	2025-04-25 07:04:10.22+00	\N
+780c99ed-cc3c-4644-92d6-f3198db18a17	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	1025.00	2025-03-22 00:00:00+00		f	2025-04-25 07:04:10.226+00	2025-04-25 07:04:10.226+00	\N
+de9b30c5-b19a-4381-b665-46a92cdc998f	a3cac384-7ef5-4e60-92ab-dbe191cba8d2	IN	536.00	2025-03-18 00:00:00+00		f	2025-04-25 07:04:10.231+00	2025-04-25 07:04:10.231+00	\N
+2ed57aa0-2ed9-4fbb-96e6-e73eb64f0627	10667ae4-4839-4c17-88a3-c9b9a202d6cb	IN	538.00	2025-03-12 00:00:00+00		f	2025-04-25 07:04:10.237+00	2025-04-25 07:04:10.237+00	\N
+cc81fc27-381e-435a-b497-97ed896f3b7f	11046707-e54b-44e5-8d87-0c1ab5b5d34d	IN	538.00	2025-03-12 00:00:00+00		f	2025-04-25 07:04:10.242+00	2025-04-25 07:04:10.242+00	\N
+d742d71f-ac67-4a48-a589-c231d5890520	0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	IN	675.00	2025-03-27 00:00:00+00		f	2025-04-25 07:04:10.247+00	2025-04-25 07:04:10.247+00	\N
+cb51847e-8912-40ae-9185-3cc2fac14c39	64a4936d-1945-4964-bd49-b281eb85fb6c	IN	591.00	2025-03-12 00:00:00+00		f	2025-04-25 07:04:10.251+00	2025-04-25 07:04:10.251+00	\N
+96af8457-c83f-4b70-8b6a-9494d327c006	64a4936d-1945-4964-bd49-b281eb85fb6c	IN	988.00	2025-03-30 00:00:00+00		f	2025-04-25 07:04:10.283+00	2025-04-25 07:04:10.283+00	\N
+5bf80916-db05-4988-b3f4-3da8cbf45981	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	IN	2771.00	2025-03-18 00:00:00+00		f	2025-04-25 07:04:10.318+00	2025-04-25 07:04:10.318+00	\N
+fd833bec-ca2e-493a-b8e8-9562ab50bb61	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	IN	467.00	2025-03-30 00:00:00+00		f	2025-04-25 07:04:10.324+00	2025-04-25 07:04:10.324+00	\N
+e5ef1747-4b0f-4113-b2e3-94477d436312	d7931935-f352-48e1-b2b3-198d95bb615d	IN	546.00	2025-03-19 00:00:00+00		f	2025-04-25 07:04:10.328+00	2025-04-25 07:04:10.328+00	\N
+95ed7213-ce62-4b29-8931-f4a4f5ee2001	255586d4-5afd-424b-84fd-6a1ae34bed3e	IN	537.00	2025-03-30 00:00:00+00		f	2025-04-25 07:04:10.333+00	2025-04-25 07:04:10.333+00	\N
+54e8cd30-e287-4ea9-bc8f-e79b9e6213ae	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	IN	626.00	2025-03-12 00:00:00+00		f	2025-04-25 07:04:10.338+00	2025-04-25 07:04:10.338+00	\N
+70e3d956-73b4-410a-aaa0-dd49489d68b2	76caa84f-1750-4310-a140-cec3684c5ee0	IN	483.00	2025-03-18 00:00:00+00		f	2025-04-25 07:04:10.343+00	2025-04-25 07:04:10.343+00	\N
+ca1f688b-721f-47f4-bbc7-1ce27527874e	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	32.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.922+00	2025-04-25 07:04:19.922+00	\N
+04560fc3-5d24-4ca1-8bad-d2834e793a88	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	24.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.922+00	2025-04-25 07:04:19.922+00	\N
+280870b1-1a86-4644-b5f7-b41c45d9a82e	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.923+00	2025-04-25 07:04:19.923+00	\N
+5efb0836-6edd-4ac9-9e69-46e9ad803ab4	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	94.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.924+00	2025-04-25 07:04:19.924+00	\N
+88236d3d-b7c8-4662-9913-bc50f50878a1	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	90.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.925+00	2025-04-25 07:04:19.925+00	\N
+3b249c48-7067-4979-9486-235e0d98ad45	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	36.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.926+00	2025-04-25 07:04:19.926+00	\N
+19b7d3a1-5561-485c-855c-7f034b53d0d6	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.926+00	2025-04-25 07:04:19.926+00	\N
+8b308a24-b318-4de8-bace-3ab372db2528	3101f24e-322b-4a36-8499-698393193a9e	OUT	380.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.927+00	2025-04-25 07:04:19.927+00	\N
+4dd2417f-0315-4327-9c31-7e8a610b8a32	5698162c-9d89-467a-ae2c-2767b6a15ead	OUT	27.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.927+00	2025-04-25 07:04:19.927+00	\N
+317c42a9-cfac-4279-a0e8-910879e78a14	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	218.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.928+00	2025-04-25 07:04:19.928+00	\N
+92b12046-1c32-4314-8267-d5d06e0d68e8	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.928+00	2025-04-25 07:04:19.928+00	\N
+8b7c8c7d-463d-4c41-bbcc-dcbf4c17219e	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.929+00	2025-04-25 07:04:19.929+00	\N
+2c495cb2-1638-483c-9e53-46354d3387ce	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	225.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.929+00	2025-04-25 07:04:19.929+00	\N
+6af06fc4-a0d0-4f80-a864-ebff2c37b2fd	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	53.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.929+00	2025-04-25 07:04:19.929+00	\N
+e787a55d-997a-4826-b961-5ccaf83b3519	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	70.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.93+00	2025-04-25 07:04:19.93+00	\N
+622bc875-067a-4741-a05c-1622982ba66f	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	128.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.931+00	2025-04-25 07:04:19.931+00	\N
+abb9d616-e280-4d39-a41f-0d20ffcc2d2b	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	99.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.931+00	2025-04-25 07:04:19.931+00	\N
+4e4e5225-cf05-4101-936b-941be42b8802	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.932+00	2025-04-25 07:04:19.932+00	\N
+17622028-30f4-4a93-995d-ff3dab44eb0e	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	17.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.933+00	2025-04-25 07:04:19.933+00	\N
+88b46a89-c968-4af5-940a-0b59ece1cafb	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.933+00	2025-04-25 07:04:19.933+00	\N
+68ca1b56-5459-4d91-80ca-5a8d45ed1483	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	127.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.934+00	2025-04-25 07:04:19.934+00	\N
+c3aefc77-d22e-4109-8959-858436f830b8	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	380.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.934+00	2025-04-25 07:04:19.934+00	\N
+7f6e5797-22d2-4e7f-9e41-71d0acd94148	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	69.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.935+00	2025-04-25 07:04:19.935+00	\N
+bd829103-4124-4f5d-87ce-d9591cba2fa6	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	31.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.936+00	2025-04-25 07:04:19.936+00	\N
+fa0c2b46-00c8-4e7e-9ac6-51f5e99e425d	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	179.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.936+00	2025-04-25 07:04:19.936+00	\N
+ea4c9562-aa3f-4bd7-a309-b6aa511f140a	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	105.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.937+00	2025-04-25 07:04:19.937+00	\N
+1f11dccf-96c3-47b7-9d29-e7ef29282dc7	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	20.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.937+00	2025-04-25 07:04:19.937+00	\N
+6fec42b6-d55f-42b7-be3b-b8d8b10c078a	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.938+00	2025-04-25 07:04:19.938+00	\N
+3dfe2fd5-5f33-447e-a118-37d5413382a1	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	20.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.938+00	2025-04-25 07:04:19.938+00	\N
+3c5a08e4-e22a-4790-95fd-b41555850326	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	84.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.938+00	2025-04-25 07:04:19.938+00	\N
+9e2834cd-23ce-47d5-8a72-7ff3b7f6cb6d	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	103.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.939+00	2025-04-25 07:04:19.939+00	\N
+74be5a20-e169-489e-992f-e508c9375d6b	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	332.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.939+00	2025-04-25 07:04:19.939+00	\N
+9792089c-d663-4a8f-a3c0-85a428d10463	af4259c9-07df-435a-a936-b69495916dda	OUT	164.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.94+00	2025-04-25 07:04:19.94+00	\N
+9523366f-78b4-4b47-87ef-dee03747b1f4	4a74547a-da83-41eb-a462-ead451407e61	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.941+00	2025-04-25 07:04:19.941+00	\N
+ad6b3f69-33d3-4eee-8da3-9a0c1f0f3a32	f985c888-f64f-4e62-b52e-a20264cda995	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.941+00	2025-04-25 07:04:19.941+00	\N
+dea03144-adb9-4085-b561-4bb6e5cbce39	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	35.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.942+00	2025-04-25 07:04:19.942+00	\N
+8c1cb9f8-7bd1-4824-86d1-fbafeced6afb	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.942+00	2025-04-25 07:04:19.942+00	\N
+fd4c1a10-2d72-4201-a64c-dae6e67d1f8a	c6aea81b-f27e-4831-a801-bc256f699290	OUT	45.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.943+00	2025-04-25 07:04:19.943+00	\N
+9661f751-8f7e-4ed2-81ff-6ec95c3b5a14	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.943+00	2025-04-25 07:04:19.943+00	\N
+fd2c311f-e594-48e2-82c3-a74a91cad9d7	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	27.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.944+00	2025-04-25 07:04:19.944+00	\N
+79f2e7cf-27a5-4057-af4c-c4ffc8010373	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.944+00	2025-04-25 07:04:19.944+00	\N
+449667f3-b3eb-4550-80ca-ac513e494887	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	43.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.945+00	2025-04-25 07:04:19.945+00	\N
+463d95f5-9ebd-4a00-b89b-f9e197a01fbf	f10eee81-3438-4965-8c14-4640f17c903b	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.946+00	2025-04-25 07:04:19.946+00	\N
+aefc6657-8533-4e31-85ec-4a5ef7b83618	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	131.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.98+00	2025-04-25 07:04:19.98+00	\N
+7865f376-fee9-47c5-b48e-5747531efaeb	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	83.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.981+00	2025-04-25 07:04:19.981+00	\N
+904549a2-6755-48cc-88e9-55c0fd35abce	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	78.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.982+00	2025-04-25 07:04:19.982+00	\N
+dbf9494f-2dc9-4339-8ef5-d36d30d5d086	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	87.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.982+00	2025-04-25 07:04:19.982+00	\N
+23ae8666-3445-480c-ad0c-d99d232e5053	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	44.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.983+00	2025-04-25 07:04:19.983+00	\N
+38f0d0f1-d0d2-4bee-bc3e-6ee72d6d2ee7	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	88.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.983+00	2025-04-25 07:04:19.983+00	\N
+54751a86-264d-4629-857c-b8b624e3f41a	4037f584-89a4-41ac-9f68-28bb72216538	OUT	13.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.983+00	2025-04-25 07:04:19.983+00	\N
+48c79360-347b-4eee-86f4-e6b138e6ee90	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	161.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.984+00	2025-04-25 07:04:19.984+00	\N
+2c016646-3003-4786-8b1c-531cd32bd067	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	21.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.985+00	2025-04-25 07:04:19.985+00	\N
+98351ae5-f4ee-4c4c-9871-c895903b9bd8	d1116894-2f0b-4473-b907-11f837669963	OUT	269.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.986+00	2025-04-25 07:04:19.986+00	\N
+9f097e31-9a09-4c2f-8b94-d6cbb8b186a4	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	325.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.986+00	2025-04-25 07:04:19.986+00	\N
+b675290c-c74a-4981-9daf-0d517c05eb44	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	500.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.987+00	2025-04-25 07:04:19.987+00	\N
+f9e58bba-5a5d-4c71-a55a-dd0c5e4cc1f0	538fa5f1-f7cf-4706-9711-197079e80529	OUT	136.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.987+00	2025-04-25 07:04:19.987+00	\N
+da58cc60-9fa8-4836-bf2a-75d4ab52a4ac	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	178.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:19.988+00	2025-04-25 07:04:19.988+00	\N
+82dd7547-b4d1-4922-a717-35a632f4196b	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	35.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.017+00	2025-04-25 07:04:20.017+00	\N
+95503c32-9e4f-4299-a401-4cae132c8415	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	131.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.018+00	2025-04-25 07:04:20.018+00	\N
+150f66fc-e10a-4a93-957f-aab8e2841d15	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	241.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.018+00	2025-04-25 07:04:20.018+00	\N
+41371f00-08cc-4806-b33b-197bce1a192e	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	41.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.02+00	2025-04-25 07:04:20.02+00	\N
+577c99f8-5a7d-4fc1-99ab-7f504a3bb43e	619c37b6-0b66-422a-916e-be96eb242f77	OUT	84.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.021+00	2025-04-25 07:04:20.021+00	\N
+fdf8d41c-0603-4470-8e3f-99ee201e6e37	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	24.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.022+00	2025-04-25 07:04:20.022+00	\N
+068cb3c8-fab5-4fa3-b5ce-f7cbc52f4fda	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	43.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.022+00	2025-04-25 07:04:20.022+00	\N
+a19fdb13-7336-4334-a42b-4b818af9b7db	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	19.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.023+00	2025-04-25 07:04:20.023+00	\N
+6349c287-5a61-418b-a99a-699cdaff275e	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	204.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.023+00	2025-04-25 07:04:20.023+00	\N
+2f5161c6-e638-4235-bc06-0ee61f2bcf64	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	96.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.024+00	2025-04-25 07:04:20.024+00	\N
+15e320dc-647c-4d69-90a9-088372dd6b3a	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	165.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.025+00	2025-04-25 07:04:20.025+00	\N
+408c2b28-801d-473c-b5dd-c3fced86d30c	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	268.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.025+00	2025-04-25 07:04:20.025+00	\N
+394d0755-3be1-478d-b099-2cb2598aa7d2	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	17.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.026+00	2025-04-25 07:04:20.026+00	\N
+342f1289-3f3c-4337-a56b-cef1a2cb4887	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	25.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.027+00	2025-04-25 07:04:20.027+00	\N
+f0dcff7a-4e12-4d8b-9599-ba5da73f93c4	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	36.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.028+00	2025-04-25 07:04:20.028+00	\N
+8062b3be-e00b-4855-aa19-eba9ff2a6d53	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	68.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.029+00	2025-04-25 07:04:20.029+00	\N
+d71ea784-cefd-4264-bd2a-305fab5d92bd	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	57.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.029+00	2025-04-25 07:04:20.029+00	\N
+a81657ef-6279-4fa5-bba6-9c48f02f404f	9987a243-da19-45ae-8099-dda63c577d11	OUT	70.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.03+00	2025-04-25 07:04:20.03+00	\N
+c1573505-8b38-49dc-8a2b-656e6655a93f	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	11.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.03+00	2025-04-25 07:04:20.03+00	\N
+cb61cf4f-4785-4004-921a-a2794ac83305	0c7d088e-3454-4924-9b68-e70142714a17	OUT	35.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.031+00	2025-04-25 07:04:20.031+00	\N
+d8f4c146-d1c6-43e5-921e-6e200f1ad4b5	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.035+00	2025-04-25 07:04:20.035+00	\N
+ff4df2cf-7f60-4065-b60a-e053f79036c7	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	112.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.036+00	2025-04-25 07:04:20.036+00	\N
+4fb1d9ea-a39f-4dca-85bc-e6f24fbc5e5f	70809504-e675-4650-8c6c-69e13c5dc199	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.036+00	2025-04-25 07:04:20.036+00	\N
+bd11c02a-26b7-47d7-9212-b5433670b987	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	58.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.038+00	2025-04-25 07:04:20.038+00	\N
+0bde6bb8-57e4-46e3-8f9c-0c5247154c11	db15050e-1566-4aad-b957-1f67746c468a	OUT	16.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.038+00	2025-04-25 07:04:20.038+00	\N
+e0eea07b-d4a6-42f8-bbad-26a7d2ccbba4	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	15.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.039+00	2025-04-25 07:04:20.039+00	\N
+1615bab7-c358-4d33-8e45-c958b458ede6	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	15.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.039+00	2025-04-25 07:04:20.039+00	\N
+1405fa96-0405-4deb-8ca9-b580cb191323	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	55.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.04+00	2025-04-25 07:04:20.04+00	\N
+7a7b9342-08d7-4ad5-bfa5-1ea5044b1048	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	39.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.04+00	2025-04-25 07:04:20.04+00	\N
+55f7d998-4a05-49fa-8ffe-756fe950f30f	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.041+00	2025-04-25 07:04:20.041+00	\N
+6d610ad4-3530-4c24-8253-4158e13a2df1	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	23.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.042+00	2025-04-25 07:04:20.042+00	\N
+dfea0413-cd39-479f-b0b1-6288ea1b347e	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	8.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.043+00	2025-04-25 07:04:20.043+00	\N
+11fcb853-94a8-4049-9b0c-6eace71d9970	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	5.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.081+00	2025-04-25 07:04:20.081+00	\N
+4b1e561c-f7f1-49e4-90bd-3251ed3ba1d2	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	32.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.082+00	2025-04-25 07:04:20.082+00	\N
+2aac186e-f4e0-4ae1-841f-ddab7cab1e8c	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	9.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.083+00	2025-04-25 07:04:20.083+00	\N
+9c27a543-ecbb-4546-96ad-d26d3931ab9c	67190dce-2601-4780-8660-ae8f696d7006	OUT	53.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.083+00	2025-04-25 07:04:20.083+00	\N
+381e59ca-b5d6-4a4d-9008-8f0bb74dcf8c	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	13.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.084+00	2025-04-25 07:04:20.084+00	\N
+c3dce411-6279-4af9-95ea-2330330d1c1c	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	9.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.084+00	2025-04-25 07:04:20.084+00	\N
+05dc028a-7c62-4864-9e23-ed8b7109ba7f	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	12.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.085+00	2025-04-25 07:04:20.085+00	\N
+98771e88-ac0b-4a2d-85e2-8ca21f7b13a0	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	122.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.086+00	2025-04-25 07:04:20.086+00	\N
+58852dee-2bce-49d9-9197-f2e811ced340	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	71.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.116+00	2025-04-25 07:04:20.116+00	\N
+ef7ca73b-f817-40c1-b9da-9344cc1ebd1b	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	95.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.117+00	2025-04-25 07:04:20.117+00	\N
+522b5c0a-069d-4a06-a2be-43b2e2b2caf6	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	211.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.119+00	2025-04-25 07:04:20.119+00	\N
+50c2f5e9-e9ff-4cba-af3a-e766b8de08f6	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	155.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.12+00	2025-04-25 07:04:20.12+00	\N
+0ca1e256-ca51-42e8-9d87-31d48f8097b3	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	61.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.12+00	2025-04-25 07:04:20.12+00	\N
+d883f9c4-bc65-4668-86f0-3fbdaf656512	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	320.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.121+00	2025-04-25 07:04:20.121+00	\N
+abf6c288-6c81-45e8-adc9-d69a054fb7ce	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	195.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.121+00	2025-04-25 07:04:20.121+00	\N
+8bb7302d-a77e-4132-9704-96fa0c23411c	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.122+00	2025-04-25 07:04:20.122+00	\N
+fe84b87f-3aec-4398-8c18-f0e71cfe0823	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	6.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.122+00	2025-04-25 07:04:20.122+00	\N
+c09a01a1-3fd0-4dc1-b0b2-8078c58b5e32	133fd452-75ea-45c0-9023-b22711b64da0	OUT	82.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.123+00	2025-04-25 07:04:20.123+00	\N
+e26ce8f6-f032-4e13-bb8c-1e6e4f2cb81f	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	29.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.123+00	2025-04-25 07:04:20.123+00	\N
+64a9fba3-a3c7-4d13-82a6-a8a2b931b787	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	47.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.124+00	2025-04-25 07:04:20.124+00	\N
+af23285c-d549-4137-9acd-ed629499b2d8	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	35.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.126+00	2025-04-25 07:04:20.126+00	\N
+f61e5691-1831-4f65-897e-34ce6dad3351	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	30.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.126+00	2025-04-25 07:04:20.126+00	\N
+1d3576ec-58f6-45d2-bf5a-637dc81aefc6	c41c8950-8578-435c-83f1-8aca424fe012	OUT	39.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.127+00	2025-04-25 07:04:20.127+00	\N
+e8bf073b-10b5-4f8a-ac3f-c59688c24121	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	70.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.127+00	2025-04-25 07:04:20.127+00	\N
+c73da2e8-928f-4740-bbdd-3cd6ac47f552	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	109.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.128+00	2025-04-25 07:04:20.128+00	\N
+cad283e8-c004-49f3-9b12-9c86cb8d9116	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	115.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.128+00	2025-04-25 07:04:20.128+00	\N
+e9f73c69-2321-4e5c-9855-494ec959035c	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	97.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.129+00	2025-04-25 07:04:20.129+00	\N
+61c570dc-baa2-4f29-b5b4-fcf133632d4d	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	103.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.129+00	2025-04-25 07:04:20.129+00	\N
+0fd49a3c-a992-4174-9169-d3c23b18f557	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	105.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.13+00	2025-04-25 07:04:20.13+00	\N
+947ba567-b6d1-44b2-8d29-1aeda71bd7da	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	79.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.131+00	2025-04-25 07:04:20.131+00	\N
+7badba4f-0970-446e-a752-0ec0c54e0afe	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	275.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.132+00	2025-04-25 07:04:20.132+00	\N
+11dd8a47-5331-441b-b7b4-10cacebfe22b	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	337.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.133+00	2025-04-25 07:04:20.133+00	\N
+0966d269-7727-41c6-9659-9a1447487e20	37223484-5648-4f06-92de-7eaa33d317f8	OUT	91.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.133+00	2025-04-25 07:04:20.133+00	\N
+165237e8-7a7a-4408-88ce-20ab45aa1acf	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	13.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.134+00	2025-04-25 07:04:20.134+00	\N
+f349b9ff-ce6c-4e99-8e18-b991232981ff	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	16.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.134+00	2025-04-25 07:04:20.134+00	\N
+15188a48-57d9-47ff-9e9e-35b1560ec2a9	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.135+00	2025-04-25 07:04:20.135+00	\N
+2567b96d-48fc-42d5-92a2-38d12cea6c47	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	24.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.136+00	2025-04-25 07:04:20.136+00	\N
+ef2a457f-5702-440b-bd1f-3cf708a50a33	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	11.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.136+00	2025-04-25 07:04:20.136+00	\N
+93c2e282-80d9-4781-9a63-5e887b88f47e	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.137+00	2025-04-25 07:04:20.137+00	\N
+a9582808-65de-4cb1-a93c-83c1e5f6e5a6	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	232.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.137+00	2025-04-25 07:04:20.137+00	\N
+3bfa2295-9e23-4c30-abf4-1ea02ee8d596	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	40.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.139+00	2025-04-25 07:04:20.139+00	\N
+5089a716-7a9f-44c8-a489-39b02464e0ac	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	125.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.139+00	2025-04-25 07:04:20.139+00	\N
+8324b4db-e93a-4186-a197-84fce3484bb5	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	13.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.14+00	2025-04-25 07:04:20.14+00	\N
+4095c8fe-97b3-46dd-a018-5d1d6f6e12ba	2af25b32-de64-4886-afd3-63d44c3db648	OUT	496.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.14+00	2025-04-25 07:04:20.14+00	\N
+b979a6b0-673e-4729-bf03-053ac2f3d700	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	431.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.141+00	2025-04-25 07:04:20.141+00	\N
+502edeee-54e0-45f8-b1ce-2344deb48ce5	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	219.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.141+00	2025-04-25 07:04:20.141+00	\N
+9e6a4198-ba0f-4ad4-b35a-5c744166cada	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	81.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.142+00	2025-04-25 07:04:20.142+00	\N
+7f0073c9-340e-4b27-88f1-4e6839344639	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	0.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.143+00	2025-04-25 07:04:20.143+00	\N
+32c335f8-c265-459f-bbe8-b9e52cb0f546	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	159.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.143+00	2025-04-25 07:04:20.143+00	\N
+40902e0b-cfd0-4bd4-b723-7e68b990eb43	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	142.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.144+00	2025-04-25 07:04:20.144+00	\N
+34a8a68d-cf73-4bc2-a64a-aa9a8ec33a24	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	107.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.18+00	2025-04-25 07:04:20.18+00	\N
+a5d101a5-67d9-4f05-a3da-43646773a9b8	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	28.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.181+00	2025-04-25 07:04:20.181+00	\N
+0d047be3-79c2-4dec-ad1d-3a8bb720f582	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	102.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.181+00	2025-04-25 07:04:20.181+00	\N
+476f0cf4-afc2-4bcb-963e-85682df15499	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	56.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.182+00	2025-04-25 07:04:20.182+00	\N
+8e997813-1a6a-4b95-af5f-3c9c06d16911	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	95.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.216+00	2025-04-25 07:04:20.216+00	\N
+e6afa20a-2e0f-456f-90a7-3e4ac971d28c	40888ace-1283-4b98-a9d9-70200531558b	OUT	68.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.217+00	2025-04-25 07:04:20.217+00	\N
+501735ac-ec34-4966-bd76-9118e507a7b9	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	64.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.217+00	2025-04-25 07:04:20.217+00	\N
+5bba4948-994e-4d0f-b056-22111168306d	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	77.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.218+00	2025-04-25 07:04:20.218+00	\N
+5b2f2535-a2d5-4296-ab9a-12ebde4e7e29	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	65.00	2025-01-30 00:00:00+00	Monthly Consumption - 1/30/2025	t	2025-04-25 07:04:20.219+00	2025-04-25 07:04:20.219+00	\N
+bd2316f9-4dd5-458a-99b5-b7721114c391	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	66.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.219+00	2025-04-25 07:04:20.219+00	\N
+10d379df-9c7b-42eb-8191-9e988c193a3b	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.221+00	2025-04-25 07:04:20.221+00	\N
+a26f03dd-bede-4754-afcf-3f34262be34b	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.221+00	2025-04-25 07:04:20.221+00	\N
+50c28f6f-7804-423d-8292-6675cfbc7a3f	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	68.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.222+00	2025-04-25 07:04:20.222+00	\N
+6f567ab0-6820-47a0-8392-5f706fed7a9c	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	99.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.222+00	2025-04-25 07:04:20.222+00	\N
+9bbcc894-d0a0-491f-b2e2-54950b4bd9cb	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.223+00	2025-04-25 07:04:20.223+00	\N
+c7b238eb-d873-4659-895e-ef5bf883a093	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.223+00	2025-04-25 07:04:20.223+00	\N
+024ed68b-d703-4e05-aa1d-dcec292205f6	3101f24e-322b-4a36-8499-698393193a9e	OUT	325.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.224+00	2025-04-25 07:04:20.224+00	\N
+51911964-b525-4521-ad6a-9f8150b9bcef	5698162c-9d89-467a-ae2c-2767b6a15ead	OUT	48.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.224+00	2025-04-25 07:04:20.224+00	\N
+33c87b1d-59e4-4875-944d-7fa1cbf30328	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	206.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.225+00	2025-04-25 07:04:20.225+00	\N
+0c128a7a-1baf-4cd1-b359-96e627a324bd	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.226+00	2025-04-25 07:04:20.226+00	\N
+1f8cea4d-d18e-4b55-8a9d-dca292bffd7f	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.227+00	2025-04-25 07:04:20.227+00	\N
+c2585977-cd3c-4712-bea3-3a3e1ef9966f	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	300.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.227+00	2025-04-25 07:04:20.227+00	\N
+9f621526-1701-4b99-847b-bd7381ae6c69	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	87.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.228+00	2025-04-25 07:04:20.228+00	\N
+46f8feb2-cc1f-43a4-b551-60c7c825386c	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	93.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.228+00	2025-04-25 07:04:20.228+00	\N
+a5d9a878-27b9-4c18-a6cb-e3f75a8b0e64	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	132.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.229+00	2025-04-25 07:04:20.229+00	\N
+1208f20d-c580-45c7-9f7e-b41a1027203c	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	115.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.23+00	2025-04-25 07:04:20.23+00	\N
+c13286a9-ae5b-4bbc-ad5a-1d0db6dccfd4	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.23+00	2025-04-25 07:04:20.23+00	\N
+dd4877e8-55e1-4b88-a657-7de9655659bc	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	71.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.231+00	2025-04-25 07:04:20.231+00	\N
+c1ca8f29-e6e5-42db-bd11-6ddc31c08cf9	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	10.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.231+00	2025-04-25 07:04:20.231+00	\N
+b7178d95-3552-4cf0-be2c-c0d531089bae	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	67.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.232+00	2025-04-25 07:04:20.232+00	\N
+d8298236-f87b-4cf6-b963-a86ad25a2646	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	409.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.233+00	2025-04-25 07:04:20.233+00	\N
+f963408b-3ea0-43a4-bc87-44e5be6efefb	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	128.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.233+00	2025-04-25 07:04:20.233+00	\N
+18e10c78-8d05-4596-ab71-4a9f786188f6	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	42.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.234+00	2025-04-25 07:04:20.234+00	\N
+7ab503fc-37e2-484a-8004-85bd847b0f3c	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	150.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.234+00	2025-04-25 07:04:20.234+00	\N
+76c4a334-0539-43dd-aa42-fd038201de3e	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	70.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.235+00	2025-04-25 07:04:20.235+00	\N
+15d8aac1-5c6c-451c-a3fd-8d61efbe76b9	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	13.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.235+00	2025-04-25 07:04:20.235+00	\N
+cd5723d0-816a-440b-bdcc-ab7018611cd9	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	13.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.236+00	2025-04-25 07:04:20.236+00	\N
+0d870bb8-dddb-4d70-bd58-6576c956ca20	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	18.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.236+00	2025-04-25 07:04:20.236+00	\N
+e757fcad-9972-4424-ae00-49e13a6d193f	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	114.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.237+00	2025-04-25 07:04:20.237+00	\N
+cc9f4dad-28f0-4cc5-93fe-3e8e7d2a1551	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	212.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.237+00	2025-04-25 07:04:20.237+00	\N
+2cb2b89a-4511-48e0-948a-ff52ff403c8f	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	267.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.238+00	2025-04-25 07:04:20.238+00	\N
+a3f46c01-7e5b-43d4-a93f-d8eaa2b03cbf	af4259c9-07df-435a-a936-b69495916dda	OUT	230.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.238+00	2025-04-25 07:04:20.238+00	\N
+69125418-5e90-404b-8257-a6a6a9340236	4a74547a-da83-41eb-a462-ead451407e61	OUT	26.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.239+00	2025-04-25 07:04:20.239+00	\N
+f24ae857-b71c-4c2b-89fc-218e317056cf	f985c888-f64f-4e62-b52e-a20264cda995	OUT	87.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.239+00	2025-04-25 07:04:20.239+00	\N
+7858891f-4742-4e31-aa47-290b04bce32c	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	68.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.24+00	2025-04-25 07:04:20.24+00	\N
+c6bae95d-eeee-4545-8391-b5dd62e1b8b7	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	61.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.24+00	2025-04-25 07:04:20.24+00	\N
+fda2ce90-22dd-41da-86bc-8586791b55f7	c6aea81b-f27e-4831-a801-bc256f699290	OUT	94.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.24+00	2025-04-25 07:04:20.24+00	\N
+a2f2cd72-1398-4a6a-b617-9ed236c9e824	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	94.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.241+00	2025-04-25 07:04:20.241+00	\N
+df594ef2-cc61-49b9-a169-58d03541a422	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	77.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.241+00	2025-04-25 07:04:20.241+00	\N
+96b3bf4b-a218-4b82-8750-16e4da6f9ee3	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.241+00	2025-04-25 07:04:20.241+00	\N
+5159ce3c-7c66-4d79-9e12-ea145f9794d0	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.243+00	2025-04-25 07:04:20.243+00	\N
+311ba92a-4aad-4195-b78b-744c6ef7b2ef	f10eee81-3438-4965-8c14-4640f17c903b	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.243+00	2025-04-25 07:04:20.243+00	\N
+328c16a0-cca3-47d6-978e-3e70ae53ba74	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	52.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.243+00	2025-04-25 07:04:20.243+00	\N
+f775ba87-a79a-442e-8e12-416de219f390	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	65.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.244+00	2025-04-25 07:04:20.244+00	\N
+e2fc6ca1-5a39-497d-be77-95b898bdd16b	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	13.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.244+00	2025-04-25 07:04:20.244+00	\N
+2497678c-21e2-4c17-b3d8-c6dd08bdf008	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	85.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.245+00	2025-04-25 07:04:20.245+00	\N
+6b219304-6b5a-4dbf-8a30-19878bd4e90f	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	26.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.245+00	2025-04-25 07:04:20.245+00	\N
+5ba5894f-5f56-4c57-bd9c-6a018a64b274	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	11.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.28+00	2025-04-25 07:04:20.28+00	\N
+99a69bb7-a83b-40f6-b6a4-116fa23afa28	4037f584-89a4-41ac-9f68-28bb72216538	OUT	72.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.28+00	2025-04-25 07:04:20.28+00	\N
+c5fa4c2e-6198-41bf-9fc7-4cfabae56541	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	166.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.281+00	2025-04-25 07:04:20.281+00	\N
+8a1a9005-c659-486a-86da-c2bb08d4d0d4	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	17.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.282+00	2025-04-25 07:04:20.282+00	\N
+b290b540-9d92-473f-9368-1e5e04c83787	d1116894-2f0b-4473-b907-11f837669963	OUT	120.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.282+00	2025-04-25 07:04:20.282+00	\N
+fc1bcf93-60b0-4057-b933-fc4e231408fb	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	227.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.283+00	2025-04-25 07:04:20.283+00	\N
+b7f76ded-156d-41a2-8056-078e06343cce	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	632.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.283+00	2025-04-25 07:04:20.283+00	\N
+80cf0536-1caf-4cbb-a6c7-d09b4642c118	538fa5f1-f7cf-4706-9711-197079e80529	OUT	129.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.284+00	2025-04-25 07:04:20.284+00	\N
+6a232877-5e89-432e-b0f3-fe5b0da0bc9e	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	186.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.284+00	2025-04-25 07:04:20.284+00	\N
+2cb31801-b5f9-48f6-a507-964cda9a0ae7	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	83.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.284+00	2025-04-25 07:04:20.284+00	\N
+4696bab8-6d0d-43b8-96f2-09d7e57b4506	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	142.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.285+00	2025-04-25 07:04:20.285+00	\N
+eecd23c9-7ce8-4c06-bc44-bd61efe9de03	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	148.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.285+00	2025-04-25 07:04:20.285+00	\N
+7024ee6e-9b4b-468d-8b34-247f792b0b0e	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	105.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.286+00	2025-04-25 07:04:20.286+00	\N
+90aee637-2a12-46bf-adfa-832963bc849c	619c37b6-0b66-422a-916e-be96eb242f77	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.287+00	2025-04-25 07:04:20.287+00	\N
+54bed329-d470-4cb4-8e1c-8508c33b380e	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	46.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.287+00	2025-04-25 07:04:20.287+00	\N
+b2c6ec76-2ff9-4dd0-a744-c50bc89335c1	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	32.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.287+00	2025-04-25 07:04:20.287+00	\N
+b649449a-c9d0-4234-8890-c02228c50e26	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	38.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.288+00	2025-04-25 07:04:20.288+00	\N
+cce6daaf-a150-4f63-9e0e-c4088dc19cd7	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	85.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.288+00	2025-04-25 07:04:20.288+00	\N
+53ba8815-d964-40d7-b438-db319005bbb1	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	156.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.289+00	2025-04-25 07:04:20.289+00	\N
+e28bd1ba-55f3-4fa9-aaa5-c8e5c9585929	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	150.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.289+00	2025-04-25 07:04:20.289+00	\N
+753ec9fb-68d1-4894-afca-12faf778ac87	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	235.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.289+00	2025-04-25 07:04:20.289+00	\N
+07d62b68-870c-4fb5-9ea9-ea62c7e6ca7b	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	50.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.29+00	2025-04-25 07:04:20.29+00	\N
+52349b9d-e2a1-4c61-8d72-75e92667b87f	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	33.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.29+00	2025-04-25 07:04:20.29+00	\N
+2eb239a1-5265-4ddc-b109-f5286814f091	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	160.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.291+00	2025-04-25 07:04:20.291+00	\N
+46f90543-c719-46d0-9c57-b379f849d87b	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	78.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.292+00	2025-04-25 07:04:20.292+00	\N
+7ef92528-375c-499b-acc9-8c13347dc572	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	31.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.292+00	2025-04-25 07:04:20.292+00	\N
+9247ec47-3569-4547-9307-35b387f9fc9e	9987a243-da19-45ae-8099-dda63c577d11	OUT	365.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.292+00	2025-04-25 07:04:20.292+00	\N
+282a24f9-6dad-47f2-bc13-dca702a20f88	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	72.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.293+00	2025-04-25 07:04:20.293+00	\N
+c0f4b57b-809a-4ca2-a805-bbadae2a8f4c	0c7d088e-3454-4924-9b68-e70142714a17	OUT	53.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.293+00	2025-04-25 07:04:20.293+00	\N
+3d3e22ea-a49a-476f-9d3a-403001d97f9c	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	48.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.294+00	2025-04-25 07:04:20.294+00	\N
+14141130-1bbd-415d-882b-3d08249a1856	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	86.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.294+00	2025-04-25 07:04:20.294+00	\N
+1eb6e66e-1724-47af-9ec8-bef5e8c28879	70809504-e675-4650-8c6c-69e13c5dc199	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.294+00	2025-04-25 07:04:20.294+00	\N
+600da77a-90c5-4947-9090-df4de2bfde43	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	68.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.295+00	2025-04-25 07:04:20.295+00	\N
+c4bbc43c-e353-414f-84fe-815cd662fe59	db15050e-1566-4aad-b957-1f67746c468a	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.295+00	2025-04-25 07:04:20.295+00	\N
+ee43568f-0705-4932-8762-1be8aea72304	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.296+00	2025-04-25 07:04:20.296+00	\N
+bf6faf22-c69c-4465-9ead-a3a983abd99e	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	21.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.316+00	2025-04-25 07:04:20.316+00	\N
+73d275aa-bc1e-43bc-802e-8ff6a6d4557f	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	86.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.317+00	2025-04-25 07:04:20.317+00	\N
+d9124f8a-6947-45cc-bb4e-d1b19f5428bc	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	47.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.317+00	2025-04-25 07:04:20.317+00	\N
+84032aa9-1e15-4fbd-b575-b2316d8c3282	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	28.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.318+00	2025-04-25 07:04:20.318+00	\N
+682a6bab-4c43-4a1b-83c2-8b955dc5028b	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	42.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.318+00	2025-04-25 07:04:20.318+00	\N
+ed34c6e6-f114-47a4-bb7a-90884aadc9ae	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	6.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.319+00	2025-04-25 07:04:20.319+00	\N
+919e8825-4854-4a03-bdca-b9663d29765b	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	43.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.319+00	2025-04-25 07:04:20.319+00	\N
+ddbb60f1-fa00-4e60-8b27-cfc5fd33ea09	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	44.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.319+00	2025-04-25 07:04:20.319+00	\N
+f37d31f2-8238-4e7f-90f7-e09f2b5116f1	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	23.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.32+00	2025-04-25 07:04:20.32+00	\N
+6030f2ab-66d9-48e7-af30-cb35ddff9fb0	67190dce-2601-4780-8660-ae8f696d7006	OUT	177.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.321+00	2025-04-25 07:04:20.321+00	\N
+f49394bc-c01f-475e-ac45-c6728f1887e4	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	87.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.321+00	2025-04-25 07:04:20.321+00	\N
+8b327628-ecae-4799-b623-74f9712b1747	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	22.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.321+00	2025-04-25 07:04:20.321+00	\N
+34ef5f0d-fab3-43ca-ba26-5f5b55431314	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	44.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.322+00	2025-04-25 07:04:20.322+00	\N
+234b8548-6bf5-4723-9b78-8607ca9ac73b	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	180.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.38+00	2025-04-25 07:04:20.38+00	\N
+54285555-f7d1-4a68-a218-8aa8ccb70431	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	116.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.381+00	2025-04-25 07:04:20.381+00	\N
+ac787454-97fe-4898-b92e-a8da7ab92e65	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	157.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.382+00	2025-04-25 07:04:20.382+00	\N
+177a2997-5b85-4599-b254-294e5b76436c	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	253.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.382+00	2025-04-25 07:04:20.382+00	\N
+006a5b7c-bd03-4105-b656-17e037140c30	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	211.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.383+00	2025-04-25 07:04:20.383+00	\N
+cd43c7b4-53d5-41f6-a90c-6dfe1f029985	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	111.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.384+00	2025-04-25 07:04:20.384+00	\N
+42c0f65a-e548-42af-99e6-dcacdbf934ba	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	108.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.384+00	2025-04-25 07:04:20.384+00	\N
+d8b13c38-70d4-4a7a-83f6-2a4b39e5e17c	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	135.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.385+00	2025-04-25 07:04:20.385+00	\N
+f4895242-2412-455c-a247-dcd903d4e72b	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.385+00	2025-04-25 07:04:20.385+00	\N
+0ad289e0-a93e-4ac8-a11c-3552a88d1289	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	28.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.385+00	2025-04-25 07:04:20.385+00	\N
+b7d1eae1-f4c3-465b-b565-79065bee170f	133fd452-75ea-45c0-9023-b22711b64da0	OUT	74.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.386+00	2025-04-25 07:04:20.386+00	\N
+8678c239-4391-41cf-90d7-14a85ed55aa6	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	95.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.386+00	2025-04-25 07:04:20.386+00	\N
+6c7fee48-3f7b-4e4f-b056-c617d00012c7	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	29.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.387+00	2025-04-25 07:04:20.387+00	\N
+8fc02468-f76a-4236-8361-9ef9a183f701	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	68.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.387+00	2025-04-25 07:04:20.387+00	\N
+9722840f-51ca-46bb-a5c5-3dbf4db78c4e	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	42.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.388+00	2025-04-25 07:04:20.388+00	\N
+2b385b64-b668-4d81-90ef-ee9ab856a030	c41c8950-8578-435c-83f1-8aca424fe012	OUT	80.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.389+00	2025-04-25 07:04:20.389+00	\N
+b645ac00-b6a7-4331-95e9-eb567fe47233	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	341.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.389+00	2025-04-25 07:04:20.389+00	\N
+96783524-7691-4d40-8d7f-a4f08ac4f7c6	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	185.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.39+00	2025-04-25 07:04:20.39+00	\N
+2eb589e0-b6f2-49e2-a37b-05b1feee38e6	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	173.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.39+00	2025-04-25 07:04:20.39+00	\N
+99ba265f-7e1b-4f37-9728-f0b1157f2fbd	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	148.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.391+00	2025-04-25 07:04:20.391+00	\N
+acef370d-613e-47a0-97d5-c69ee2cb1310	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	124.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.391+00	2025-04-25 07:04:20.391+00	\N
+8fc002eb-03bc-4f9e-949a-b4096eb49f18	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	209.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.392+00	2025-04-25 07:04:20.392+00	\N
+5d6d2bbb-0754-40fa-a6b4-5c1994b370d7	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	166.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.392+00	2025-04-25 07:04:20.392+00	\N
+57a81950-0d33-4239-a4c1-518dff8183b5	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	206.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.393+00	2025-04-25 07:04:20.393+00	\N
+89c15c62-cecd-4497-a90b-47efc9486522	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	659.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.394+00	2025-04-25 07:04:20.394+00	\N
+60246d32-d455-4606-a3c9-2bac1be4b89e	37223484-5648-4f06-92de-7eaa33d317f8	OUT	78.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.395+00	2025-04-25 07:04:20.395+00	\N
+548cfaec-473e-40dc-a416-217ba6961456	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	11.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.395+00	2025-04-25 07:04:20.395+00	\N
+2e4dc200-3576-434f-a1cf-6c24fb467869	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	34.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.396+00	2025-04-25 07:04:20.396+00	\N
+1d6c4def-75b0-4a18-8788-98a8b1de09ca	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	16.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.396+00	2025-04-25 07:04:20.396+00	\N
+c92e5eea-f42a-4f36-a55e-45f2aa776a71	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	43.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.397+00	2025-04-25 07:04:20.397+00	\N
+68dffb2f-9565-4ac5-bbd2-441f1d59cdc0	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	78.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.397+00	2025-04-25 07:04:20.397+00	\N
+5f25a2ca-f877-4fa9-91ec-81279b6b9432	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	15.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.398+00	2025-04-25 07:04:20.398+00	\N
+3377f9d5-e068-4c16-92dc-148676169839	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	227.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.398+00	2025-04-25 07:04:20.398+00	\N
+044ca6c8-0a32-47fc-af79-f0a26092ac2d	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	86.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.398+00	2025-04-25 07:04:20.398+00	\N
+a822b310-b6e6-4196-ac24-4bc923b8604e	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	186.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.399+00	2025-04-25 07:04:20.399+00	\N
+2bda9a24-bf14-41e5-89a7-e01e2d27e081	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	20.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.4+00	2025-04-25 07:04:20.4+00	\N
+615a12ff-b1a4-4e48-8b98-00ff613d5397	2af25b32-de64-4886-afd3-63d44c3db648	OUT	362.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.4+00	2025-04-25 07:04:20.4+00	\N
+b1e609a4-0706-42c0-8168-0ae38b055598	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	323.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.401+00	2025-04-25 07:04:20.401+00	\N
+b1432acb-17b6-43d3-ace5-4bf37dc266dc	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	48.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.401+00	2025-04-25 07:04:20.401+00	\N
+a6dba429-c59e-4337-a52b-06729db5dd57	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	115.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.402+00	2025-04-25 07:04:20.402+00	\N
+0a9adec7-d59b-433c-9fb9-5c1bb74a1c08	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.402+00	2025-04-25 07:04:20.402+00	\N
+f1d16ee9-2e09-49f0-8628-7852f03ee6c0	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	180.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.402+00	2025-04-25 07:04:20.402+00	\N
+d689b77b-502a-423e-8af2-c6d9a736a8d7	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	203.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.403+00	2025-04-25 07:04:20.403+00	\N
+118208ec-bec0-4fbb-aa23-b4f1be113fc7	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	94.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.403+00	2025-04-25 07:04:20.403+00	\N
+6aafbc5a-ca48-49ad-ba59-c8f73acbc8c1	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	94.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.403+00	2025-04-25 07:04:20.403+00	\N
+0be42b44-90bf-457d-84a4-8c3338978d21	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	106.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.416+00	2025-04-25 07:04:20.416+00	\N
+bc8b6929-6474-4943-bec3-cd8e17885e8d	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	82.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.417+00	2025-04-25 07:04:20.417+00	\N
+c3f2c737-b81c-4b4b-9f6b-8a781c2bf2b0	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	85.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.418+00	2025-04-25 07:04:20.418+00	\N
+c0e9a357-88fa-46c7-80ff-bf41e3182999	40888ace-1283-4b98-a9d9-70200531558b	OUT	142.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.418+00	2025-04-25 07:04:20.418+00	\N
+2c3b0f15-9e58-4e3a-a17c-e0cc0eabd7e7	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	114.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.419+00	2025-04-25 07:04:20.419+00	\N
+0efaa9dc-e945-444a-b73b-3368ae373eba	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	147.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.419+00	2025-04-25 07:04:20.419+00	\N
+6ceccfee-d757-4b20-bd47-1ec2c045eaa2	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	122.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:04:20.42+00	2025-04-25 07:04:20.42+00	\N
+9a3cc4fd-0d31-44d7-ac9d-9aaa985438d4	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	40.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.483+00	2025-04-25 07:04:20.483+00	\N
+8f080e8d-f199-4ea1-a885-90fbfc950546	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	44.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.484+00	2025-04-25 07:04:20.484+00	\N
+7f617a2a-2d4a-4711-a7a1-f46b2c68e913	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	33.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.485+00	2025-04-25 07:04:20.485+00	\N
+792011cc-f946-48b3-99ff-26458a94edf2	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	106.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.487+00	2025-04-25 07:04:20.487+00	\N
+15c93c6e-04f4-412c-b016-7e270b8bca58	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	145.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.488+00	2025-04-25 07:04:20.488+00	\N
+a3e5b16d-d1b8-43ec-b78e-2bf502924bb9	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	5.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.488+00	2025-04-25 07:04:20.488+00	\N
+80924c14-5648-401b-b64f-95a8f09ba2c2	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.489+00	2025-04-25 07:04:20.489+00	\N
+a915459f-c6b6-4536-8632-7ebc27f0d57f	3101f24e-322b-4a36-8499-698393193a9e	OUT	488.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.49+00	2025-04-25 07:04:20.49+00	\N
+e0184dd4-c75d-473c-b5cd-8989ef51747d	5698162c-9d89-467a-ae2c-2767b6a15ead	OUT	18.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.49+00	2025-04-25 07:04:20.49+00	\N
+d21dbf7d-fcd2-4c8f-a0da-5510f84828eb	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	308.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.491+00	2025-04-25 07:04:20.491+00	\N
+adf7f52d-e51e-4147-a769-1ae681c0f493	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.491+00	2025-04-25 07:04:20.491+00	\N
+668df9cb-d684-43df-857c-c73dfcff43f8	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	6.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.492+00	2025-04-25 07:04:20.492+00	\N
+dfaaa9c0-c22b-4004-b610-e190f84a240a	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	266.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.492+00	2025-04-25 07:04:20.492+00	\N
+6fb4833a-1308-4629-9d26-82f953a6ac9f	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	73.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.493+00	2025-04-25 07:04:20.493+00	\N
+5f918db1-f16e-459f-9523-1fb65ecf0c81	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.494+00	2025-04-25 07:04:20.494+00	\N
+4240f47a-419c-4d62-b52d-6b3055e671ed	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	72.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.495+00	2025-04-25 07:04:20.495+00	\N
+3d777401-fb1a-48ba-bfe0-2307cbec5671	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	121.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.495+00	2025-04-25 07:04:20.495+00	\N
+c1db2639-46cf-428f-bed4-4cffb89fad99	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	6.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.496+00	2025-04-25 07:04:20.496+00	\N
+99a57373-880f-4163-a687-e4223cd3bba8	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	15.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.496+00	2025-04-25 07:04:20.496+00	\N
+aa6a8958-cece-49ce-87c2-c2e7691f14f7	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	12.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.497+00	2025-04-25 07:04:20.497+00	\N
+b285200e-ee5a-45d8-950d-3d97bbf5482d	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	81.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.497+00	2025-04-25 07:04:20.497+00	\N
+f87c737e-576c-485b-8d1d-708c3c78e776	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	420.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.499+00	2025-04-25 07:04:20.499+00	\N
+6d6f19e5-1c3e-407d-8495-59c8e08eff8d	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	92.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.499+00	2025-04-25 07:04:20.499+00	\N
+08f2f448-7301-45b6-b6bd-5d40c4de3fbd	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	80.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.501+00	2025-04-25 07:04:20.501+00	\N
+55f551d5-f4ef-4e95-aeaf-268bb9eae505	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	287.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.501+00	2025-04-25 07:04:20.501+00	\N
+d82cb533-3db2-4bb4-b1d8-f9ed2c17b10c	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	70.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.501+00	2025-04-25 07:04:20.501+00	\N
+3b8ed534-be27-4b96-8b0c-212e8c67100e	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	80.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.502+00	2025-04-25 07:04:20.502+00	\N
+2927786f-9a3c-4a15-a94e-71e96cd2a6b7	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	18.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.502+00	2025-04-25 07:04:20.502+00	\N
+da237762-85b2-4b56-b22d-8d57b1094007	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	8.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.503+00	2025-04-25 07:04:20.503+00	\N
+11eb6a25-2650-463d-b8a5-3503a063d3cb	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	95.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.503+00	2025-04-25 07:04:20.503+00	\N
+62058cca-3518-4927-b9d0-01356cb836b1	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	55.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.504+00	2025-04-25 07:04:20.504+00	\N
+72ad9b48-a8f6-412f-9040-6e0cf352bb18	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	144.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.517+00	2025-04-25 07:04:20.517+00	\N
+a1b41565-08c6-4312-a66a-fc1e2384bbb7	af4259c9-07df-435a-a936-b69495916dda	OUT	350.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.519+00	2025-04-25 07:04:20.519+00	\N
+9a2624ae-18d4-48c5-8ad1-bcb6d5e167b0	4a74547a-da83-41eb-a462-ead451407e61	OUT	111.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.521+00	2025-04-25 07:04:20.521+00	\N
+c84795f0-7e1a-4c4a-99b0-360d1bd75145	f985c888-f64f-4e62-b52e-a20264cda995	OUT	34.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.521+00	2025-04-25 07:04:20.521+00	\N
+180eac77-f02d-461e-aa6d-f0f08f4d2a53	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	111.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.522+00	2025-04-25 07:04:20.522+00	\N
+53383c73-8609-452d-b3e1-de7c5ad54df0	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	44.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.523+00	2025-04-25 07:04:20.523+00	\N
+bbc48032-4fc4-4711-880f-5de8d258caae	c6aea81b-f27e-4831-a801-bc256f699290	OUT	116.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.523+00	2025-04-25 07:04:20.523+00	\N
+2818f49d-c7f2-46e6-9f50-a90dc814b0d2	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	45.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.581+00	2025-04-25 07:04:20.581+00	\N
+f34ac291-a527-4e47-9aca-c77564cfb6b4	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	29.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.581+00	2025-04-25 07:04:20.581+00	\N
+c51fa898-ef1a-4158-91bf-11beeb7321fd	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	29.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.582+00	2025-04-25 07:04:20.582+00	\N
+f49673b6-a436-4b70-b5dc-6b1773ce02e5	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	51.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.582+00	2025-04-25 07:04:20.582+00	\N
+3e8a113b-9276-4294-89ba-d52acb9a2a36	f10eee81-3438-4965-8c14-4640f17c903b	OUT	17.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.583+00	2025-04-25 07:04:20.583+00	\N
+3df86cce-2208-4839-af5a-744b81f62868	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	68.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.584+00	2025-04-25 07:04:20.584+00	\N
+6251c5f7-6a44-45ac-be69-8ccc59ed36e9	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	78.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.585+00	2025-04-25 07:04:20.585+00	\N
+a81e7e8c-e4fb-406c-b55c-2b78c6433ce9	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	12.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.585+00	2025-04-25 07:04:20.585+00	\N
+2aca9e58-ce0f-4f02-8054-072b0a010f56	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	77.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.586+00	2025-04-25 07:04:20.586+00	\N
+495a776e-3890-420b-a823-777fb924fc7a	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	51.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.586+00	2025-04-25 07:04:20.586+00	\N
+0b7d882a-8d5f-4632-b0a2-c06b6c9d5b04	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	69.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.587+00	2025-04-25 07:04:20.587+00	\N
+33de4148-5247-4ea0-b861-0b247d3b1bfa	4037f584-89a4-41ac-9f68-28bb72216538	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.587+00	2025-04-25 07:04:20.587+00	\N
+76d544f0-45a2-44a3-9a6c-f4e742b2a5b3	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	180.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.588+00	2025-04-25 07:04:20.588+00	\N
+675f96a7-60fa-4cef-b5de-fffc17e423dd	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	38.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.588+00	2025-04-25 07:04:20.588+00	\N
+6284f759-00ba-4a0e-b117-8573ae37162f	d1116894-2f0b-4473-b907-11f837669963	OUT	201.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.589+00	2025-04-25 07:04:20.589+00	\N
+ce89fdcf-d455-4cb0-8944-57a5993aed2b	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	282.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.59+00	2025-04-25 07:04:20.59+00	\N
+c1cb0308-fb0c-457e-b914-92f257248147	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	748.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.59+00	2025-04-25 07:04:20.59+00	\N
+e84f39cf-6dc6-43fe-bfa5-84f34e56b705	538fa5f1-f7cf-4706-9711-197079e80529	OUT	164.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.591+00	2025-04-25 07:04:20.591+00	\N
+60bf9e8a-0ae9-48ae-b90b-169fe2c8a2d1	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	105.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.591+00	2025-04-25 07:04:20.591+00	\N
+e0c8e71b-757a-4f96-8e72-907a0f41d605	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	141.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.592+00	2025-04-25 07:04:20.592+00	\N
+77776938-c841-4c23-a0c3-0d7aebca2a1e	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	135.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.592+00	2025-04-25 07:04:20.592+00	\N
+541dc776-a91f-46ec-aab8-910e53acaf36	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	332.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.593+00	2025-04-25 07:04:20.593+00	\N
+b3caadbe-71f8-4a1e-8dc9-3432ea5ba0c5	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	83.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.593+00	2025-04-25 07:04:20.593+00	\N
+4fea2abf-51a8-4b2c-90c9-3f9d952b5b40	619c37b6-0b66-422a-916e-be96eb242f77	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.594+00	2025-04-25 07:04:20.594+00	\N
+df5004a9-54c1-47f7-8148-02d09a27e4d9	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	21.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.594+00	2025-04-25 07:04:20.594+00	\N
+fbb33c74-390d-4c60-97cf-804c4e7c1cd9	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	81.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.596+00	2025-04-25 07:04:20.596+00	\N
+a7dd8e04-9f68-489f-bb95-fa6c5ee3ae0b	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	45.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.596+00	2025-04-25 07:04:20.596+00	\N
+9c1a33f7-b463-453d-80cc-df93d3893ed8	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	137.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.597+00	2025-04-25 07:04:20.597+00	\N
+96ef47f5-df3c-49ef-ab6a-9ce7adf1311a	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	141.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.597+00	2025-04-25 07:04:20.597+00	\N
+b402437e-a3c7-48c8-8a5a-d429c7400ef2	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	195.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.598+00	2025-04-25 07:04:20.598+00	\N
+1f3d2bd5-b77b-467a-9234-55e95d583031	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	273.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.616+00	2025-04-25 07:04:20.616+00	\N
+7dd2f8fa-6a1f-4948-9c58-712c2f92e41c	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.617+00	2025-04-25 07:04:20.617+00	\N
+2f42594e-df4f-41d3-8d90-ea81e17502a3	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	46.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.617+00	2025-04-25 07:04:20.617+00	\N
+73a53876-9712-463b-8c85-12574f4b0a68	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	69.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.618+00	2025-04-25 07:04:20.618+00	\N
+62b2b145-703f-40b3-8d7c-7dfafa0813d8	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	36.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.618+00	2025-04-25 07:04:20.618+00	\N
+af4be74f-910a-4107-ae6d-614eba5386e3	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.62+00	2025-04-25 07:04:20.62+00	\N
+e628f2eb-247f-445f-9002-3ffe2e99eb84	9987a243-da19-45ae-8099-dda63c577d11	OUT	462.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.62+00	2025-04-25 07:04:20.62+00	\N
+2a4ed3e6-2793-478c-89eb-c862f3916faa	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	70.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.621+00	2025-04-25 07:04:20.621+00	\N
+b13b534d-17d8-4824-ac88-72401e86cdd7	0c7d088e-3454-4924-9b68-e70142714a17	OUT	49.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.621+00	2025-04-25 07:04:20.621+00	\N
+9e396c13-7841-4847-a63a-41ec56c72f9c	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	27.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.622+00	2025-04-25 07:04:20.622+00	\N
+e86ad007-a0b7-4374-8ab4-87731c2763d4	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	62.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.622+00	2025-04-25 07:04:20.622+00	\N
+b8c4e0a1-66e2-4e54-9501-ce9c69b39604	70809504-e675-4650-8c6c-69e13c5dc199	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.623+00	2025-04-25 07:04:20.623+00	\N
+6ff33255-ea46-4986-bd6b-999d9719891f	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	113.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.623+00	2025-04-25 07:04:20.623+00	\N
+a64273af-fb01-4cd4-ba80-237cec2680a5	db15050e-1566-4aad-b957-1f67746c468a	OUT	19.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.624+00	2025-04-25 07:04:20.624+00	\N
+54445199-a293-430e-9c36-474974c79168	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	32.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.624+00	2025-04-25 07:04:20.624+00	\N
+c6aa6c6d-8f45-4654-b83c-c2a94787192e	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	10.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.625+00	2025-04-25 07:04:20.625+00	\N
+9c84f147-97a5-436d-9a99-bc77949f6689	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	57.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.626+00	2025-04-25 07:04:20.626+00	\N
+f4743b78-93df-4142-9bb1-97f217f8d58a	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	86.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.626+00	2025-04-25 07:04:20.626+00	\N
+a560bcac-4b06-4b79-936e-c62512f454d9	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	29.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.627+00	2025-04-25 07:04:20.627+00	\N
+c04cab53-05e9-4978-867b-eccf186ca8f8	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	31.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.627+00	2025-04-25 07:04:20.627+00	\N
+d485cffb-1a74-4be3-ae90-79a25d561df2	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.628+00	2025-04-25 07:04:20.628+00	\N
+d16ca5be-9408-4041-bbf4-2598be4e4731	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	18.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.628+00	2025-04-25 07:04:20.628+00	\N
+81e53a49-f2d8-4da0-83e4-9f6b08da6730	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	61.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.629+00	2025-04-25 07:04:20.629+00	\N
+c49016a0-ecc0-4ed2-ab10-123cea438bd4	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.629+00	2025-04-25 07:04:20.629+00	\N
+b805d9e7-928d-48eb-90aa-342fe0c963ae	67190dce-2601-4780-8660-ae8f696d7006	OUT	172.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.63+00	2025-04-25 07:04:20.63+00	\N
+64c83c93-2359-43f7-b1b5-ca6a6c13cf50	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	61.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.631+00	2025-04-25 07:04:20.631+00	\N
+90bdb59c-3cfd-4896-81fe-3016025beffa	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	50.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.631+00	2025-04-25 07:04:20.631+00	\N
+f6dfbc3f-f45c-4a33-848d-5e87b4b33478	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	38.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.681+00	2025-04-25 07:04:20.681+00	\N
+5c4162fd-60bf-4d78-a4ca-75f1520c1f3d	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	82.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.681+00	2025-04-25 07:04:20.681+00	\N
+449e9615-47b9-42af-b821-b689a9df4e58	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	99.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.682+00	2025-04-25 07:04:20.682+00	\N
+0aa840b7-b8ad-4639-a1bd-0d6d2d23aa8a	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	120.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.682+00	2025-04-25 07:04:20.682+00	\N
+0f78427e-b1fb-4b38-89e1-65cea411cc00	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	192.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.683+00	2025-04-25 07:04:20.683+00	\N
+48bb4cd3-f927-4980-b438-2e5436f7a776	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	190.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.716+00	2025-04-25 07:04:20.716+00	\N
+d4c03806-559c-49d3-89e9-f05d0827b1c7	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	46.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.717+00	2025-04-25 07:04:20.717+00	\N
+7f7a89a3-9a65-415d-90ea-3d68ba832019	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	199.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.717+00	2025-04-25 07:04:20.717+00	\N
+29e25330-b64d-44a1-8ddf-7df13a035522	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	99.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.719+00	2025-04-25 07:04:20.719+00	\N
+13ff2456-d314-445b-b963-05f621ebe1e3	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.719+00	2025-04-25 07:04:20.719+00	\N
+7a099c1f-358f-438d-8b96-29280e6b71ec	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	0.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.72+00	2025-04-25 07:04:20.72+00	\N
+6ecea7ea-5720-4dd0-ab13-ca26a55c7856	133fd452-75ea-45c0-9023-b22711b64da0	OUT	80.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.72+00	2025-04-25 07:04:20.72+00	\N
+ce106924-06ba-4734-a4de-33494f309645	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	103.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.721+00	2025-04-25 07:04:20.721+00	\N
+daa7563b-e964-42c1-b368-a1ffbcc21ad3	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	35.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.721+00	2025-04-25 07:04:20.721+00	\N
+764cc224-e28b-44ac-acce-a5c6e0057a26	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	23.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.721+00	2025-04-25 07:04:20.721+00	\N
+6cfb1091-2e43-4c0d-bdc9-806e64324db3	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	23.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.722+00	2025-04-25 07:04:20.722+00	\N
+1d78839a-c136-4b11-aecd-71603906e21d	c41c8950-8578-435c-83f1-8aca424fe012	OUT	27.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.722+00	2025-04-25 07:04:20.722+00	\N
+068bdc9b-184d-494e-9d8d-c6e882a91abe	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	324.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.723+00	2025-04-25 07:04:20.723+00	\N
+00f186b8-e298-47d4-bda4-f427895c9fcf	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	149.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.724+00	2025-04-25 07:04:20.724+00	\N
+958e363d-7ef2-4935-9b79-dc14e3db7dfb	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	52.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.724+00	2025-04-25 07:04:20.724+00	\N
+03db0d5e-9c3b-4703-bf4c-f8b3085116f3	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	103.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.725+00	2025-04-25 07:04:20.725+00	\N
+a3f2914c-e3e8-4261-a123-fafe1e8a1e05	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	98.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.725+00	2025-04-25 07:04:20.725+00	\N
+469fa392-923b-40e2-8fa7-ce5a5006fbe4	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	115.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.725+00	2025-04-25 07:04:20.725+00	\N
+6a5d511a-36e4-446a-8f17-87674ffcd63b	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	166.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.726+00	2025-04-25 07:04:20.726+00	\N
+f433cabf-e896-4dd8-8c55-3c9309a2bd6e	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	399.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.726+00	2025-04-25 07:04:20.726+00	\N
+d1ece998-34e6-4c50-abd9-70ffd09a19d4	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	808.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.727+00	2025-04-25 07:04:20.727+00	\N
+8167f594-cee6-4d10-95dd-b6656e8647d5	37223484-5648-4f06-92de-7eaa33d317f8	OUT	89.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.727+00	2025-04-25 07:04:20.727+00	\N
+d2eb3ea2-2091-4177-8a1d-c43dc39b2954	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	21.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.728+00	2025-04-25 07:04:20.728+00	\N
+b2e63485-69a1-455a-9862-9c72a94fd4bb	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	43.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.728+00	2025-04-25 07:04:20.728+00	\N
+abc5b373-dbb2-4a62-b42a-d24e761a25cb	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	18.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.729+00	2025-04-25 07:04:20.729+00	\N
+60db785d-093d-468c-9012-56522344b2b7	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	26.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.729+00	2025-04-25 07:04:20.729+00	\N
+aa3df67b-0849-49c2-abd8-0ef3587f5b8b	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	74.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.729+00	2025-04-25 07:04:20.729+00	\N
+4e206e32-2668-44be-8f8e-3fe203c644b6	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	31.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.73+00	2025-04-25 07:04:20.73+00	\N
+e562b92c-d739-4667-bdeb-36b57cfd7218	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	170.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.73+00	2025-04-25 07:04:20.73+00	\N
+5fca31a2-094d-496e-8c5f-62a53b0bbfae	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	65.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.731+00	2025-04-25 07:04:20.731+00	\N
+a896ae09-e66f-4e2b-8476-80aa300a75f5	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	208.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.731+00	2025-04-25 07:04:20.731+00	\N
+941323f9-0ac0-466d-967d-dc8425a331a8	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	24.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.732+00	2025-04-25 07:04:20.732+00	\N
+6175570d-a7c8-438f-b46e-17d92cd8064d	2af25b32-de64-4886-afd3-63d44c3db648	OUT	462.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.732+00	2025-04-25 07:04:20.732+00	\N
+6d73b911-5146-4ab5-a855-7e8ba87089ad	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	441.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.733+00	2025-04-25 07:04:20.733+00	\N
+316438bb-046e-478d-b8c1-85a9736e156b	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	230.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.733+00	2025-04-25 07:04:20.733+00	\N
+caa15693-9ae9-4baa-a254-794b650f8059	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	229.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.734+00	2025-04-25 07:04:20.734+00	\N
+7fe9df8d-ce92-490a-a230-40f7dc321e3a	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	49.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.734+00	2025-04-25 07:04:20.734+00	\N
+c3ae0ccd-c75d-40ec-bbda-e8cbcd107ff5	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	139.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.735+00	2025-04-25 07:04:20.735+00	\N
+f9d3e304-f935-44d3-a3e1-c6e6e4e3ce9a	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	168.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.816+00	2025-04-25 07:04:20.816+00	\N
+8e1d85a1-dc36-4bd3-b046-2aaeedeaf34a	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	89.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.817+00	2025-04-25 07:04:20.817+00	\N
+d1c805f9-e284-42a4-9e6a-173d8ab599bb	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	19.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.818+00	2025-04-25 07:04:20.818+00	\N
+07eb0a67-1de2-40d4-8195-4c8aad7f4d55	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	42.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.819+00	2025-04-25 07:04:20.819+00	\N
+7a47bb72-2daa-4be2-9e7f-f060bb7ad5c2	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	25.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.82+00	2025-04-25 07:04:20.82+00	\N
+61f9e64a-dd30-4e44-9f9e-a814583be186	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	91.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.82+00	2025-04-25 07:04:20.82+00	\N
+91988b86-51fb-41d5-a764-05b96e2fcc29	40888ace-1283-4b98-a9d9-70200531558b	OUT	69.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.821+00	2025-04-25 07:04:20.821+00	\N
+fd8cc0b3-17a3-4a18-8b64-0ddd5c70ab98	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	68.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.821+00	2025-04-25 07:04:20.821+00	\N
+f799dec6-8721-4471-930e-9ee7369e8b0e	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	73.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.822+00	2025-04-25 07:04:20.822+00	\N
+42a7c93b-064e-4dfb-a173-c79a6536a549	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	103.00	2025-03-30 00:00:00+00	Monthly Consumption - 3/30/2025	t	2025-04-25 07:04:20.822+00	2025-04-25 07:04:20.822+00	\N
+f22acccb-2680-4968-8435-8e003b15c406	26a9d26e-acef-4519-b22d-79556b4d62ea	CORRECTION	-342.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.294+00	2025-04-25 07:33:04.294+00	\N
+7f2f1555-bebe-4e4f-b44c-066e765892bb	7f99ee7f-9612-40d1-89e7-f20588aeea0c	CORRECTION	16.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.299+00	2025-04-25 07:33:04.299+00	\N
+12bc7c9b-f109-455f-b5bd-d512b526e308	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	CORRECTION	123.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.303+00	2025-04-25 07:33:04.303+00	\N
+c166dbb3-7e4b-460c-aa7e-6374518fde42	71578227-eb61-4a5b-9e77-b0fb6820f6d5	CORRECTION	-5.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.307+00	2025-04-25 07:33:04.307+00	\N
+780db66d-f39c-4303-85f3-a623a201146a	a5876edb-57b3-4c7b-9554-091a8d25d099	CORRECTION	-42.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.31+00	2025-04-25 07:33:04.31+00	\N
+fc59d128-7e39-4636-9fd1-4f53ee97c199	6802b141-d15a-4ded-b1af-e51c89c3cae5	CORRECTION	-1.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.382+00	2025-04-25 07:33:04.382+00	\N
+aa80d9ff-4506-4bf4-a361-2efef1b16828	1c14eed6-b659-4435-821d-1cfa0d52c2f4	CORRECTION	-214.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.385+00	2025-04-25 07:33:04.385+00	\N
+a6db898d-f7a0-4f7a-9e32-e7141440ddf4	5fd052eb-9eb1-4dd0-854d-00af93c252ef	CORRECTION	-3.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.388+00	2025-04-25 07:33:04.388+00	\N
+b1d744e1-8353-4d50-a232-7c66dfa17cd0	d1116894-2f0b-4473-b907-11f837669963	CORRECTION	-5.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.39+00	2025-04-25 07:33:04.39+00	\N
+8d155b3d-4a46-4603-b0b2-a5b649296341	20f5d863-c219-485f-ba56-4b7cbace2645	CORRECTION	3.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.393+00	2025-04-25 07:33:04.393+00	\N
+140d8667-5980-48e2-8e43-de367c796927	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	CORRECTION	-464.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.396+00	2025-04-25 07:33:04.396+00	\N
+084fac0a-df3b-44b9-88d4-59266818fce9	7e93b44a-7620-463d-9de2-8ed44f9be58d	CORRECTION	23.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.399+00	2025-04-25 07:33:04.399+00	\N
+6083b1d2-b7a7-4d4d-868b-f732a34a7892	6b8141d6-1c53-4788-a0de-938429be7e67	CORRECTION	-197.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.402+00	2025-04-25 07:33:04.402+00	\N
+2af56008-2aba-4da6-b62d-81d0946ab0ee	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	CORRECTION	-119.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.405+00	2025-04-25 07:33:04.405+00	\N
+d012ad6a-25c5-46cb-b986-de906a013b49	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	CORRECTION	-490.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.408+00	2025-04-25 07:33:04.408+00	\N
+30eaa60f-a388-4a06-a424-9a2f729d0c2d	4c65ac22-e2d3-4df3-83f9-962b3574e85b	CORRECTION	-4.00	2025-04-04 00:00:00+00	March closing adjustment	f	2025-04-25 07:33:04.411+00	2025-04-25 07:33:04.411+00	\N
+fd486dc4-9125-410c-b5d4-3d5d723aee89	26a9d26e-acef-4519-b22d-79556b4d62ea	CORRECTION	342.00	2025-04-25 00:00:00+00	March Correction mistake removal	f	2025-04-25 07:34:08.802+00	2025-04-25 07:34:08.802+00	\N
+8792edbf-78eb-4a93-a6bb-cacdc4332d7b	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	22.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.865+00	2025-05-09 07:44:24.865+00	\N
+0aee8432-3660-476d-89b5-13a3ca316469	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	20.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.866+00	2025-05-09 07:44:24.866+00	\N
+5acd5aa4-4c81-4f9d-b31a-47faa183c845	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	38.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.868+00	2025-05-09 07:44:24.868+00	\N
+97d05e0b-345e-4f4d-8b39-61138f2d420c	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	19.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.868+00	2025-05-09 07:44:24.868+00	\N
+4c4c3fce-9931-49ce-94ea-8f807701fdb8	3101f24e-322b-4a36-8499-698393193a9e	OUT	209.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.869+00	2025-05-09 07:44:24.869+00	\N
+715cee5e-1a03-405d-af6f-ca403369c603	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	137.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.87+00	2025-05-09 07:44:24.87+00	\N
+485e2440-4813-441a-bd5d-cdca40d064a8	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	137.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.87+00	2025-05-09 07:44:24.87+00	\N
+2398e22e-0c3d-43e2-82b0-c24609ffa5eb	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	80.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.871+00	2025-05-09 07:44:24.871+00	\N
+f7c5e186-74a4-4d37-8bec-a68579797843	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	54.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.872+00	2025-05-09 07:44:24.872+00	\N
+7420409e-b5db-4177-9a6c-8e343e55a8f7	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	89.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.874+00	2025-05-09 07:44:24.874+00	\N
+f0e7f0b2-8c1d-42bd-b66b-940ffe644036	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	54.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.876+00	2025-05-09 07:44:24.876+00	\N
+14888f53-49b0-45e9-a175-e6443a4422e9	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	24.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.877+00	2025-05-09 07:44:24.877+00	\N
+6c4671fb-6039-49eb-a568-7834f88445d7	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	15.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.878+00	2025-05-09 07:44:24.878+00	\N
+e5a65fe2-08fe-4d93-89fc-3e3f36852c45	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	93.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.878+00	2025-05-09 07:44:24.878+00	\N
+14efdcf3-ab6c-434a-9161-8090b6cc053a	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	212.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.879+00	2025-05-09 07:44:24.879+00	\N
+062f5fac-3b0f-4ed3-9ccc-29b8f65e811d	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	368.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.88+00	2025-05-09 07:44:24.88+00	\N
+60fdfca9-6f4a-45e0-ae29-be735ceffe89	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	44.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.916+00	2025-05-09 07:44:24.916+00	\N
+d0457ccd-6a4d-4023-9675-b42e822d9635	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	303.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.917+00	2025-05-09 07:44:24.917+00	\N
+dac0ca1a-3e7d-49a3-be6c-7715df882734	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	86.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.917+00	2025-05-09 07:44:24.917+00	\N
+46386427-7b3a-4234-b373-6701e482ee81	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	11.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.919+00	2025-05-09 07:44:24.919+00	\N
+c9aefd15-7c97-4f78-aa6f-e1d28b600671	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	37.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.92+00	2025-05-09 07:44:24.92+00	\N
+01540b4e-3dc7-4504-ba42-676af70ace23	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	191.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.92+00	2025-05-09 07:44:24.92+00	\N
+0aff584b-80aa-4ba1-bffb-1b4e5ced1b9e	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	154.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.921+00	2025-05-09 07:44:24.921+00	\N
+a1c1043f-9b9c-4c07-b575-aed9472948dd	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	233.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.921+00	2025-05-09 07:44:24.921+00	\N
+cf2ea4e2-df35-44d7-b7bc-68e289283a6c	af4259c9-07df-435a-a936-b69495916dda	OUT	162.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.922+00	2025-05-09 07:44:24.922+00	\N
+223aa8b6-1c0f-4ba1-8622-3e17f6b69515	4a74547a-da83-41eb-a462-ead451407e61	OUT	30.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.923+00	2025-05-09 07:44:24.923+00	\N
+c2311349-725b-404c-9994-b9bbfc9744de	f985c888-f64f-4e62-b52e-a20264cda995	OUT	53.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.923+00	2025-05-09 07:44:24.923+00	\N
+978a19ec-9fcd-4727-acb8-f241eacc1c2c	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	87.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.924+00	2025-05-09 07:44:24.924+00	\N
+67d2ce1a-8609-4c5e-a494-7b3d9fa04e20	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	52.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.925+00	2025-05-09 07:44:24.925+00	\N
+a31fb487-dba2-4708-8878-920c66afd14d	c6aea81b-f27e-4831-a801-bc256f699290	OUT	51.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.926+00	2025-05-09 07:44:24.926+00	\N
+92a3042d-251d-4ba9-aa26-2f66de69b9b6	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	23.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.927+00	2025-05-09 07:44:24.927+00	\N
+882712e5-5d6d-4c69-9c45-338a837612c1	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	42.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.927+00	2025-05-09 07:44:24.927+00	\N
+7c0b671e-e319-4919-9fa7-86cdc7e38adc	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	49.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.928+00	2025-05-09 07:44:24.928+00	\N
+7b43927c-c356-44b5-8c9f-8b7477a79b3b	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	35.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.928+00	2025-05-09 07:44:24.928+00	\N
+f2e912bc-d083-4205-8e61-1090562d4b86	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	52.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.929+00	2025-05-09 07:44:24.929+00	\N
+39f519fe-a104-4073-b2ed-fddffbe80768	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	51.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.93+00	2025-05-09 07:44:24.93+00	\N
+d2e99f8a-6682-464f-a2da-db07b1c1a328	4037f584-89a4-41ac-9f68-28bb72216538	OUT	14.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.93+00	2025-05-09 07:44:24.93+00	\N
+0e67a8aa-7e25-40e7-a6fc-e3272845c0af	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	92.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.931+00	2025-05-09 07:44:24.931+00	\N
+f7bf8c16-1a15-4083-b2fc-5533251b3bce	d1116894-2f0b-4473-b907-11f837669963	OUT	124.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.932+00	2025-05-09 07:44:24.932+00	\N
+7c0d548a-9877-4ac7-b7af-56d27edd0c2e	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	217.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.933+00	2025-05-09 07:44:24.933+00	\N
+81aca5cb-b2bd-4f96-aba9-f6d0e45f2a32	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	263.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.933+00	2025-05-09 07:44:24.933+00	\N
+ca9da71a-d3b7-4874-8774-151ef0bad1f3	538fa5f1-f7cf-4706-9711-197079e80529	OUT	49.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.934+00	2025-05-09 07:44:24.934+00	\N
+4be1e5c7-9f5d-4fa8-aee9-68dad80d4fe1	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	58.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.934+00	2025-05-09 07:44:24.934+00	\N
+cb23c457-17e0-481f-8995-832461b81c32	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	22.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.935+00	2025-05-09 07:44:24.935+00	\N
+5f1b2c24-6b22-4e6c-bf41-593b83288bd3	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	128.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.936+00	2025-05-09 07:44:24.936+00	\N
+422fa523-16b7-44c8-9fab-91b47deb216a	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	154.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.936+00	2025-05-09 07:44:24.936+00	\N
+6f9b2ab3-2efd-4872-afc7-fbc9e496ca59	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	85.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.937+00	2025-05-09 07:44:24.937+00	\N
+fbd511a5-a751-4eb2-af7e-5f0524bed17a	619c37b6-0b66-422a-916e-be96eb242f77	OUT	10.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.937+00	2025-05-09 07:44:24.937+00	\N
+0697dfaa-f286-44de-9b6c-b06bf57abb39	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	13.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.939+00	2025-05-09 07:44:24.939+00	\N
+2d64653b-05f1-405f-ba99-fffccef12b84	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	16.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.939+00	2025-05-09 07:44:24.939+00	\N
+769c0faf-74da-4f4a-baa0-47dad4e73e5d	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	28.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.94+00	2025-05-09 07:44:24.94+00	\N
+279b83df-241e-4a7c-86f6-83552d029b89	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	176.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:24.941+00	2025-05-09 07:44:24.941+00	\N
+74e913d7-02ab-47a9-ad25-80e7b91fc028	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	121.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.016+00	2025-05-09 07:44:25.016+00	\N
+fec2328e-dadc-4cbe-a888-58661746585c	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	158.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.017+00	2025-05-09 07:44:25.017+00	\N
+2c09b736-d86f-461e-b4b0-61ded8677ed1	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	162.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.018+00	2025-05-09 07:44:25.018+00	\N
+8efcfb68-1c57-4389-b9dc-298477cf584e	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	12.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.019+00	2025-05-09 07:44:25.019+00	\N
+39a9295e-0c5c-4d43-88e2-7a8c4cf5164c	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	110.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.02+00	2025-05-09 07:44:25.02+00	\N
+4b940252-c4ba-44c9-b405-4a3113e33cc3	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	55.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.02+00	2025-05-09 07:44:25.02+00	\N
+c2afee22-da9a-4190-a82f-ff7228f56e7c	9987a243-da19-45ae-8099-dda63c577d11	OUT	168.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.022+00	2025-05-09 07:44:25.022+00	\N
+0890b39e-60c1-47e2-ae8a-61c8953ef266	0c7d088e-3454-4924-9b68-e70142714a17	OUT	7.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.023+00	2025-05-09 07:44:25.023+00	\N
+0e2a7b3f-5db2-45f6-8994-ffd2a430ca34	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	11.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.023+00	2025-05-09 07:44:25.023+00	\N
+f9f2fc38-bc02-46d5-b0e3-c8d14381e70f	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	56.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.024+00	2025-05-09 07:44:25.024+00	\N
+6e9d988e-50a8-4b92-88be-8ff32c8ec5ff	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	56.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.025+00	2025-05-09 07:44:25.025+00	\N
+783312b4-3942-4b51-82c5-3a373eeb0d38	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	9.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.025+00	2025-05-09 07:44:25.025+00	\N
+1187d602-d6d0-429e-ba8c-acf5b2773497	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	14.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.026+00	2025-05-09 07:44:25.026+00	\N
+2efa3692-7f2d-4db5-877c-fdf73c87b5e4	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	32.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.027+00	2025-05-09 07:44:25.027+00	\N
+4c75f767-c2f6-4e7b-a2fc-135e1cacd18a	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	54.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.027+00	2025-05-09 07:44:25.027+00	\N
+57b5e834-f59b-449c-814a-665e000ea3e4	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	46.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.028+00	2025-05-09 07:44:25.028+00	\N
+dea70979-c822-4a26-af52-8fd3ce2d741d	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	10.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.03+00	2025-05-09 07:44:25.03+00	\N
+a8a85c01-c612-48e0-a9d3-b0af8753e12a	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	31.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.03+00	2025-05-09 07:44:25.03+00	\N
+d18d3e9a-ff71-49cb-b82d-1ee58177ecb4	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	61.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.031+00	2025-05-09 07:44:25.031+00	\N
+38882f8b-02f3-4a49-9e0b-bc03760847dc	67190dce-2601-4780-8660-ae8f696d7006	OUT	104.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.031+00	2025-05-09 07:44:25.031+00	\N
+a4544773-e408-4e04-9953-8f9338a606e8	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	42.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.032+00	2025-05-09 07:44:25.032+00	\N
+ae587596-9af2-4ab6-b937-1a299b52758d	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	33.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.033+00	2025-05-09 07:44:25.033+00	\N
+2ae4f345-e9ed-4840-a6b4-3f8e94c6bf47	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	15.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.034+00	2025-05-09 07:44:25.034+00	\N
+a1a432c5-db8c-4644-9d10-530c6b2bdf8b	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	90.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.034+00	2025-05-09 07:44:25.034+00	\N
+33aaf195-dc46-4831-93d3-bca2780b453f	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	100.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.035+00	2025-05-09 07:44:25.035+00	\N
+ffaa20c9-d439-4a68-ab99-9412a8345a7e	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	89.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.117+00	2025-05-09 07:44:25.117+00	\N
+752e08b1-6ed2-4808-82bd-f73045e239d4	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	208.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.118+00	2025-05-09 07:44:25.118+00	\N
+a70e2a47-3b49-401b-b1d5-0a5e6dc7d508	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	183.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.119+00	2025-05-09 07:44:25.119+00	\N
+72df3420-1b56-4de9-bdd8-1af49d569825	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	34.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.119+00	2025-05-09 07:44:25.119+00	\N
+d7e18604-a2da-4227-b7d9-1915ae274973	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	274.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.12+00	2025-05-09 07:44:25.12+00	\N
+30b4f8b2-ad9b-47e5-9945-0fa97a6f1eb8	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	24.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.12+00	2025-05-09 07:44:25.12+00	\N
+4aedc3cf-fbae-46c8-be62-c99ad6ea6e20	133fd452-75ea-45c0-9023-b22711b64da0	OUT	24.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.121+00	2025-05-09 07:44:25.121+00	\N
+366b689e-7f1b-4487-99d3-b9b387a9673d	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	40.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.121+00	2025-05-09 07:44:25.121+00	\N
+74648902-db87-48ad-8a8d-c562f96d3cc4	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	237.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.122+00	2025-05-09 07:44:25.122+00	\N
+1f2c760b-e9cd-4f19-9ce4-bc423ab8b7f4	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	119.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.122+00	2025-05-09 07:44:25.122+00	\N
+07a792ec-71e6-4a37-8dd2-dee40f0a3e90	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	101.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.123+00	2025-05-09 07:44:25.123+00	\N
+2a5c92e3-08d4-40a7-bf6d-4d5b8eb07515	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	72.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.124+00	2025-05-09 07:44:25.124+00	\N
+fa9cc411-2eb3-434a-b7fd-21dee82e3d42	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	55.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.124+00	2025-05-09 07:44:25.124+00	\N
+407a31f1-591e-457f-8ac7-e97fb671b628	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	108.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.125+00	2025-05-09 07:44:25.125+00	\N
+3a8bb025-c41c-407b-afac-52b7519c1ce8	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	88.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.125+00	2025-05-09 07:44:25.125+00	\N
+18c644ea-82d9-460c-bce9-47631225326b	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	240.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.126+00	2025-05-09 07:44:25.126+00	\N
+3a5d24b8-83de-41a1-8b36-532fea0c5c9e	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	726.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.127+00	2025-05-09 07:44:25.127+00	\N
+9a063133-a85f-4180-ab63-d5f5af95d721	37223484-5648-4f06-92de-7eaa33d317f8	OUT	25.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.127+00	2025-05-09 07:44:25.127+00	\N
+1d4f9f82-b8a3-4b80-b9fd-291a77e32171	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	17.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.128+00	2025-05-09 07:44:25.128+00	\N
+b4a367ed-fcb3-438a-bac3-5e79f2190ef1	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	88.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.129+00	2025-05-09 07:44:25.129+00	\N
+8406622d-1628-4403-baf8-cea8721a80d2	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	15.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.129+00	2025-05-09 07:44:25.129+00	\N
+6c8a042e-2722-4193-8b1f-f5665ea6be29	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	35.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.13+00	2025-05-09 07:44:25.13+00	\N
+7078043a-0068-4030-bf17-c558997299c0	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	109.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.13+00	2025-05-09 07:44:25.13+00	\N
+7761625e-3dd2-4393-b0c4-f524ed572c91	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	329.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.131+00	2025-05-09 07:44:25.131+00	\N
+3b381b1f-6b20-4295-8575-5f3905e21279	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	116.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.131+00	2025-05-09 07:44:25.131+00	\N
+3c299163-01e5-4353-954c-722884affedb	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	153.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.132+00	2025-05-09 07:44:25.132+00	\N
+4162b319-c066-49e3-91c1-c8cdf2fcefa5	2af25b32-de64-4886-afd3-63d44c3db648	OUT	631.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.132+00	2025-05-09 07:44:25.132+00	\N
+999d9c57-10d3-4c79-826b-6693ae8a9a21	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	284.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.133+00	2025-05-09 07:44:25.133+00	\N
+16fcb04a-3d53-4f7c-9095-89326f20d650	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	118.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.134+00	2025-05-09 07:44:25.134+00	\N
+65d6e0af-4cc9-484f-ac81-6836b9803f5d	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	179.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.135+00	2025-05-09 07:44:25.135+00	\N
+5afcb769-4fc9-4baa-9ff7-5d821daa5f32	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	70.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.135+00	2025-05-09 07:44:25.135+00	\N
+3ae7564d-093e-4f89-a3a9-204faafaff40	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	102.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.136+00	2025-05-09 07:44:25.136+00	\N
+fdf87904-d8ca-4f30-852f-de9973690c58	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	79.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.136+00	2025-05-09 07:44:25.136+00	\N
+0071fd76-95a6-4d50-8364-c7ff430b04fa	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	58.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.137+00	2025-05-09 07:44:25.137+00	\N
+356d9f9d-6d29-433c-b645-6c8d88b7678b	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	23.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.137+00	2025-05-09 07:44:25.137+00	\N
+0395c8dd-4660-467f-be70-e70b7e05f843	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	37.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.138+00	2025-05-09 07:44:25.138+00	\N
+9a13fbdc-a4ca-41e4-ba65-ea770373fe91	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	74.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.138+00	2025-05-09 07:44:25.138+00	\N
+1ae53f9a-9c3c-4b08-8f4e-9144c5d42361	40888ace-1283-4b98-a9d9-70200531558b	OUT	86.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.139+00	2025-05-09 07:44:25.139+00	\N
+fc19d105-b18a-41b1-abc7-ee46eaed83cf	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	67.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.14+00	2025-05-09 07:44:25.14+00	\N
+f0ee5b44-4bcb-4a2e-a8fb-bd213c77f342	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	56.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.14+00	2025-05-09 07:44:25.14+00	\N
+e2424199-ed83-48b0-8e0f-b5ea4bfefb1f	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	41.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.141+00	2025-05-09 07:44:25.141+00	\N
+071bec13-8fc5-42ed-ac90-ce93ab197917	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	OUT	1552.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.141+00	2025-05-09 07:44:25.141+00	\N
+673c5be6-e712-4f81-bdbc-cb0de323b9fb	e51cc773-61dd-4219-a85b-7803c1e676c3	OUT	4292.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.181+00	2025-05-09 07:44:25.181+00	\N
+0659c1a3-e5d0-4b84-bd21-5e18c84d9f8d	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	OUT	528.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.182+00	2025-05-09 07:44:25.182+00	\N
+532f6c1c-7eeb-4c76-85a9-5f4240816f5a	3367f8cc-7c4d-4119-bc1f-b763d8d55dbd	OUT	54.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.182+00	2025-05-09 07:44:25.182+00	\N
+e2106abe-3ca3-4975-b425-6ef7036d35c2	a787e796-4385-412c-b2c5-27c9247f9894	OUT	72.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.183+00	2025-05-09 07:44:25.183+00	\N
+5ba932ab-5ff0-4c7c-9e5c-d5a5ac035d15	a3cac384-7ef5-4e60-92ab-dbe191cba8d2	OUT	214.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.184+00	2025-05-09 07:44:25.184+00	\N
+4047d3d4-fc44-497c-9b57-357d65494b33	3176c92d-701d-4ad3-b33d-69351138bc92	OUT	53.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.186+00	2025-05-09 07:44:25.186+00	\N
+6a1cb014-138f-4cf4-bbbf-40277a8dd5c9	10667ae4-4839-4c17-88a3-c9b9a202d6cb	OUT	279.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.186+00	2025-05-09 07:44:25.186+00	\N
+5f5d1d7b-edc1-4095-8596-479ca424f683	11046707-e54b-44e5-8d87-0c1ab5b5d34d	OUT	184.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.187+00	2025-05-09 07:44:25.187+00	\N
+308c3f95-60e0-4bdb-973e-cecd17e27a09	74143383-eaff-438b-973e-f36bccd350d0	OUT	105.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.188+00	2025-05-09 07:44:25.188+00	\N
+5cd8d126-580b-432f-840d-951e23c4c260	0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	OUT	20.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.188+00	2025-05-09 07:44:25.188+00	\N
+c9d96acf-78dd-44db-b585-7921581334e4	013663d3-e71d-46c2-b4b4-f8b9cb042d8c	OUT	67.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.189+00	2025-05-09 07:44:25.189+00	\N
+f7980071-b861-4253-8bda-24c470e46bf1	f5465b38-1aa7-486a-a7de-465c89565a2e	OUT	14.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.189+00	2025-05-09 07:44:25.189+00	\N
+a05e20d8-76d0-464f-ad87-85c0839036a2	056aec11-d847-4816-9217-898f31bbd4fb	OUT	172.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.19+00	2025-05-09 07:44:25.19+00	\N
+9d445c7e-0855-45f3-b6b7-59b3f7cefb25	5ddf1010-2b30-459e-9a5a-377d0de9381e	OUT	32.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.19+00	2025-05-09 07:44:25.19+00	\N
+c523b7b7-15a2-4600-a6c1-0bbc2c06ba9b	7ad9a54b-9a6f-4bf7-969b-7baec42d6ef6	OUT	10.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.192+00	2025-05-09 07:44:25.192+00	\N
+721a6870-c339-49b2-961c-d27961f8b98d	56e305de-ba92-4e70-9dcc-6e38303920c0	OUT	55.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.193+00	2025-05-09 07:44:25.193+00	\N
+39d96bd7-bb34-4d46-80f5-97e6b63a419a	a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	OUT	40.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.193+00	2025-05-09 07:44:25.193+00	\N
+1f13a177-1b1a-4676-b9b1-43dfd2614044	64a4936d-1945-4964-bd49-b281eb85fb6c	OUT	550.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.194+00	2025-05-09 07:44:25.194+00	\N
+13dd859a-30c7-4c04-ad32-8b081cbe7e9a	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	OUT	851.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.194+00	2025-05-09 07:44:25.194+00	\N
+454b48d6-7a0a-4a50-bd38-47beb9ae5a30	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	OUT	348.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.195+00	2025-05-09 07:44:25.195+00	\N
+6d9d53c2-0577-4cb1-aeb5-1dfe04b16ea3	9c7487c5-4437-4c71-94de-4958578e6252	OUT	52.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.196+00	2025-05-09 07:44:25.196+00	\N
+70d82087-5291-4edd-8642-60782cef7e18	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	OUT	571.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.217+00	2025-05-09 07:44:25.217+00	\N
+6ae131b1-8db3-48de-be96-21abbf9454cb	d7931935-f352-48e1-b2b3-198d95bb615d	OUT	653.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.218+00	2025-05-09 07:44:25.218+00	\N
+3cba9158-96eb-4eec-ad32-57ad5d788ec7	255586d4-5afd-424b-84fd-6a1ae34bed3e	OUT	158.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.219+00	2025-05-09 07:44:25.219+00	\N
+0977bc90-3917-4699-ba04-75fe019d6a93	aff2a5a9-1324-4beb-a479-106b2c5979d7	OUT	733.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.22+00	2025-05-09 07:44:25.22+00	\N
+dc8c39d3-1555-4cf6-acde-850c28fcab6d	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	OUT	224.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.221+00	2025-05-09 07:44:25.221+00	\N
+04cf08d3-ce9b-4b93-9a1b-7c918c0de2ca	9a94fcd6-aaad-4420-b82a-7ac28528b598	OUT	337.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.221+00	2025-05-09 07:44:25.221+00	\N
+91d0cd95-0269-494c-a7c5-c499e0c71745	76caa84f-1750-4310-a140-cec3684c5ee0	OUT	321.00	2025-04-30 00:00:00+00	Monthly Consumption - 4/30/2025	t	2025-05-09 07:44:25.222+00	2025-05-09 07:44:25.222+00	\N
+fa5894c6-1767-4532-8151-eb285c33e31d	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	IN	533.00	2025-04-09 00:00:00+00		f	2025-05-09 07:44:36.929+00	2025-05-09 07:44:36.929+00	\N
+8f555192-6223-4756-8932-608abeb14e24	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	IN	2138.00	2025-04-15 00:00:00+00		f	2025-05-09 07:44:36.935+00	2025-05-09 07:44:36.935+00	\N
+1ceadfdb-9b96-414c-8c03-a0c46f873e9f	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	IN	1029.00	2025-04-19 00:00:00+00		f	2025-05-09 07:44:36.939+00	2025-05-09 07:44:36.939+00	\N
+04423d13-cd08-447d-b2a0-d8cd097e4b9e	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	2614.00	2025-04-09 00:00:00+00		f	2025-05-09 07:44:36.943+00	2025-05-09 07:44:36.943+00	\N
+28ee3715-61d2-4e80-823d-88456ea0c5c0	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	2202.00	2025-04-10 00:00:00+00		f	2025-05-09 07:44:36.947+00	2025-05-09 07:44:36.947+00	\N
+e36df682-fc78-46a2-9561-cbe7c610aff6	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	3219.00	2025-04-19 00:00:00+00		f	2025-05-09 07:44:36.952+00	2025-05-09 07:44:36.952+00	\N
+0fbf4153-1587-4b2c-9432-e41ad3cd2b00	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	IN	1021.00	2025-04-09 00:00:00+00		f	2025-05-09 07:44:36.956+00	2025-05-09 07:44:36.956+00	\N
+d9ed311c-c79d-4d7c-a43b-b9a60e12cc10	3520b985-7a28-4781-8893-3f442cc6d9b6	IN	516.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.02+00	2025-05-09 07:44:37.02+00	\N
+15663a72-225e-4e63-afe8-c96c72859d04	11046707-e54b-44e5-8d87-0c1ab5b5d34d	IN	503.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.024+00	2025-05-09 07:44:37.024+00	\N
+e9b50464-65c5-4b72-952f-4d9979cac089	64a4936d-1945-4964-bd49-b281eb85fb6c	IN	503.00	2025-04-08 00:00:00+00		f	2025-05-09 07:44:37.028+00	2025-05-09 07:44:37.028+00	\N
+3089bd99-aeb1-41cd-9af5-539f5b5f6423	64a4936d-1945-4964-bd49-b281eb85fb6c	IN	424.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.033+00	2025-05-09 07:44:37.033+00	\N
+51863b72-9d65-4e21-99b3-8cda369c721b	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	IN	1445.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.036+00	2025-05-09 07:44:37.036+00	\N
+dbe6bf22-3ee8-4dbe-9031-263d8850b97d	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	IN	558.00	2025-04-24 00:00:00+00		f	2025-05-09 07:44:37.04+00	2025-05-09 07:44:37.04+00	\N
+c7fae537-0469-431f-a06f-e053b42a4e00	d7931935-f352-48e1-b2b3-198d95bb615d	IN	567.00	2025-04-24 00:00:00+00		f	2025-05-09 07:44:37.045+00	2025-05-09 07:44:37.045+00	\N
+9f157766-d5ca-42f6-bd73-de78f28e57ed	aff2a5a9-1324-4beb-a479-106b2c5979d7	IN	505.00	2025-04-28 00:00:00+00		f	2025-05-09 07:44:37.049+00	2025-05-09 07:44:37.049+00	\N
+be6eb505-064d-4462-be6a-d0b376f728fb	12e8c770-8592-4d69-9b4e-873b88b0124f	IN	246.00	2025-04-19 00:00:00+00		f	2025-05-09 07:44:37.054+00	2025-05-09 07:44:37.054+00	\N
+c6d9377b-0f9b-4bc3-9786-cb54876cb03b	db090aec-b37c-40ce-83c5-a82fe8d884b8	IN	231.00	2025-04-19 00:00:00+00		f	2025-05-09 07:44:37.058+00	2025-05-09 07:44:37.058+00	\N
+845d050c-48cd-4d41-b703-e97c025fc2cc	4c65ac22-e2d3-4df3-83f9-962b3574e85b	IN	521.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.083+00	2025-05-09 07:44:37.083+00	\N
+98a22fb8-e4cb-4942-bcc4-44ff2a5d3c79	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	IN	270.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.118+00	2025-05-09 07:44:37.118+00	\N
+8e2945d9-9834-457f-ade4-d2fdbfccf141	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	IN	298.00	2025-04-28 00:00:00+00		f	2025-05-09 07:44:37.123+00	2025-05-09 07:44:37.123+00	\N
+2a7ccc44-1909-4074-806f-bfc0a9927df1	6b8141d6-1c53-4788-a0de-938429be7e67	IN	243.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.13+00	2025-05-09 07:44:37.13+00	\N
+d4a2fd6c-a737-4a32-bbe9-0bce45bc624c	7e93b44a-7620-463d-9de2-8ed44f9be58d	IN	257.00	2025-04-10 00:00:00+00		f	2025-05-09 07:44:37.136+00	2025-05-09 07:44:37.136+00	\N
+f8a59088-deb7-49f8-a780-6194c2dd21c2	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	IN	549.00	2025-04-08 00:00:00+00		f	2025-05-09 07:44:37.14+00	2025-05-09 07:44:37.14+00	\N
+3d3c6cf0-6785-498f-bf77-36dcfd790316	af4259c9-07df-435a-a936-b69495916dda	IN	289.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.145+00	2025-05-09 07:44:37.145+00	\N
+f3dd01e0-e2d1-4906-b549-2fde207b808c	4a74547a-da83-41eb-a462-ead451407e61	IN	264.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.15+00	2025-05-09 07:44:37.15+00	\N
+5e3301af-8004-4286-bdef-6a668fb9b98a	cafac31f-e7cb-4f48-b704-df84d5e84ad8	IN	255.00	2025-04-07 00:00:00+00		f	2025-05-09 07:44:37.221+00	2025-05-09 07:44:37.221+00	\N
+a1b49647-951e-4322-9192-dfc8abb42096	d1116894-2f0b-4473-b907-11f837669963	IN	570.00	2025-04-07 00:00:00+00		f	2025-05-09 07:44:37.228+00	2025-05-09 07:44:37.228+00	\N
+133e21c3-47ff-4c2e-964a-9c681af4af82	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	185.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.234+00	2025-05-09 07:44:37.234+00	\N
+b6541b26-6853-4a8c-bd5f-13350a3f6670	5fd052eb-9eb1-4dd0-854d-00af93c252ef	IN	523.00	2025-04-10 00:00:00+00		f	2025-05-09 07:44:37.24+00	2025-05-09 07:44:37.24+00	\N
+8372935b-bda9-4fc8-ba0e-fd3b39a2e1b7	33b804dd-22bc-4504-9a36-9c840b35aa08	IN	287.00	2025-04-19 00:00:00+00		f	2025-05-09 07:44:37.319+00	2025-05-09 07:44:37.319+00	\N
+b6ddd5b4-0479-4153-af76-590825737969	c904d337-67b8-450c-964f-39ab2c70eaa3	IN	505.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.324+00	2025-05-09 07:44:37.324+00	\N
+726e8c9d-2f9f-4873-a79c-a98da0bd5ec9	10122c70-0fd8-4889-b2c6-2a6252569200	IN	187.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.329+00	2025-05-09 07:44:37.329+00	\N
+fb52645e-4aff-44a7-b600-e333751cdf15	15efc96f-2728-4830-937d-5d4f529bdd4b	IN	539.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.333+00	2025-05-09 07:44:37.333+00	\N
+d3899862-7899-456a-872e-e156aec79eb1	22e71b98-2a32-4077-b0d3-d0882a2674d5	IN	261.00	2025-04-16 00:00:00+00		f	2025-05-09 07:44:37.339+00	2025-05-09 07:44:37.339+00	\N
+f0ff15b9-fbbd-47f8-814e-5db7b3915374	9987a243-da19-45ae-8099-dda63c577d11	IN	450.00	2025-04-16 00:00:00+00		f	2025-05-09 07:44:37.344+00	2025-05-09 07:44:37.344+00	\N
+1027c592-902f-4d5d-aa58-b4882132386c	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	IN	249.00	2025-04-19 00:00:00+00		f	2025-05-09 07:44:37.35+00	2025-05-09 07:44:37.35+00	\N
+5a774c2a-1cb3-48b1-871c-2d14ffeb29af	4e319128-6d79-411b-b07f-7cf04613c0e5	IN	261.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.355+00	2025-05-09 07:44:37.355+00	\N
+5ac0da0a-c7a3-490a-90c9-6493cfa88aa2	67190dce-2601-4780-8660-ae8f696d7006	IN	535.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.36+00	2025-05-09 07:44:37.36+00	\N
+863ef510-16e8-461a-9caa-80c342bce50a	dafcc2c6-7438-4350-a808-d0908244de6b	IN	1086.00	2025-04-27 00:00:00+00		f	2025-05-09 07:44:37.383+00	2025-05-09 07:44:37.383+00	\N
+7ec4e657-8511-41ec-bfe6-9225555a8919	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	IN	468.00	2025-04-16 00:00:00+00		f	2025-05-09 07:44:37.388+00	2025-05-09 07:44:37.388+00	\N
+b36c9cb3-4db7-45c1-9b7d-0156276c598a	8b446b13-5977-4382-80f1-c145c4ff8c28	IN	299.00	2025-04-16 00:00:00+00		f	2025-05-09 07:44:37.393+00	2025-05-09 07:44:37.393+00	\N
+72b21efa-feee-4a39-a251-703652316992	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	IN	55.00	2025-04-07 00:00:00+00		f	2025-05-09 07:44:37.422+00	2025-05-09 07:44:37.422+00	\N
+49405be3-a4e7-4d57-838d-a91a3b6dfea3	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	IN	123.00	2025-04-30 00:00:00+00		f	2025-05-09 07:44:37.427+00	2025-05-09 07:44:37.427+00	\N
+9c53419c-fd2c-4ab2-b14f-ef8866e3496f	71108d69-b791-4b1d-9cae-7ebd91dec569	IN	229.00	2025-04-28 00:00:00+00		f	2025-05-09 07:44:37.432+00	2025-05-09 07:44:37.432+00	\N
+b4206e53-7225-43fd-a046-93df0be13fd8	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	IN	153.00	2025-04-07 00:00:00+00		f	2025-05-09 07:44:37.437+00	2025-05-09 07:44:37.437+00	\N
+056b2716-6418-46dc-ba36-1fffeb88392b	3927e84b-e35f-4c88-bb49-93aa3370eb6b	IN	156.00	2025-04-28 00:00:00+00		f	2025-05-09 07:44:37.442+00	2025-05-09 07:44:37.442+00	\N
+b01eb852-d57e-46cc-a027-4205eac48fe1	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	IN	519.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.483+00	2025-05-09 07:44:37.483+00	\N
+f8dd76fa-e65b-419c-8490-864bb7cdd69e	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	544.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.488+00	2025-05-09 07:44:37.488+00	\N
+cb9f20f0-f57a-4929-a7cd-3344d0eb4a1d	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	544.00	2025-04-28 00:00:00+00		f	2025-05-09 07:44:37.493+00	2025-05-09 07:44:37.493+00	\N
+cc6f204b-323d-4d3c-9c3a-e11115720e51	7f99ee7f-9612-40d1-89e7-f20588aeea0c	IN	546.00	2025-04-16 00:00:00+00		f	2025-05-09 07:44:37.498+00	2025-05-09 07:44:37.498+00	\N
+aaa7a4e3-5686-4db1-a7f2-7b716dbb33ec	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	IN	105.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.502+00	2025-05-09 07:44:37.502+00	\N
+ba22f7e2-faad-4313-8398-6a62d8d3ef41	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	IN	506.00	2025-04-28 00:00:00+00		f	2025-05-09 07:44:37.523+00	2025-05-09 07:44:37.523+00	\N
+8ae2773e-7004-4666-af7f-34d5ad4db208	2af25b32-de64-4886-afd3-63d44c3db648	IN	510.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.58+00	2025-05-09 07:44:37.58+00	\N
+b81a1a8a-f537-46ee-b12f-7b2b7b7b3a16	2af25b32-de64-4886-afd3-63d44c3db648	IN	542.00	2025-04-16 00:00:00+00		f	2025-05-09 07:44:37.586+00	2025-05-09 07:44:37.586+00	\N
+ef553cc9-5ee9-47fc-9d95-fc1efce74c7f	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	521.00	2025-04-27 00:00:00+00		f	2025-05-09 07:44:37.59+00	2025-05-09 07:44:37.59+00	\N
+82ec4a91-44d5-44a3-bfbb-807950c1b1fc	ab54ac15-dfb7-4edb-802c-a02562188e54	IN	521.00	2025-04-03 00:00:00+00		f	2025-05-09 07:44:37.596+00	2025-05-09 07:44:37.596+00	\N
+8ac25c26-5898-4146-92f1-fedc1572fd7a	e852932d-64b6-40ba-b4e6-b000b1782f13	IN	457.00	2025-04-07 00:00:00+00		f	2025-05-09 07:44:37.601+00	2025-05-09 07:44:37.601+00	\N
+9f2f5756-db18-410d-9707-1f49651cf4b8	5054a542-2406-4a73-9b22-5fdeb5f5f642	IN	95.00	2025-04-07 00:00:00+00		f	2025-05-09 07:44:37.606+00	2025-05-09 07:44:37.606+00	\N
+062b0248-3aa1-4b4d-9d55-7c1d2abcbd97	5e9023f5-f412-42ea-a178-e1975fb13c19	IN	180.00	2025-04-07 00:00:00+00		f	2025-05-09 07:44:37.611+00	2025-05-09 07:44:37.611+00	\N
+03ac4620-4bfc-4e19-b831-7b9abf8e5fff	37223484-5648-4f06-92de-7eaa33d317f8	OUT	53.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.981+00	2025-06-04 15:17:47.981+00	bulk_inventory_1749050267029_cc7s58hyz
+6fb7114e-7a11-4dff-9042-064201f9f4a7	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	20.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.982+00	2025-06-04 15:17:47.982+00	bulk_inventory_1749050267029_cc7s58hyz
+449f729e-4b56-4113-a2fa-1ba129430a00	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.982+00	2025-06-04 15:17:47.982+00	bulk_inventory_1749050267029_cc7s58hyz
+4b08740d-af2e-4b1f-bca2-be6967813ad0	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	25.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.984+00	2025-06-04 15:17:47.984+00	bulk_inventory_1749050267029_cc7s58hyz
+5f66d82b-662c-4955-96d0-62a48cea08d6	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.986+00	2025-06-04 15:17:47.986+00	bulk_inventory_1749050267029_cc7s58hyz
+c8457663-6d74-4421-b164-5417e674ad1c	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.987+00	2025-06-04 15:17:47.987+00	bulk_inventory_1749050267029_cc7s58hyz
+cdc8a31c-31d7-4316-88c9-0a73b993bcc3	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.988+00	2025-06-04 15:17:47.988+00	bulk_inventory_1749050267029_cc7s58hyz
+a639e1a8-5a6e-4e52-9f25-dd8b0d72f9f6	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	139.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.988+00	2025-06-04 15:17:47.988+00	bulk_inventory_1749050267029_cc7s58hyz
+594fc544-6429-4e8a-bfcf-7541197fe829	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	82.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.989+00	2025-06-04 15:17:47.989+00	bulk_inventory_1749050267029_cc7s58hyz
+b6271c64-c82f-4cfd-bb79-81ad14e04c7b	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	91.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.989+00	2025-06-04 15:17:47.989+00	bulk_inventory_1749050267029_cc7s58hyz
+1ecd3502-3c7f-47f9-a426-36ccbf599fdf	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.99+00	2025-06-04 15:17:47.99+00	bulk_inventory_1749050267029_cc7s58hyz
+9f873a34-d23c-4e41-abef-8d195c5fd271	2af25b32-de64-4886-afd3-63d44c3db648	OUT	267.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.99+00	2025-06-04 15:17:47.99+00	bulk_inventory_1749050267029_cc7s58hyz
+86dbad4d-50cf-4079-ab75-83b869322aaa	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	289.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.991+00	2025-06-04 15:17:47.991+00	bulk_inventory_1749050267029_cc7s58hyz
+b408d3e9-7fe3-42e1-ac79-f446b5dfa06e	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	39.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.992+00	2025-06-04 15:17:47.992+00	bulk_inventory_1749050267029_cc7s58hyz
+9bcbb452-af04-46d8-89f9-4a5be58f9b8c	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	91.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.993+00	2025-06-04 15:17:47.993+00	bulk_inventory_1749050267029_cc7s58hyz
+7b7c2419-f904-4a91-8e56-2aafe4b88141	a787e796-4385-412c-b2c5-27c9247f9894	IN	428.00	2025-05-16 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.657+00	2025-06-04 15:17:06.657+00	bulk_purchase_1749050226632_v7irqoffa
+ba36e020-1432-43f8-a72f-dccbc7c300e8	10667ae4-4839-4c17-88a3-c9b9a202d6cb	IN	496.00	2025-05-16 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.707+00	2025-06-04 15:17:06.707+00	bulk_purchase_1749050226632_v7irqoffa
+2aaee506-f22f-44e7-9a37-6323d01e7f85	74143383-eaff-438b-973e-f36bccd350d0	IN	538.00	2025-05-27 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.714+00	2025-06-04 15:17:06.714+00	bulk_purchase_1749050226632_v7irqoffa
+8fd9701e-6e25-45a9-9f24-f85a73aa952b	013663d3-e71d-46c2-b4b4-f8b9cb042d8c	IN	424.00	2025-05-17 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.72+00	2025-06-04 15:17:06.72+00	bulk_purchase_1749050226632_v7irqoffa
+7ed31d0c-f4d0-4308-ace3-c038438dc684	056aec11-d847-4816-9217-898f31bbd4fb	IN	244.00	2025-05-20 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.725+00	2025-06-04 15:17:06.725+00	bulk_purchase_1749050226632_v7irqoffa
+49367c78-f071-4e16-8325-68e1061382d0	5ddf1010-2b30-459e-9a5a-377d0de9381e	IN	552.00	2025-05-20 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.73+00	2025-06-04 15:17:06.73+00	bulk_purchase_1749050226632_v7irqoffa
+abf0e97a-9db9-4baa-8c42-351daf81b9fd	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	IN	508.00	2025-05-17 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.735+00	2025-06-04 15:17:06.735+00	bulk_purchase_1749050226632_v7irqoffa
+17d9e119-f3f9-4c37-bfdb-524d37803364	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	IN	543.00	2025-05-23 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.741+00	2025-06-04 15:17:06.741+00	bulk_purchase_1749050226632_v7irqoffa
+8b70d9b9-6661-4cc4-8661-cfc6f8424a93	d7931935-f352-48e1-b2b3-198d95bb615d	IN	502.00	2025-05-23 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.78+00	2025-06-04 15:17:06.78+00	bulk_purchase_1749050226632_v7irqoffa
+2e56922a-b951-4242-b222-6fef50b3fb05	aff2a5a9-1324-4beb-a479-106b2c5979d7	IN	768.00	2025-05-22 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.797+00	2025-06-04 15:17:06.797+00	bulk_purchase_1749050226632_v7irqoffa
+a8d116e4-2ab3-4b74-8eae-392049e259c4	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	IN	290.00	2025-05-27 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.803+00	2025-06-04 15:17:06.803+00	bulk_purchase_1749050226632_v7irqoffa
+41194c70-8c09-4f24-bb34-cdbb29d1a5f5	9a94fcd6-aaad-4420-b82a-7ac28528b598	IN	512.00	2025-05-20 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.808+00	2025-06-04 15:17:06.808+00	bulk_purchase_1749050226632_v7irqoffa
+044ff531-3832-4a30-98f5-9e3ffad7157f	76caa84f-1750-4310-a140-cec3684c5ee0	IN	521.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.813+00	2025-06-04 15:17:06.813+00	bulk_purchase_1749050226632_v7irqoffa
+abdbf985-5691-438c-bcdf-15d9a4caae2e	3101f24e-322b-4a36-8499-698393193a9e	IN	1575.00	2025-05-05 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.818+00	2025-06-04 15:17:06.818+00	bulk_purchase_1749050226632_v7irqoffa
+f8017a62-d613-4fa1-9bc4-e0a514e2e627	1985e7d8-91f8-45a6-9377-445a0052056a	IN	511.00	2025-05-27 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.823+00	2025-06-04 15:17:06.823+00	bulk_purchase_1749050226632_v7irqoffa
+a5bbf15f-34c8-4c9c-9e72-ff83f137abeb	8a6295c5-a8a1-459e-95e5-3a99537f792b	IN	481.00	2025-05-27 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.827+00	2025-06-04 15:17:06.827+00	bulk_purchase_1749050226632_v7irqoffa
+ae2e7dd7-9422-45dd-be05-2af361171c87	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	IN	256.00	2025-05-20 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.882+00	2025-06-04 15:17:06.882+00	bulk_purchase_1749050226632_v7irqoffa
+28e39330-3d03-46a3-b5bc-704874ea35b4	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	IN	536.00	2025-05-22 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.889+00	2025-06-04 15:17:06.889+00	bulk_purchase_1749050226632_v7irqoffa
+db504e13-44ec-47dd-acba-97d352bb65e3	6b8141d6-1c53-4788-a0de-938429be7e67	IN	465.00	2025-05-27 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.897+00	2025-06-04 15:17:06.897+00	bulk_purchase_1749050226632_v7irqoffa
+30b8afaa-4ed7-46e5-988a-1e87526ab291	7e93b44a-7620-463d-9de2-8ed44f9be58d	IN	482.00	2025-05-14 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.905+00	2025-06-04 15:17:06.905+00	bulk_purchase_1749050226632_v7irqoffa
+ab8c23f7-fdd0-47c4-b599-48070d2a7f08	af4259c9-07df-435a-a936-b69495916dda	IN	596.00	2025-05-20 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.913+00	2025-06-04 15:17:06.913+00	bulk_purchase_1749050226632_v7irqoffa
+3f4e00c3-8e48-4322-88ff-2d0d60c053b6	f985c888-f64f-4e62-b52e-a20264cda995	IN	301.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.92+00	2025-06-04 15:17:06.92+00	bulk_purchase_1749050226632_v7irqoffa
+4d4a1e6f-abb6-49b0-b80d-b7e52a8a2499	f75d2a64-2710-4546-8e9c-d0a5c8008c75	IN	324.00	2025-05-20 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.926+00	2025-06-04 15:17:06.926+00	bulk_purchase_1749050226632_v7irqoffa
+5114e742-e4ee-4169-be8d-615427dfbf8a	8ed81c0f-150e-4eef-8dee-e206374cb86b	IN	223.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.932+00	2025-06-04 15:17:06.932+00	bulk_purchase_1749050226632_v7irqoffa
+b1eb4041-5af3-4106-9c38-dd504d8dce05	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	IN	262.00	2025-05-13 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.942+00	2025-06-04 15:17:06.942+00	bulk_purchase_1749050226632_v7irqoffa
+2e52294b-af40-45be-8f6d-d666d81d5dfc	a81a5cd7-1d01-49e0-987c-419d628472f2	IN	524.00	2025-05-13 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.948+00	2025-06-04 15:17:06.948+00	bulk_purchase_1749050226632_v7irqoffa
+541fde85-4279-4694-bfe6-ba36afb601c9	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	1318.00	2025-05-05 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:06.997+00	2025-06-04 15:17:06.997+00	bulk_purchase_1749050226632_v7irqoffa
+046ee356-fe34-4b27-9d3d-721b62a4df29	33b804dd-22bc-4504-9a36-9c840b35aa08	IN	239.00	2025-05-16 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.004+00	2025-06-04 15:17:07.004+00	bulk_purchase_1749050226632_v7irqoffa
+396f3504-cac1-4a14-8812-a6a2d5567659	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	IN	210.00	2025-05-16 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.011+00	2025-06-04 15:17:07.011+00	bulk_purchase_1749050226632_v7irqoffa
+301bb64b-d830-49f8-802a-27ac2bfb0a92	41fd7109-37a5-45e0-9c87-0656bf194cc9	IN	476.00	2025-05-01 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.016+00	2025-06-04 15:17:07.016+00	bulk_purchase_1749050226632_v7irqoffa
+a899c140-3048-494c-9bda-8080212d683c	1c14eed6-b659-4435-821d-1cfa0d52c2f4	IN	456.00	2025-05-14 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.021+00	2025-06-04 15:17:07.021+00	bulk_purchase_1749050226632_v7irqoffa
+6284169d-2d97-4899-971b-e79cc4b79a8a	c904d337-67b8-450c-964f-39ab2c70eaa3	IN	471.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.026+00	2025-06-04 15:17:07.026+00	bulk_purchase_1749050226632_v7irqoffa
+601662ac-f976-4d2f-b646-74e3bb2c2ba9	9d84fa50-480c-4c5a-9114-ca89723cfe37	IN	561.00	2025-05-26 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.031+00	2025-06-04 15:17:07.031+00	bulk_purchase_1749050226632_v7irqoffa
+a76fc296-b064-4ff0-be05-c33016aba736	6802b141-d15a-4ded-b1af-e51c89c3cae5	IN	475.00	2025-05-05 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.035+00	2025-06-04 15:17:07.035+00	bulk_purchase_1749050226632_v7irqoffa
+d19a5e25-2530-487e-bccb-6a783448beb6	31b095f3-d72f-4870-b711-8681ebfaa0b4	IN	218.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.085+00	2025-06-04 15:17:07.085+00	bulk_purchase_1749050226632_v7irqoffa
+f4e43b06-9472-4b08-bae3-2da8afa5d76e	b82deb6a-925d-4ece-a1b4-51e8e80a2460	IN	121.00	2025-05-16 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.09+00	2025-06-04 15:17:07.09+00	bulk_purchase_1749050226632_v7irqoffa
+6413d160-c316-4cff-9a50-78428d3ce5f1	043246cc-f78d-49c8-bcab-8e9f42257178	IN	488.00	2025-05-14 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.095+00	2025-06-04 15:17:07.095+00	bulk_purchase_1749050226632_v7irqoffa
+e04f56cf-284d-41ca-a914-911ade86c395	957b389a-df69-4b4a-803e-aa6aed47312e	IN	418.00	2025-05-05 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.1+00	2025-06-04 15:17:07.1+00	bulk_purchase_1749050226632_v7irqoffa
+ab802d4e-99c3-45ae-a4c1-045cf3f264b8	3067b9fd-6966-4161-96ec-3d2faabe3d87	IN	528.00	2025-05-27 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.105+00	2025-06-04 15:17:07.105+00	bulk_purchase_1749050226632_v7irqoffa
+76e35a8d-6266-4311-9480-551c482c7255	8b446b13-5977-4382-80f1-c145c4ff8c28	IN	113.00	2025-05-05 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.11+00	2025-06-04 15:17:07.11+00	bulk_purchase_1749050226632_v7irqoffa
+7b96309e-f21b-41d8-b956-a4634060ab97	8b446b13-5977-4382-80f1-c145c4ff8c28	IN	126.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.115+00	2025-06-04 15:17:07.115+00	bulk_purchase_1749050226632_v7irqoffa
+201a16c7-9c21-4caf-b14a-7f632841cb3a	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	IN	144.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.12+00	2025-06-04 15:17:07.12+00	bulk_purchase_1749050226632_v7irqoffa
+a171af7d-f349-46c6-b0d5-07aa623ca3b2	a9d95b92-b40b-477e-9fad-90d174617f80	IN	232.00	2025-05-28 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.184+00	2025-06-04 15:17:07.184+00	bulk_purchase_1749050226632_v7irqoffa
+992d2d20-8da3-460f-a2a5-9949bf9b4767	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	547.00	2025-05-02 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.19+00	2025-06-04 15:17:07.19+00	bulk_purchase_1749050226632_v7irqoffa
+3bef6fa9-478a-4c81-a390-6eb30c1ea05f	5054a542-2406-4a73-9b22-5fdeb5f5f642	IN	185.00	2025-05-14 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.195+00	2025-06-04 15:17:07.195+00	bulk_purchase_1749050226632_v7irqoffa
+8276be59-e1e3-4f1d-9d29-2c48cb06cb80	c48004c1-4854-4845-a1fb-cca95861e90a	IN	99.00	2025-05-20 00:00:00+00	Bulk Purchase Order	f	2025-06-04 15:17:07.2+00	2025-06-04 15:17:07.2+00	bulk_purchase_1749050226632_v7irqoffa
+864ed26e-30f0-4fa8-8cdc-560fcfb98904	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	42.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.993+00	2025-06-04 15:17:47.993+00	bulk_inventory_1749050267029_cc7s58hyz
+ac460c32-4511-4eb1-af64-bfee0e62e926	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	79.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.993+00	2025-06-04 15:17:47.993+00	bulk_inventory_1749050267029_cc7s58hyz
+009bff99-a24c-44cf-8095-490c3e3d4200	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	181.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.994+00	2025-06-04 15:17:47.994+00	bulk_inventory_1749050267029_cc7s58hyz
+6743b065-547e-4438-b939-48ba1abd9cec	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	88.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.994+00	2025-06-04 15:17:47.994+00	bulk_inventory_1749050267029_cc7s58hyz
+2af73edf-3c17-44e4-9e0f-6e105b7360ef	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	18.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.995+00	2025-06-04 15:17:47.995+00	bulk_inventory_1749050267029_cc7s58hyz
+14ee9165-6976-4f60-91b3-75ab0ba0c8e1	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	62.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.995+00	2025-06-04 15:17:47.995+00	bulk_inventory_1749050267029_cc7s58hyz
+6e860995-baf0-4aaf-b2df-aa461852e83b	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.996+00	2025-06-04 15:17:47.996+00	bulk_inventory_1749050267029_cc7s58hyz
+393502d5-9432-4e2e-a0ee-0eae44b8e683	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	98.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.996+00	2025-06-04 15:17:47.996+00	bulk_inventory_1749050267029_cc7s58hyz
+b7a01683-0f12-4fb5-83ac-b128c2dcb1ff	40888ace-1283-4b98-a9d9-70200531558b	OUT	28.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.997+00	2025-06-04 15:17:47.997+00	bulk_inventory_1749050267029_cc7s58hyz
+06a6541e-569c-4beb-85f4-a22054af95dd	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	39.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.998+00	2025-06-04 15:17:47.998+00	bulk_inventory_1749050267029_cc7s58hyz
+fdfa4d49-861d-4d1b-9410-858b015bb6c2	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	51.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.999+00	2025-06-04 15:17:47.999+00	bulk_inventory_1749050267029_cc7s58hyz
+342a25ef-a3bd-4dd4-a74a-6063f5ff4944	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	26.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.999+00	2025-06-04 15:17:47.999+00	bulk_inventory_1749050267029_cc7s58hyz
+4b0affc7-4580-4c6a-b86d-d6630b5a9d2e	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	OUT	885.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48+00	2025-06-04 15:17:48+00	bulk_inventory_1749050267029_cc7s58hyz
+93e5d7b6-2908-4b49-ab83-b4dd1402e450	e51cc773-61dd-4219-a85b-7803c1e676c3	OUT	2960.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48+00	2025-06-04 15:17:48+00	bulk_inventory_1749050267029_cc7s58hyz
+b0ce1937-63d2-48a0-8ab4-796b0f7c82fe	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	OUT	365.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.001+00	2025-06-04 15:17:48.001+00	bulk_inventory_1749050267029_cc7s58hyz
+1bd1be7e-a5c3-423c-8718-3f36fad4933f	3367f8cc-7c4d-4119-bc1f-b763d8d55dbd	OUT	50.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.001+00	2025-06-04 15:17:48.001+00	bulk_inventory_1749050267029_cc7s58hyz
+a4413edf-c63d-4cb1-b234-a11a9e725eb2	3520b985-7a28-4781-8893-3f442cc6d9b6	OUT	262.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.002+00	2025-06-04 15:17:48.002+00	bulk_inventory_1749050267029_cc7s58hyz
+8c773a6f-8929-40e0-ae62-b7ed4adc4878	a787e796-4385-412c-b2c5-27c9247f9894	OUT	105.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.003+00	2025-06-04 15:17:48.003+00	bulk_inventory_1749050267029_cc7s58hyz
+e3b697e8-5d50-48cc-a670-f5b5bf1d0369	a3cac384-7ef5-4e60-92ab-dbe191cba8d2	OUT	104.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.003+00	2025-06-04 15:17:48.003+00	bulk_inventory_1749050267029_cc7s58hyz
+3309a05e-7e50-4d56-84a6-4098abef1239	6b39aa6c-f45d-4fed-83ce-e52cb6405a1f	OUT	31.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.08+00	2025-06-04 15:17:48.08+00	bulk_inventory_1749050267029_cc7s58hyz
+0119bddc-3571-4da6-820f-978156760729	3176c92d-701d-4ad3-b33d-69351138bc92	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.081+00	2025-06-04 15:17:48.081+00	bulk_inventory_1749050267029_cc7s58hyz
+53bd708d-cc90-4b2c-8567-cfd5b3bc5a06	10667ae4-4839-4c17-88a3-c9b9a202d6cb	OUT	445.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.082+00	2025-06-04 15:17:48.082+00	bulk_inventory_1749050267029_cc7s58hyz
+e9aea696-820c-41ac-b12f-5b28e1c779e5	11046707-e54b-44e5-8d87-0c1ab5b5d34d	OUT	92.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.082+00	2025-06-04 15:17:48.082+00	bulk_inventory_1749050267029_cc7s58hyz
+56e799f7-b2ab-429e-9b47-f5878766a982	74143383-eaff-438b-973e-f36bccd350d0	OUT	67.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.083+00	2025-06-04 15:17:48.083+00	bulk_inventory_1749050267029_cc7s58hyz
+2de86f8b-c484-465b-8f6e-d8bd7c9d276b	0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	OUT	109.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.083+00	2025-06-04 15:17:48.083+00	bulk_inventory_1749050267029_cc7s58hyz
+f7a09fff-cb1f-4fd8-badf-7555aca9aedf	1353dc63-9c99-4a11-aca6-b04daaee59b9	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.084+00	2025-06-04 15:17:48.084+00	bulk_inventory_1749050267029_cc7s58hyz
+8c356cfe-f6e8-490e-9d6f-1922bfb00965	013663d3-e71d-46c2-b4b4-f8b9cb042d8c	OUT	19.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.085+00	2025-06-04 15:17:48.085+00	bulk_inventory_1749050267029_cc7s58hyz
+6d2aed80-8c3b-4385-b035-fe059b1295f2	f5465b38-1aa7-486a-a7de-465c89565a2e	OUT	22.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.085+00	2025-06-04 15:17:48.085+00	bulk_inventory_1749050267029_cc7s58hyz
+a4379e65-5e25-4a80-9df2-da94da175580	056aec11-d847-4816-9217-898f31bbd4fb	OUT	158.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.086+00	2025-06-04 15:17:48.086+00	bulk_inventory_1749050267029_cc7s58hyz
+1b842a7e-415e-4547-a6c3-be3e77949d62	5ddf1010-2b30-459e-9a5a-377d0de9381e	OUT	365.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.086+00	2025-06-04 15:17:48.086+00	bulk_inventory_1749050267029_cc7s58hyz
+1e42a0ac-4791-4d9c-a807-a77c82a3fecf	7ad9a54b-9a6f-4bf7-969b-7baec42d6ef6	OUT	11.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.087+00	2025-06-04 15:17:48.087+00	bulk_inventory_1749050267029_cc7s58hyz
+de6b981e-2aa8-460b-937f-78806f3b7ba6	56e305de-ba92-4e70-9dcc-6e38303920c0	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.087+00	2025-06-04 15:17:48.087+00	bulk_inventory_1749050267029_cc7s58hyz
+f5d9fcf4-c5c5-4c18-b995-6a8732e9e4d7	a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.088+00	2025-06-04 15:17:48.088+00	bulk_inventory_1749050267029_cc7s58hyz
+91ac2df4-8b32-4bf2-b37b-55f8d4e94399	64a4936d-1945-4964-bd49-b281eb85fb6c	OUT	580.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.088+00	2025-06-04 15:17:48.088+00	bulk_inventory_1749050267029_cc7s58hyz
+a90dcc21-ec5a-453a-b22a-ac6de3caf8c9	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	OUT	1010.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.089+00	2025-06-04 15:17:48.089+00	bulk_inventory_1749050267029_cc7s58hyz
+1d88e80d-92b4-495c-b46d-e5c29ddc718b	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	OUT	169.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.09+00	2025-06-04 15:17:48.09+00	bulk_inventory_1749050267029_cc7s58hyz
+544f2b9f-b9f0-4306-bd16-af0243f7c0f5	9c7487c5-4437-4c71-94de-4958578e6252	OUT	43.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.091+00	2025-06-04 15:17:48.091+00	bulk_inventory_1749050267029_cc7s58hyz
+f5d5314d-9d43-453e-bf04-9dedc7f669f7	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	OUT	326.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.091+00	2025-06-04 15:17:48.091+00	bulk_inventory_1749050267029_cc7s58hyz
+c0c1a709-6861-4888-86f5-dbe5199bdaa5	d7931935-f352-48e1-b2b3-198d95bb615d	OUT	486.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.092+00	2025-06-04 15:17:48.092+00	bulk_inventory_1749050267029_cc7s58hyz
+531d3cf4-0c4f-4d58-bb6e-6a90ca253f2e	255586d4-5afd-424b-84fd-6a1ae34bed3e	OUT	146.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.092+00	2025-06-04 15:17:48.092+00	bulk_inventory_1749050267029_cc7s58hyz
+5de2ccf5-564f-4116-a51a-6b72e5183416	aff2a5a9-1324-4beb-a479-106b2c5979d7	OUT	229.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.093+00	2025-06-04 15:17:48.093+00	bulk_inventory_1749050267029_cc7s58hyz
+7471c3e3-d146-46d6-85d8-97a7577f3418	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	OUT	249.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.093+00	2025-06-04 15:17:48.093+00	bulk_inventory_1749050267029_cc7s58hyz
+ebdfd852-a255-46ea-9a53-1c71ac35a715	9a94fcd6-aaad-4420-b82a-7ac28528b598	OUT	157.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.094+00	2025-06-04 15:17:48.094+00	bulk_inventory_1749050267029_cc7s58hyz
+f0043fe2-c9be-49dd-97b0-f63bcc56c8ec	76caa84f-1750-4310-a140-cec3684c5ee0	OUT	196.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:48.094+00	2025-06-04 15:17:48.094+00	bulk_inventory_1749050267029_cc7s58hyz
+03764da1-8e22-4828-bd09-c4d3ae96e2cf	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	8.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.122+00	2025-06-04 15:17:47.122+00	bulk_inventory_1749050267029_cc7s58hyz
+649d0db1-d6a8-48fb-8897-61441bd26511	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	43.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.123+00	2025-06-04 15:17:47.123+00	bulk_inventory_1749050267029_cc7s58hyz
+7a4eca74-03e8-4444-bb0c-a9f40f5aa974	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	25.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.124+00	2025-06-04 15:17:47.124+00	bulk_inventory_1749050267029_cc7s58hyz
+4c8ad27d-4967-419e-b998-afd4391e4a9a	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	39.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.124+00	2025-06-04 15:17:47.124+00	bulk_inventory_1749050267029_cc7s58hyz
+5ebcc7f9-09c3-4943-91ea-fc9bcbad3fa5	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	51.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.125+00	2025-06-04 15:17:47.125+00	bulk_inventory_1749050267029_cc7s58hyz
+7bb3affe-b4e9-47b5-b53d-15887d8e94cd	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.125+00	2025-06-04 15:17:47.125+00	bulk_inventory_1749050267029_cc7s58hyz
+bd4c4121-c516-4f82-a0fd-68c0ae0d1dbb	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.126+00	2025-06-04 15:17:47.126+00	bulk_inventory_1749050267029_cc7s58hyz
+3aec6100-fdd6-42f8-9093-604dbddbe0fd	3101f24e-322b-4a36-8499-698393193a9e	OUT	382.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.127+00	2025-06-04 15:17:47.127+00	bulk_inventory_1749050267029_cc7s58hyz
+39583925-9d6a-4e01-86fc-0b33e8b8e2e4	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	245.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.127+00	2025-06-04 15:17:47.127+00	bulk_inventory_1749050267029_cc7s58hyz
+e556653e-8bde-4cd8-adad-4cdb1a889c60	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.128+00	2025-06-04 15:17:47.128+00	bulk_inventory_1749050267029_cc7s58hyz
+561dba72-6b0f-4448-ba3a-92e4e3150919	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.128+00	2025-06-04 15:17:47.128+00	bulk_inventory_1749050267029_cc7s58hyz
+28a53eef-0c16-4525-9ec4-912f15e5dccc	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	277.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.129+00	2025-06-04 15:17:47.129+00	bulk_inventory_1749050267029_cc7s58hyz
+1890243c-058e-40be-8cd4-8dcf55870f77	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	11.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.129+00	2025-06-04 15:17:47.129+00	bulk_inventory_1749050267029_cc7s58hyz
+1ef2ea75-dd5b-4a35-833c-9e246b781856	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	101.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.13+00	2025-06-04 15:17:47.13+00	bulk_inventory_1749050267029_cc7s58hyz
+982b5ffd-b1c7-44b0-a37a-3c7a40f64361	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	107.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.13+00	2025-06-04 15:17:47.13+00	bulk_inventory_1749050267029_cc7s58hyz
+a2a000bb-c7a4-4117-bae9-22b519c7ef40	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	120.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.131+00	2025-06-04 15:17:47.131+00	bulk_inventory_1749050267029_cc7s58hyz
+81432093-e7c0-4d14-a115-c7f00c8eefed	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	8.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.132+00	2025-06-04 15:17:47.132+00	bulk_inventory_1749050267029_cc7s58hyz
+ce27c934-8045-4e49-9db0-1375135be77d	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	123.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.198+00	2025-06-04 15:17:47.198+00	bulk_inventory_1749050267029_cc7s58hyz
+2bdc8bef-fbdd-46e4-9b8f-414e938e14de	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.303+00	2025-06-04 15:17:47.303+00	bulk_inventory_1749050267029_cc7s58hyz
+4065e941-c016-445c-9bd1-2457d77e02c8	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	43.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.304+00	2025-06-04 15:17:47.304+00	bulk_inventory_1749050267029_cc7s58hyz
+84351da0-f07b-4eb0-a04f-c63f87349791	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	398.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.305+00	2025-06-04 15:17:47.305+00	bulk_inventory_1749050267029_cc7s58hyz
+66ec0102-6824-4d3c-ad19-27084c36ee33	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	663.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.306+00	2025-06-04 15:17:47.306+00	bulk_inventory_1749050267029_cc7s58hyz
+5d0f25ca-2497-429b-a0c9-d7bc121cf793	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	51.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.307+00	2025-06-04 15:17:47.307+00	bulk_inventory_1749050267029_cc7s58hyz
+73b40351-7faf-43e1-85e4-2677e8312bcf	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	197.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.498+00	2025-06-04 15:17:47.498+00	bulk_inventory_1749050267029_cc7s58hyz
+9cbdb34c-85dc-465d-83d0-69fc4f55aec1	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	97.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.6+00	2025-06-04 15:17:47.6+00	bulk_inventory_1749050267029_cc7s58hyz
+d7265856-c2e7-4b3c-9cc3-7db0ae263e46	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	99.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.613+00	2025-06-04 15:17:47.613+00	bulk_inventory_1749050267029_cc7s58hyz
+6c3cb680-45bf-4dcf-8fef-475b3f8ac0c6	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	33.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.707+00	2025-06-04 15:17:47.707+00	bulk_inventory_1749050267029_cc7s58hyz
+6d08e685-9386-4f52-b7ec-a5bb2d914772	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.708+00	2025-06-04 15:17:47.708+00	bulk_inventory_1749050267029_cc7s58hyz
+661125de-2d68-4db9-9ecc-075f33440734	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	108.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.709+00	2025-06-04 15:17:47.709+00	bulk_inventory_1749050267029_cc7s58hyz
+6900ad70-dc28-420b-b19c-31cf73ff5833	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	130.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.709+00	2025-06-04 15:17:47.709+00	bulk_inventory_1749050267029_cc7s58hyz
+e0b0094b-a1aa-423c-8bec-afbe6278e85a	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	326.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.71+00	2025-06-04 15:17:47.71+00	bulk_inventory_1749050267029_cc7s58hyz
+b91f5880-892f-4f91-8d82-e8195feab381	af4259c9-07df-435a-a936-b69495916dda	OUT	168.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.71+00	2025-06-04 15:17:47.71+00	bulk_inventory_1749050267029_cc7s58hyz
+3b9ebb3d-0d27-4a10-b900-f194f84d8b0d	4a74547a-da83-41eb-a462-ead451407e61	OUT	46.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.711+00	2025-06-04 15:17:47.711+00	bulk_inventory_1749050267029_cc7s58hyz
+5b99c77b-fc55-486e-95c7-8efb34ee207a	f985c888-f64f-4e62-b52e-a20264cda995	OUT	60.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.712+00	2025-06-04 15:17:47.712+00	bulk_inventory_1749050267029_cc7s58hyz
+37e939c6-f55e-468b-8dbd-474626f84ef4	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.712+00	2025-06-04 15:17:47.712+00	bulk_inventory_1749050267029_cc7s58hyz
+b69bb7b1-093b-498e-9565-2be570d57593	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	28.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.713+00	2025-06-04 15:17:47.713+00	bulk_inventory_1749050267029_cc7s58hyz
+2b36762d-a2f5-4d60-97ce-5a36724b3480	c6aea81b-f27e-4831-a801-bc256f699290	OUT	53.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.713+00	2025-06-04 15:17:47.713+00	bulk_inventory_1749050267029_cc7s58hyz
+09f8eb06-2eed-4e41-9c12-7103e097339b	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	27.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.715+00	2025-06-04 15:17:47.715+00	bulk_inventory_1749050267029_cc7s58hyz
+aeeceb4c-eb0d-481b-acf6-1db1861ddbc0	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	16.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.715+00	2025-06-04 15:17:47.715+00	bulk_inventory_1749050267029_cc7s58hyz
+fcd1c214-b269-44a3-9b7b-bab0c68177b9	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	12.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.716+00	2025-06-04 15:17:47.716+00	bulk_inventory_1749050267029_cc7s58hyz
+fd1b0d0c-d954-4671-8ad5-6398e5edce49	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	21.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.716+00	2025-06-04 15:17:47.716+00	bulk_inventory_1749050267029_cc7s58hyz
+0d5cee28-c1d3-4469-aa4c-cae84a30bf3f	f10eee81-3438-4965-8c14-4640f17c903b	OUT	16.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.717+00	2025-06-04 15:17:47.717+00	bulk_inventory_1749050267029_cc7s58hyz
+08d6806e-1dd9-4310-8a9c-0cd90c72da8a	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	82.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.717+00	2025-06-04 15:17:47.717+00	bulk_inventory_1749050267029_cc7s58hyz
+845c4e88-4880-41ed-9e74-f843c4a52bf2	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	25.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.718+00	2025-06-04 15:17:47.718+00	bulk_inventory_1749050267029_cc7s58hyz
+b10253c1-8066-45cf-967c-dc0b9afa37b2	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	34.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.718+00	2025-06-04 15:17:47.718+00	bulk_inventory_1749050267029_cc7s58hyz
+e64089b3-e37c-417a-9607-90d3728236be	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	47.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.719+00	2025-06-04 15:17:47.719+00	bulk_inventory_1749050267029_cc7s58hyz
+208cbe25-a2e3-4945-9c27-e5293e7e9fcf	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	67.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.799+00	2025-06-04 15:17:47.799+00	bulk_inventory_1749050267029_cc7s58hyz
+6f08141a-e947-4913-b4aa-588fa417826e	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	67.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.8+00	2025-06-04 15:17:47.8+00	bulk_inventory_1749050267029_cc7s58hyz
+2f732283-ffd6-4734-8530-4dc08996a124	4037f584-89a4-41ac-9f68-28bb72216538	OUT	20.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.801+00	2025-06-04 15:17:47.801+00	bulk_inventory_1749050267029_cc7s58hyz
+18f14bad-8f89-442b-9764-70ff83acb6eb	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	111.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.802+00	2025-06-04 15:17:47.802+00	bulk_inventory_1749050267029_cc7s58hyz
+f767633b-d3f8-4da1-a00e-6b4d5ced10f2	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.803+00	2025-06-04 15:17:47.803+00	bulk_inventory_1749050267029_cc7s58hyz
+57199163-36be-4aa2-8458-f6b52614e489	d1116894-2f0b-4473-b907-11f837669963	OUT	362.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.804+00	2025-06-04 15:17:47.804+00	bulk_inventory_1749050267029_cc7s58hyz
+b43346f5-5e1b-4d3b-a58f-b52068952ea2	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	240.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.804+00	2025-06-04 15:17:47.804+00	bulk_inventory_1749050267029_cc7s58hyz
+f66c53e6-e5f1-47de-b0bc-90b8d52ee9e5	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	758.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.806+00	2025-06-04 15:17:47.806+00	bulk_inventory_1749050267029_cc7s58hyz
+8d16df81-caf8-4219-b00f-352bb8531079	538fa5f1-f7cf-4706-9711-197079e80529	OUT	51.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.807+00	2025-06-04 15:17:47.807+00	bulk_inventory_1749050267029_cc7s58hyz
+dee2d504-875b-4474-8cfe-b4d1eaeb3aca	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	148.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.807+00	2025-06-04 15:17:47.807+00	bulk_inventory_1749050267029_cc7s58hyz
+e8d1dbc8-9795-4b02-8ac0-3147451894f5	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	25.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.809+00	2025-06-04 15:17:47.809+00	bulk_inventory_1749050267029_cc7s58hyz
+4bf80cbf-9643-4154-9a4d-2bd7c4e3c2f0	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	35.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.81+00	2025-06-04 15:17:47.81+00	bulk_inventory_1749050267029_cc7s58hyz
+c3cd5ea0-1763-4bf9-a8e1-31c4ec193245	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	203.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.81+00	2025-06-04 15:17:47.81+00	bulk_inventory_1749050267029_cc7s58hyz
+71657c89-5f82-4c0f-bf83-d4e9cb44a819	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	105.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.812+00	2025-06-04 15:17:47.812+00	bulk_inventory_1749050267029_cc7s58hyz
+61752363-8b22-4ca5-8840-1cb8dd7c63cb	619c37b6-0b66-422a-916e-be96eb242f77	OUT	29.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.813+00	2025-06-04 15:17:47.813+00	bulk_inventory_1749050267029_cc7s58hyz
+1cdd6dc5-6db5-4391-859d-b7f8ce1de23e	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	33.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.816+00	2025-06-04 15:17:47.816+00	bulk_inventory_1749050267029_cc7s58hyz
+91e6f8a1-9df5-4c23-b181-3006db5dafe5	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	46.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.817+00	2025-06-04 15:17:47.817+00	bulk_inventory_1749050267029_cc7s58hyz
+8976c89e-8717-4a6f-9833-220f3156500a	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.819+00	2025-06-04 15:17:47.819+00	bulk_inventory_1749050267029_cc7s58hyz
+b44e993c-f4fd-48d9-a2b1-e7bac50b379a	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	111.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.82+00	2025-06-04 15:17:47.82+00	bulk_inventory_1749050267029_cc7s58hyz
+97a9aca9-2e49-4109-adfe-cd680d6ef4df	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	51.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.821+00	2025-06-04 15:17:47.821+00	bulk_inventory_1749050267029_cc7s58hyz
+82283aa8-4a8a-4e4f-85ca-a1d14d6934d5	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	86.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.821+00	2025-06-04 15:17:47.821+00	bulk_inventory_1749050267029_cc7s58hyz
+4e3f7e87-4c5d-4f4e-9f05-6c189ea13e9d	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	126.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.822+00	2025-06-04 15:17:47.822+00	bulk_inventory_1749050267029_cc7s58hyz
+c6e3b59b-1431-4fe7-981e-b2673ec9285f	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	42.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.823+00	2025-06-04 15:17:47.823+00	bulk_inventory_1749050267029_cc7s58hyz
+98c39d32-9897-46d3-8313-ffec997653fd	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	43.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.824+00	2025-06-04 15:17:47.824+00	bulk_inventory_1749050267029_cc7s58hyz
+7124a898-0a1e-4567-9a72-35620da6c68a	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	25.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.824+00	2025-06-04 15:17:47.824+00	bulk_inventory_1749050267029_cc7s58hyz
+c17a574d-fcd6-434c-a382-ac09b7b11cf3	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	87.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.825+00	2025-06-04 15:17:47.825+00	bulk_inventory_1749050267029_cc7s58hyz
+eec5ee17-2c4e-49e8-891b-429226ee57e7	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	48.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.826+00	2025-06-04 15:17:47.826+00	bulk_inventory_1749050267029_cc7s58hyz
+76885ba9-af9c-4383-8818-3ecb27296d5b	9987a243-da19-45ae-8099-dda63c577d11	OUT	209.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.826+00	2025-06-04 15:17:47.826+00	bulk_inventory_1749050267029_cc7s58hyz
+1c8de54f-7fa3-4319-867f-b0e6f1dfe77b	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	32.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.827+00	2025-06-04 15:17:47.827+00	bulk_inventory_1749050267029_cc7s58hyz
+22f2213d-19ad-494d-b10b-7b74873ec368	0c7d088e-3454-4924-9b68-e70142714a17	OUT	47.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.828+00	2025-06-04 15:17:47.828+00	bulk_inventory_1749050267029_cc7s58hyz
+b7cd4389-3513-4eba-b58b-4e85603607e9	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	27.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.828+00	2025-06-04 15:17:47.828+00	bulk_inventory_1749050267029_cc7s58hyz
+db23f738-a0bf-49e4-9bde-2ecd3c46c4eb	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	78.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.88+00	2025-06-04 15:17:47.88+00	bulk_inventory_1749050267029_cc7s58hyz
+66ae01fb-fd01-4b53-ac72-4bfa84568add	70809504-e675-4650-8c6c-69e13c5dc199	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.881+00	2025-06-04 15:17:47.881+00	bulk_inventory_1749050267029_cc7s58hyz
+6e8a6dbe-4878-4cf0-b1a3-397cbdefe0d4	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	73.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.882+00	2025-06-04 15:17:47.882+00	bulk_inventory_1749050267029_cc7s58hyz
+f95d5a7d-3df4-435e-a5a5-3b509f6c14ad	db15050e-1566-4aad-b957-1f67746c468a	OUT	8.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.882+00	2025-06-04 15:17:47.882+00	bulk_inventory_1749050267029_cc7s58hyz
+f2086e43-dc50-4b4f-9d41-3c35e3877588	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	10.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.883+00	2025-06-04 15:17:47.883+00	bulk_inventory_1749050267029_cc7s58hyz
+e702aefd-0c23-4009-a6e3-46eede6411d0	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.883+00	2025-06-04 15:17:47.883+00	bulk_inventory_1749050267029_cc7s58hyz
+92935a85-4aa7-479a-988c-aa42919d44f1	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	18.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.884+00	2025-06-04 15:17:47.884+00	bulk_inventory_1749050267029_cc7s58hyz
+f6e003f5-d816-4d42-bad4-af1eb0e8e4f5	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	47.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.885+00	2025-06-04 15:17:47.885+00	bulk_inventory_1749050267029_cc7s58hyz
+2b688841-c15c-4fa6-b712-9296a3c0491e	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	15.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.885+00	2025-06-04 15:17:47.885+00	bulk_inventory_1749050267029_cc7s58hyz
+088b1ecd-9856-4896-a804-553f11ea62ff	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	13.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.886+00	2025-06-04 15:17:47.886+00	bulk_inventory_1749050267029_cc7s58hyz
+6937602b-4d1b-4436-b3e6-5a9c511106bc	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	20.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.886+00	2025-06-04 15:17:47.886+00	bulk_inventory_1749050267029_cc7s58hyz
+49a251f3-3809-44ec-aea8-e4037ca43bea	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	14.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.887+00	2025-06-04 15:17:47.887+00	bulk_inventory_1749050267029_cc7s58hyz
+a35b622f-5390-42f2-b589-68dd1734a41d	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	27.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.887+00	2025-06-04 15:17:47.887+00	bulk_inventory_1749050267029_cc7s58hyz
+2d51fb13-b5e7-47ca-991a-35690cf4c336	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.888+00	2025-06-04 15:17:47.888+00	bulk_inventory_1749050267029_cc7s58hyz
+d716d90e-dd65-468b-95df-08b8efe02787	67190dce-2601-4780-8660-ae8f696d7006	OUT	95.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.888+00	2025-06-04 15:17:47.888+00	bulk_inventory_1749050267029_cc7s58hyz
+85ad6517-64fa-4ff0-8acd-08e5093b47d1	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	63.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.889+00	2025-06-04 15:17:47.889+00	bulk_inventory_1749050267029_cc7s58hyz
+1f598da5-8668-4085-94b2-c93cb23951a7	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	41.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.89+00	2025-06-04 15:17:47.89+00	bulk_inventory_1749050267029_cc7s58hyz
+0ea32306-b1bc-49e8-9b81-fb2c481c091e	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	37.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.89+00	2025-06-04 15:17:47.89+00	bulk_inventory_1749050267029_cc7s58hyz
+93a0d7a7-8d17-4eba-9f2d-b13a2a5a001a	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	156.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.891+00	2025-06-04 15:17:47.891+00	bulk_inventory_1749050267029_cc7s58hyz
+558c1fa8-3eb3-4fc3-b534-2c29843eeae8	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	32.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.891+00	2025-06-04 15:17:47.891+00	bulk_inventory_1749050267029_cc7s58hyz
+24607f8e-f545-406c-8d7f-38fe17e60487	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	154.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.892+00	2025-06-04 15:17:47.892+00	bulk_inventory_1749050267029_cc7s58hyz
+f54f6610-37c6-43e7-ab7f-bc4a1e402237	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	214.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.892+00	2025-06-04 15:17:47.892+00	bulk_inventory_1749050267029_cc7s58hyz
+70c2aad5-8073-4a3e-a690-a9bfd2cf0b97	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	239.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.893+00	2025-06-04 15:17:47.893+00	bulk_inventory_1749050267029_cc7s58hyz
+d175f96e-2dcd-44cd-974d-fa368da1192e	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	40.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.893+00	2025-06-04 15:17:47.893+00	bulk_inventory_1749050267029_cc7s58hyz
+df962b43-c4e3-40aa-9e3e-2f033a8febf6	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	164.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.893+00	2025-06-04 15:17:47.893+00	bulk_inventory_1749050267029_cc7s58hyz
+a58dbba2-0bc9-49cb-a363-a8cbcf47f329	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	153.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.894+00	2025-06-04 15:17:47.894+00	bulk_inventory_1749050267029_cc7s58hyz
+9de82da5-4322-4a40-bcf3-e5cc704a5121	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.895+00	2025-06-04 15:17:47.895+00	bulk_inventory_1749050267029_cc7s58hyz
+a4487936-370e-424a-9ce0-af63f88f9d5f	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	12.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.896+00	2025-06-04 15:17:47.896+00	bulk_inventory_1749050267029_cc7s58hyz
+f011873d-2d35-4daa-af24-e3c6bcedc756	133fd452-75ea-45c0-9023-b22711b64da0	OUT	34.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.896+00	2025-06-04 15:17:47.896+00	bulk_inventory_1749050267029_cc7s58hyz
+da06bf9c-52ad-4b17-ae1f-a5d7886030c5	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	54.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.897+00	2025-06-04 15:17:47.897+00	bulk_inventory_1749050267029_cc7s58hyz
+6ff29578-0d00-4943-959c-af81438fdf61	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	63.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.897+00	2025-06-04 15:17:47.897+00	bulk_inventory_1749050267029_cc7s58hyz
+12d6bf65-a1f7-47ce-a94e-8b58ffaa1b26	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	59.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.897+00	2025-06-04 15:17:47.897+00	bulk_inventory_1749050267029_cc7s58hyz
+5c8cfc42-6a93-44d7-a11c-758c1ec3ea36	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	31.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.898+00	2025-06-04 15:17:47.898+00	bulk_inventory_1749050267029_cc7s58hyz
+c4d6b184-7a7b-45b7-86bf-f618432ab83a	c41c8950-8578-435c-83f1-8aca424fe012	OUT	0.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.898+00	2025-06-04 15:17:47.898+00	bulk_inventory_1749050267029_cc7s58hyz
+e4e67ee5-0ecf-44f3-8955-d431c9a84daa	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	210.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.899+00	2025-06-04 15:17:47.899+00	bulk_inventory_1749050267029_cc7s58hyz
+23b3286b-6d9e-4793-9006-08a2a73e3a11	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	123.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.899+00	2025-06-04 15:17:47.899+00	bulk_inventory_1749050267029_cc7s58hyz
+2eacc1f5-e096-4c68-912c-4abf72a8d3a4	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	47.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.9+00	2025-06-04 15:17:47.9+00	bulk_inventory_1749050267029_cc7s58hyz
+186e3bc7-58ea-42df-bb13-ae21b5a02655	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	50.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.901+00	2025-06-04 15:17:47.901+00	bulk_inventory_1749050267029_cc7s58hyz
+76906b7d-d6c8-499c-bf39-ed710fff66e2	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	33.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.901+00	2025-06-04 15:17:47.901+00	bulk_inventory_1749050267029_cc7s58hyz
+61511987-6b87-4a7b-8aad-0459187a4794	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	229.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.902+00	2025-06-04 15:17:47.902+00	bulk_inventory_1749050267029_cc7s58hyz
+99622004-1b12-4631-abb7-21239d9d8976	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	58.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.902+00	2025-06-04 15:17:47.902+00	bulk_inventory_1749050267029_cc7s58hyz
+e6263f6c-1f91-4ba0-8ad9-3cc8d04d0fcd	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	209.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.903+00	2025-06-04 15:17:47.903+00	bulk_inventory_1749050267029_cc7s58hyz
+fcb729fd-f3f4-4792-87bc-09f16b42cdf8	84e10830-9923-4bd8-a704-75b8a62d18c7	IN	231.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.893+00	2025-04-25 07:02:57.893+00	\N
+fe9fbc1a-851c-4caa-82f1-92e5e5a1d1d1	12e8c770-8592-4d69-9b4e-873b88b0124f	IN	222.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.894+00	2025-04-25 07:02:57.894+00	\N
+3bdb59aa-e832-464a-9da7-255b080e7582	16bfeff9-7c35-4570-9ea8-5c624361a8b2	IN	207.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.894+00	2025-04-25 07:02:57.894+00	\N
+a5011e2f-2c86-4bbf-b7f7-82fdb14f6f45	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	IN	496.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.895+00	2025-04-25 07:02:57.895+00	\N
+d0dcac49-a41d-4846-b62c-c22f008b6464	db090aec-b37c-40ce-83c5-a82fe8d884b8	IN	333.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.895+00	2025-04-25 07:02:57.895+00	\N
+3b6d6222-2843-4b05-9729-9bc923aa5758	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	IN	165.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.896+00	2025-04-25 07:02:57.896+00	\N
+457c4b3b-b8ea-4606-b77e-c8fcb5e056a1	8421a0f1-ccbc-40f1-a781-19f620c84eab	IN	84.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.896+00	2025-04-25 07:02:57.896+00	\N
+85288ffd-a8b7-4587-92d9-e023dd1d9476	3101f24e-322b-4a36-8499-698393193a9e	OUT	391.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:57.897+00	2025-04-25 07:02:57.897+00	\N
+c89ae071-9372-47b3-9ce3-48c962217f52	5698162c-9d89-467a-ae2c-2767b6a15ead	IN	228.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.897+00	2025-04-25 07:02:57.897+00	\N
+7ce2dee9-c219-45fb-b7f4-b5a2517ef285	1985e7d8-91f8-45a6-9377-445a0052056a	IN	247.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.898+00	2025-04-25 07:02:57.898+00	\N
+9f88187c-e5ec-4e0d-af9c-1ca0725374dc	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	IN	304.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.899+00	2025-04-25 07:02:57.899+00	\N
+5aab81ec-c65e-43b3-b84f-f595ceae8c87	d77449a9-6533-40ad-b711-af427fc5d53e	IN	64.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.899+00	2025-04-25 07:02:57.899+00	\N
+441ff922-c256-49f8-991b-65d865f0dd07	4c65ac22-e2d3-4df3-83f9-962b3574e85b	IN	261.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.9+00	2025-04-25 07:02:57.9+00	\N
+662f5e70-53eb-4cd9-a266-1263427dcb84	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	IN	21.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.901+00	2025-04-25 07:02:57.901+00	\N
+52fe1b82-bac4-4d5f-a0fe-cd0e0651d009	8a6295c5-a8a1-459e-95e5-3a99537f792b	IN	274.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.901+00	2025-04-25 07:02:57.901+00	\N
+e25ee68e-a212-4e0a-b47f-1237b057650e	690d8675-5f55-4faa-b512-c706ccc5afde	IN	174.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.902+00	2025-04-25 07:02:57.902+00	\N
+e9a79934-3f95-49af-8a6c-67b5e227d480	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	IN	172.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.902+00	2025-04-25 07:02:57.902+00	\N
+770c305a-b930-4c95-a258-6062de51ef7e	90d3abe5-d026-4ba5-8d65-4d86b20b609c	IN	144.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.903+00	2025-04-25 07:02:57.903+00	\N
+edb46b9c-0595-44e6-bedb-94330dcf9d97	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	IN	466.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.903+00	2025-04-25 07:02:57.903+00	\N
+8c6c326e-38b6-4d5e-8802-bb71d2ba3589	b9db925a-e9e0-4688-b301-af9143c00daa	IN	143.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.904+00	2025-04-25 07:02:57.904+00	\N
+8573461a-0d4d-4f04-8268-88b17ab4ba44	c688e992-127e-4be0-8f40-5b03a31d9939	IN	249.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.905+00	2025-04-25 07:02:57.905+00	\N
+167147b5-e506-44c2-857c-ce83cb3f1363	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	IN	428.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.905+00	2025-04-25 07:02:57.905+00	\N
+b1664abd-7fa3-4c04-924f-19fd3e76bc5d	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	IN	269.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.906+00	2025-04-25 07:02:57.906+00	\N
+7c8cb8fa-5a57-40c0-8885-1db7c8cb90dc	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	IN	279.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.98+00	2025-04-25 07:02:57.98+00	\N
+6a229726-9382-4aca-92d6-d44cf1ca976e	6b8141d6-1c53-4788-a0de-938429be7e67	IN	223.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.981+00	2025-04-25 07:02:57.981+00	\N
+b15d41f3-e883-46b7-9621-a487a6612e05	7e93b44a-7620-463d-9de2-8ed44f9be58d	IN	520.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.982+00	2025-04-25 07:02:57.982+00	\N
+83691e26-5dd8-4a6f-a641-c3aa4c7d55d5	e15a84df-6a31-4d9d-845a-f5d56c398d3d	IN	370.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.982+00	2025-04-25 07:02:57.982+00	\N
+8c886dd4-3e23-44da-8874-8a289f2e910f	ec262571-6900-4cdb-8f74-e40b14b17d80	IN	241.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.982+00	2025-04-25 07:02:57.982+00	\N
+c0db134d-f90d-4d21-8185-0057c4d8089d	709f6326-0e0f-485a-9965-66f8d11bcbc0	IN	432.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.983+00	2025-04-25 07:02:57.983+00	\N
+26da30d3-b277-4199-98a0-0352ec9bebe8	94d7482a-b13f-4527-b57c-4edd6c630257	IN	313.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.983+00	2025-04-25 07:02:57.983+00	\N
+fabc52d0-f0df-4308-bb41-aa34907bd103	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	IN	948.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.984+00	2025-04-25 07:02:57.984+00	\N
+0bb9004e-7d21-4e74-a567-e434ce1d12fe	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	IN	995.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.985+00	2025-04-25 07:02:57.985+00	\N
+7513c73a-976b-4d11-a68b-48526c2be453	af4259c9-07df-435a-a936-b69495916dda	IN	274.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.986+00	2025-04-25 07:02:57.986+00	\N
+2186a5c7-5b9d-4792-8294-08f99f879f62	4a74547a-da83-41eb-a462-ead451407e61	IN	352.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.986+00	2025-04-25 07:02:57.986+00	\N
+8312d489-6d46-458c-a65e-dd36d2832d64	f985c888-f64f-4e62-b52e-a20264cda995	IN	361.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.987+00	2025-04-25 07:02:57.987+00	\N
+e4f48364-6c18-4fa3-bd34-fae9c9ae0049	f75d2a64-2710-4546-8e9c-d0a5c8008c75	IN	499.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.987+00	2025-04-25 07:02:57.987+00	\N
+30185688-ea0c-4725-bde2-0c52db992d20	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	IN	58.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.988+00	2025-04-25 07:02:57.988+00	\N
+7655b98f-a3c3-424d-9e71-525ed433e2eb	c6aea81b-f27e-4831-a801-bc256f699290	IN	215.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.988+00	2025-04-25 07:02:57.988+00	\N
+547ef39c-4aea-4dde-9192-448627662d43	8ed81c0f-150e-4eef-8dee-e206374cb86b	IN	259.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.988+00	2025-04-25 07:02:57.988+00	\N
+ff316672-5fef-44dd-b08b-cf72722aed01	26912293-b83f-425a-b7c6-8090d90c62ab	IN	162.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.989+00	2025-04-25 07:02:57.989+00	\N
+068e4107-e9a7-481e-9cda-43f8cd46de51	4fec1fbc-1190-42d7-b569-d7f1580561b7	IN	166.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.989+00	2025-04-25 07:02:57.989+00	\N
+677414c7-0312-4702-9676-ffd148c629a3	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	IN	129.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.99+00	2025-04-25 07:02:57.99+00	\N
+eea2768a-aeb0-4135-87de-b16bbf1461be	f10eee81-3438-4965-8c14-4640f17c903b	IN	121.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.992+00	2025-04-25 07:02:57.992+00	\N
+cd7c3252-1452-4036-9f7d-d955f3133810	7dae25a0-08b2-422a-bfd9-84ca60c1223a	IN	158.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.992+00	2025-04-25 07:02:57.992+00	\N
+8c2470fb-f93a-46cd-8f6e-7c119570cc9d	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	IN	228.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.993+00	2025-04-25 07:02:57.993+00	\N
+ffce46cc-c527-4dab-8aab-8f2c09d1ab20	f3957def-9de6-4e72-9960-9a9ceac670ab	IN	74.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.993+00	2025-04-25 07:02:57.993+00	\N
+037a2335-1495-4334-b52a-37326a88f41b	cafac31f-e7cb-4f48-b704-df84d5e84ad8	IN	208.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.994+00	2025-04-25 07:02:57.994+00	\N
+92320550-7a7e-4751-922d-4fb23d923db3	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	IN	408.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.994+00	2025-04-25 07:02:57.994+00	\N
+679f5ed5-cb72-4799-8377-f0aede65c0d8	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	IN	342.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.995+00	2025-04-25 07:02:57.995+00	\N
+9b434249-02dc-44fc-aa38-152ef99b47e1	4037f584-89a4-41ac-9f68-28bb72216538	IN	311.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.995+00	2025-04-25 07:02:57.995+00	\N
+ef0b4011-9257-4014-b6d7-aeca27cf4d83	239425e4-90bf-4048-9f7e-6aa4f5a8365e	IN	231.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.996+00	2025-04-25 07:02:57.996+00	\N
+60c78b1a-ff3a-4c49-a715-7a0f36acff90	20f5d863-c219-485f-ba56-4b7cbace2645	IN	214.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.996+00	2025-04-25 07:02:57.996+00	\N
+2cae2507-0f24-42b5-8066-fcdf2c58fe76	d1116894-2f0b-4473-b907-11f837669963	IN	137.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.997+00	2025-04-25 07:02:57.997+00	\N
+f9962d18-9103-465e-9dbd-9fdd93a0bd6d	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	255.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:57.999+00	2025-04-25 07:02:57.999+00	\N
+86bdfe66-16da-496d-b8da-0c8e645f7f26	538fa5f1-f7cf-4706-9711-197079e80529	IN	175.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:57.999+00	2025-04-25 07:02:57.999+00	\N
+c8a92767-52ad-4bed-a7b6-ea3eea66bf46	5fd052eb-9eb1-4dd0-854d-00af93c252ef	IN	144.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58+00	2025-04-25 07:02:58+00	\N
+169e6dc1-b83e-4232-8adc-928fb5aabc8e	33b804dd-22bc-4504-9a36-9c840b35aa08	IN	380.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58+00	2025-04-25 07:02:58+00	\N
+f4cc9cb8-2d20-4d00-a07d-e7bc2257ef08	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	IN	135.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.001+00	2025-04-25 07:02:58.001+00	\N
+2c516d1c-220f-4963-96c2-592ee85295b7	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	237.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.001+00	2025-04-25 07:02:58.001+00	\N
+47fa957d-5667-4c61-9d23-9be500ccf4a3	1c14eed6-b659-4435-821d-1cfa0d52c2f4	IN	375.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.002+00	2025-04-25 07:02:58.002+00	\N
+c577bddb-f2d5-4f5b-bf93-748f65e23b1a	619c37b6-0b66-422a-916e-be96eb242f77	IN	52.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.002+00	2025-04-25 07:02:58.002+00	\N
+0abd72bb-376d-4a4d-ad67-eaffc60c36ab	5afe5513-aa31-4b59-8734-cac79b685f3f	IN	204.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.003+00	2025-04-25 07:02:58.003+00	\N
+0a81477b-cc23-41ad-8fea-8406bf4d0e2d	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	IN	112.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.003+00	2025-04-25 07:02:58.003+00	\N
+d4ad2948-49c8-4700-8611-0d39b710117f	182e431b-ee09-42e3-a93c-f62c289cf3d7	IN	378.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.004+00	2025-04-25 07:02:58.004+00	\N
+a800848f-44f4-42d9-8edc-c8fc1144b738	c904d337-67b8-450c-964f-39ab2c70eaa3	IN	409.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.005+00	2025-04-25 07:02:58.005+00	\N
+b1038927-3374-4d17-ae1d-c43f28e68305	10122c70-0fd8-4889-b2c6-2a6252569200	IN	295.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.005+00	2025-04-25 07:02:58.005+00	\N
+80813087-736a-45da-af67-9e638a2ba979	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	82.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.006+00	2025-04-25 07:02:58.006+00	\N
+8404b742-aa7b-4a76-8f74-90f41e4108b8	15efc96f-2728-4830-937d-5d4f529bdd4b	IN	126.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.007+00	2025-04-25 07:02:58.007+00	\N
+4761848b-68c5-4258-9e3b-c5154164cc2a	6802b141-d15a-4ded-b1af-e51c89c3cae5	IN	116.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.007+00	2025-04-25 07:02:58.007+00	\N
+2820eb33-3821-4c7f-91f8-1e956d0ee28a	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	45.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.007+00	2025-04-25 07:02:58.007+00	\N
+258f7795-e4ea-41cb-9d89-75f62f805b03	71578227-eb61-4a5b-9e77-b0fb6820f6d5	IN	807.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.008+00	2025-04-25 07:02:58.008+00	\N
+843db630-a15f-4bd0-8510-34d805ec4ab3	22e71b98-2a32-4077-b0d3-d0882a2674d5	IN	217.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.008+00	2025-04-25 07:02:58.008+00	\N
+9fdf46c3-3c2c-489e-af9b-cc810e05c312	af619843-42f3-4ccb-a145-54c64adf4f6f	IN	174.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.008+00	2025-04-25 07:02:58.008+00	\N
+c5795289-51d3-4ac9-873a-864d098f74bc	9987a243-da19-45ae-8099-dda63c577d11	IN	537.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.009+00	2025-04-25 07:02:58.009+00	\N
+dcd1c8ba-f588-4a9d-9662-d37fea4b7f0f	8f8c1dab-1010-47a4-9931-7b7858e4a11c	IN	289.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.009+00	2025-04-25 07:02:58.009+00	\N
+18ba8cca-3c1c-4328-b3c5-1f57f79426b0	0c7d088e-3454-4924-9b68-e70142714a17	IN	293.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.01+00	2025-04-25 07:02:58.01+00	\N
+32a026f7-b8e2-4cd8-86dc-ca5a73ca9f5b	ee40ba6a-5b01-4a1f-8249-f31f6589c414	IN	565.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.01+00	2025-04-25 07:02:58.01+00	\N
+1c62e24f-bb50-43f5-82c7-dc8850a11979	70809504-e675-4650-8c6c-69e13c5dc199	IN	285.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.011+00	2025-04-25 07:02:58.011+00	\N
+ef8d008c-f31c-4975-96f1-c6dd52d88726	db15050e-1566-4aad-b957-1f67746c468a	IN	138.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.011+00	2025-04-25 07:02:58.011+00	\N
+dcb70f2e-79b4-40e4-8055-3b6999b57efe	4e4e32e9-17ec-41fe-8109-b9939be0561d	IN	218.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.011+00	2025-04-25 07:02:58.011+00	\N
+36a25c0f-5a3c-4b62-a8c3-53ab76af5712	267a90e8-cca5-4c53-8f47-73d8b7836272	IN	260.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.012+00	2025-04-25 07:02:58.012+00	\N
+e3f9d795-21d6-43b9-9279-1be271da18b9	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	IN	368.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.012+00	2025-04-25 07:02:58.012+00	\N
+61c3787d-2f17-4298-915c-e09c0789dcd0	82e68c33-2f5c-4482-9063-8f98243fec03	IN	234.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.013+00	2025-04-25 07:02:58.013+00	\N
+32a5b5a3-12ef-43a1-9d39-739d9874d54f	40a09f66-dd19-4b48-afb7-efe1ea353a41	IN	279.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.013+00	2025-04-25 07:02:58.013+00	\N
+769a39e1-adb5-4af9-b133-1a750c8f901f	4e319128-6d79-411b-b07f-7cf04613c0e5	IN	242.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.013+00	2025-04-25 07:02:58.013+00	\N
+847713e3-dcca-4115-a071-417431620117	bbcb03dc-3fe7-47f9-acd6-b748095e0103	IN	206.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.014+00	2025-04-25 07:02:58.014+00	\N
+0872a7d5-082c-444f-96ef-fcccded98d92	fe625b93-f72a-49c2-b2f5-1617a2402fc0	IN	588.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.08+00	2025-04-25 07:02:58.08+00	\N
+58810109-0232-42cb-8f15-11fd5e637af9	b2a7761c-3479-4fd8-b914-7cb1b466aeef	IN	155.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.081+00	2025-04-25 07:02:58.081+00	\N
+6d2f5fcc-1554-4076-a67f-4d5a16134645	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	699.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.081+00	2025-04-25 07:02:58.081+00	\N
+fbf55874-48c9-4329-b0c1-535968aaface	0fff1be0-c4ae-4b09-a56a-94795b6ee450	IN	141.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.082+00	2025-04-25 07:02:58.082+00	\N
+9cb4bf49-9819-40a9-bd1e-a5978fd9af82	67190dce-2601-4780-8660-ae8f696d7006	IN	422.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.082+00	2025-04-25 07:02:58.082+00	\N
+fc8f14c0-9359-446a-a1e1-c69a79db8621	31b095f3-d72f-4870-b711-8681ebfaa0b4	IN	345.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.083+00	2025-04-25 07:02:58.083+00	\N
+786fb59e-78b9-411c-952a-fbd2a67f1947	b82deb6a-925d-4ece-a1b4-51e8e80a2460	IN	494.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.083+00	2025-04-25 07:02:58.083+00	\N
+41c606b9-dd24-42fd-9683-88823b9ed9df	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	IN	402.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.083+00	2025-04-25 07:02:58.083+00	\N
+9d984dd9-c293-4bf0-96fe-beda28a19c71	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	IN	1152.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.084+00	2025-04-25 07:02:58.084+00	\N
+a80c17e8-04b9-43f6-98cc-9c642ae12323	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	51.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.084+00	2025-04-25 07:02:58.084+00	\N
+59843301-e3b0-425e-99cb-e7df45e7c311	37223484-5648-4f06-92de-7eaa33d317f8	IN	185.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.085+00	2025-04-25 07:02:58.085+00	\N
+68eb7884-dcc3-428c-befc-9d57091eb47d	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	IN	199.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.086+00	2025-04-25 07:02:58.086+00	\N
+34012644-78a8-4ba4-b78c-68137a1c4690	881bef50-07c0-49bb-9cd1-fd77401f5746	IN	196.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.086+00	2025-04-25 07:02:58.086+00	\N
+9c9d54cb-4b09-4257-84da-7d1703e86c06	8b9bc0fa-0898-4f06-a212-b69d24563e01	IN	457.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.087+00	2025-04-25 07:02:58.087+00	\N
+f6336f72-3194-429a-b5e0-c17ce02a26b0	cd2f2713-2c16-46e2-91a6-a46d34166527	IN	341.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.087+00	2025-04-25 07:02:58.087+00	\N
+1dc57378-b899-4717-bc36-f16886859aa2	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	IN	451.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.088+00	2025-04-25 07:02:58.088+00	\N
+1e2d1485-59db-450d-a8c9-3d262cc99bc8	9ec636d6-2773-4a7a-b8a6-26ab852155ba	IN	276.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.088+00	2025-04-25 07:02:58.088+00	\N
+fefa3379-43a6-439c-8f87-3550848c5376	7f99ee7f-9612-40d1-89e7-f20588aeea0c	IN	684.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.089+00	2025-04-25 07:02:58.089+00	\N
+ae45c05f-5d99-4ff5-801d-953958453adb	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	IN	448.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.089+00	2025-04-25 07:02:58.089+00	\N
+1dfcfe45-9b39-4a02-a595-5170268fb36f	d3ca9255-2b14-42d7-8940-f11eedbfa16d	IN	517.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.09+00	2025-04-25 07:02:58.09+00	\N
+3d89e3de-46bf-4993-9b79-a2de51967ef8	190becbb-2919-4ebf-aa19-619a06a12fe5	IN	504.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.091+00	2025-04-25 07:02:58.091+00	\N
+c2006390-512b-410f-83b8-f3466ae64d04	2af25b32-de64-4886-afd3-63d44c3db648	IN	78.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.092+00	2025-04-25 07:02:58.092+00	\N
+b9c093fc-719c-4100-9323-c7da8ad4ab7d	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	196.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.092+00	2025-04-25 07:02:58.092+00	\N
+10034704-bb19-4614-9cea-8ce76c93d05d	ab54ac15-dfb7-4edb-802c-a02562188e54	IN	423.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.093+00	2025-04-25 07:02:58.093+00	\N
+bf7e0932-6c6e-4935-8f3f-8d0e2c23b8aa	661c2cb7-b78f-4584-a043-a4ca8873ec25	IN	1061.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.093+00	2025-04-25 07:02:58.093+00	\N
+2aa62bce-b4ad-4c68-8e12-808dbce2ff46	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	IN	268.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.094+00	2025-04-25 07:02:58.094+00	\N
+4d38c007-1b98-4cde-838f-adb734bc3091	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	IN	179.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.094+00	2025-04-25 07:02:58.094+00	\N
+815a1059-2db9-4699-b476-11d2ee2c1272	e852932d-64b6-40ba-b4e6-b000b1782f13	IN	470.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.095+00	2025-04-25 07:02:58.095+00	\N
+ac1fc85e-fe64-49a5-8ce4-b85809fd5921	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	IN	388.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.095+00	2025-04-25 07:02:58.095+00	\N
+2de66a4a-b8ad-4d98-8c82-80a9f24e3e86	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	IN	471.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.095+00	2025-04-25 07:02:58.095+00	\N
+2c9a7679-f6d4-4ed8-a61a-5e479afd734c	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	21.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.096+00	2025-04-25 07:02:58.096+00	\N
+1e7666ab-7c73-4791-bda1-94a4da1498fb	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	19.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.096+00	2025-04-25 07:02:58.096+00	\N
+21d34ad3-29dd-4b61-8302-eb4ff169ca21	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	10.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.098+00	2025-04-25 07:02:58.098+00	\N
+b1dbfade-08e9-408c-951a-41f7cefbe190	40888ace-1283-4b98-a9d9-70200531558b	OUT	7.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.098+00	2025-04-25 07:02:58.098+00	\N
+e20ed311-97e6-4507-af26-c5d388f6f951	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	23.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.099+00	2025-04-25 07:02:58.099+00	\N
+2ea3e115-7b85-4ede-99bb-dc832991059c	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	18.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.099+00	2025-04-25 07:02:58.099+00	\N
+9b48c2b1-b536-4fd8-bacf-e551d84305e8	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	15.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.1+00	2025-04-25 07:02:58.1+00	\N
+adb96704-d9ef-47b0-93ef-fa40b01a0817	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	IN	169.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.1+00	2025-04-25 07:02:58.1+00	\N
+1ae41e4b-6980-4bba-b7ed-9f80d9611cca	e6126504-c564-454a-b29c-d93b3edff9f8	IN	307.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.101+00	2025-04-25 07:02:58.101+00	\N
+94bca5f8-3ee9-4249-bd0d-0c887459e77f	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	IN	376.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.101+00	2025-04-25 07:02:58.101+00	\N
+3e156520-ccb9-46d7-a4de-21c7c599c1a0	133fd452-75ea-45c0-9023-b22711b64da0	IN	338.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.102+00	2025-04-25 07:02:58.102+00	\N
+1fcd38b0-1fd1-494b-ac2d-3b623610e0da	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	IN	292.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:02:58.102+00	2025-04-25 07:02:58.102+00	\N
+113129e2-d05b-47a5-89d9-4a73cace3d38	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	72.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.103+00	2025-04-25 07:02:58.103+00	\N
+25e42f64-a7b8-45f0-a226-bab8b8c01c8c	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	22.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.104+00	2025-04-25 07:02:58.104+00	\N
+3f296129-f461-4e3b-9bcf-5bad29cb14a2	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	60.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.104+00	2025-04-25 07:02:58.104+00	\N
+e2f96fc2-dbff-40cb-9844-c535a01ed4a1	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	95.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.105+00	2025-04-25 07:02:58.105+00	\N
+f3de314d-bf25-40e8-98a9-884f61823443	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	45.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.105+00	2025-04-25 07:02:58.105+00	\N
+a4367e44-21b0-43bb-96b1-c09be188f595	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	42.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.106+00	2025-04-25 07:02:58.106+00	\N
+c03d8db2-5b8d-481a-ab9a-2f5a75df3b7d	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	76.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.106+00	2025-04-25 07:02:58.106+00	\N
+62879064-61c0-4ce8-a53f-2f4468559382	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.107+00	2025-04-25 07:02:58.107+00	\N
+6d7a1574-b733-41d4-818a-c2faba837a3b	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	16.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.107+00	2025-04-25 07:02:58.107+00	\N
+3c364af8-41e2-454e-8a69-291c20870c5e	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	13.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.108+00	2025-04-25 07:02:58.108+00	\N
+fc021b23-15f3-4835-8f72-514a0d4d0f38	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	26.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.18+00	2025-04-25 07:02:58.18+00	\N
+82c384fa-1946-43cc-bef3-52a59f3243c1	c41c8950-8578-435c-83f1-8aca424fe012	OUT	21.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.181+00	2025-04-25 07:02:58.181+00	\N
+67fab0e1-15c5-410a-bc7a-be16226fa2dc	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	73.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.185+00	2025-04-25 07:02:58.185+00	\N
+b9f74f4a-3b1e-44c7-96f9-53c496f439d5	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	20.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.185+00	2025-04-25 07:02:58.185+00	\N
+8bcc8055-99ea-4483-beda-f1b69ab035d5	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	26.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.186+00	2025-04-25 07:02:58.186+00	\N
+77c08b51-848f-47a6-b9e8-9d959346c7f3	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	18.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.186+00	2025-04-25 07:02:58.186+00	\N
+b5d3aa7d-ab42-4cec-a83a-aa7f696d1402	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	18.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.187+00	2025-04-25 07:02:58.187+00	\N
+e0886d6e-a291-499d-89f0-18343c3d339f	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	14.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.187+00	2025-04-25 07:02:58.187+00	\N
+bc6a3571-7738-4e80-a6ce-af2ded4b846e	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	19.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.188+00	2025-04-25 07:02:58.188+00	\N
+bab1f6d0-8592-4a57-bda3-25076f4ff096	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	25.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.188+00	2025-04-25 07:02:58.188+00	\N
+548295dc-0ffb-482c-acb2-5e7fe0a4f8d2	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	34.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.189+00	2025-04-25 07:02:58.189+00	\N
+444e8c48-6202-4a03-87f8-8cbe81f40906	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	57.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.19+00	2025-04-25 07:02:58.19+00	\N
+64319ebf-49bd-4227-9400-6bd3b9ed9f07	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	33.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.19+00	2025-04-25 07:02:58.19+00	\N
+88ffa7bb-df24-4c12-b254-15a4c45b2d90	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	58.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.192+00	2025-04-25 07:02:58.192+00	\N
+86aa8212-5a0d-45f5-944e-5f5d2f19e1de	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	124.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.193+00	2025-04-25 07:02:58.193+00	\N
+154c91a1-967d-4c9d-bbe9-e83a7d8807c8	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	6.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.193+00	2025-04-25 07:02:58.193+00	\N
+550f7249-8902-4af9-88f2-d337caf55d15	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.194+00	2025-04-25 07:02:58.194+00	\N
+cecd531b-958e-403b-aad0-b17a3a988bea	3101f24e-322b-4a36-8499-698393193a9e	OUT	371.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.194+00	2025-04-25 07:02:58.194+00	\N
+019d4ea4-3107-4d6f-a61c-9cc606672796	5698162c-9d89-467a-ae2c-2767b6a15ead	OUT	43.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.195+00	2025-04-25 07:02:58.195+00	\N
+80912276-f87b-4fae-bcd9-85d68b351ecc	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	209.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.196+00	2025-04-25 07:02:58.196+00	\N
+4d1518bd-e051-4c44-85ba-83cace43b7de	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.197+00	2025-04-25 07:02:58.197+00	\N
+16d41853-5276-4549-a8c0-468df9e21054	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.197+00	2025-04-25 07:02:58.197+00	\N
+d8cc4d51-e68d-4c54-94d5-d1f8dc5d419d	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	141.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.198+00	2025-04-25 07:02:58.198+00	\N
+7dc2badd-9a4d-4639-acbe-3a40cc0ee49a	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	140.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.201+00	2025-04-25 07:02:58.201+00	\N
+778de7c3-f451-4bc0-8777-98fff637bf21	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	56.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.202+00	2025-04-25 07:02:58.202+00	\N
+fec3a417-af5c-4a39-90dd-9a4ff4bcef5f	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	74.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.203+00	2025-04-25 07:02:58.203+00	\N
+17e9b1e0-2e94-48fb-bc1d-79b6a579d0f8	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	76.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.203+00	2025-04-25 07:02:58.203+00	\N
+6579ffe8-a37a-4043-8585-9298155615ad	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.204+00	2025-04-25 07:02:58.204+00	\N
+5dee1351-1bfa-4bcb-bfc4-5a9ca5a8aa92	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	28.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.204+00	2025-04-25 07:02:58.204+00	\N
+949bd710-3807-4958-b7e9-23ec06a6f855	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	4.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.205+00	2025-04-25 07:02:58.205+00	\N
+48ac0d47-1bea-42df-b379-f269861559a6	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	75.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.205+00	2025-04-25 07:02:58.205+00	\N
+3a7aa529-12a3-4dd7-8a39-ade3e25592bc	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	305.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.206+00	2025-04-25 07:02:58.206+00	\N
+6f6cee81-42f6-4cc0-8516-cc7b0899eaec	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	113.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.207+00	2025-04-25 07:02:58.207+00	\N
+628378a2-571c-4ef5-9e87-e0e52a65b064	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	51.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.207+00	2025-04-25 07:02:58.207+00	\N
+9b657693-15cd-42a1-9f1b-64ccdb169214	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	202.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.21+00	2025-04-25 07:02:58.21+00	\N
+501f56aa-5a1e-405c-8012-4a031b02803a	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	21.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.21+00	2025-04-25 07:02:58.21+00	\N
+ede45414-1059-4c3c-93f4-a8eade20b979	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	137.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.211+00	2025-04-25 07:02:58.211+00	\N
+a146e715-600d-4c0d-9e9c-7b67cc96d6f4	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	17.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.212+00	2025-04-25 07:02:58.212+00	\N
+f32c805c-aba2-4d69-82d2-a55575235bf3	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	39.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.213+00	2025-04-25 07:02:58.213+00	\N
+3848cc41-5cc9-4d13-b020-7c6c5858cd1c	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	113.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.213+00	2025-04-25 07:02:58.213+00	\N
+f78536ed-0265-4fc8-b83b-57fe0efc2502	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	62.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.214+00	2025-04-25 07:02:58.214+00	\N
+cf9437e1-d065-40db-90f8-f8b36ed7877b	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	326.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.215+00	2025-04-25 07:02:58.215+00	\N
+bbfcb12d-c08f-4bfe-8ab5-d7a100a1d6bc	af4259c9-07df-435a-a936-b69495916dda	OUT	224.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.215+00	2025-04-25 07:02:58.215+00	\N
+8e6576dd-a26c-46a1-9321-ccb67c36ff71	4a74547a-da83-41eb-a462-ead451407e61	OUT	16.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.216+00	2025-04-25 07:02:58.216+00	\N
+7fa94667-a7bd-4bca-8ada-ce0ba82ac2e2	f985c888-f64f-4e62-b52e-a20264cda995	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.228+00	2025-04-25 07:02:58.228+00	\N
+5aaf15fd-7e66-4666-9604-c19b0ecde1b5	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.23+00	2025-04-25 07:02:58.23+00	\N
+71c435d7-3e5c-41fe-bf23-22bac9bbd073	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.232+00	2025-04-25 07:02:58.232+00	\N
+577e3acf-18f1-4cc2-bd82-c6761494224f	c6aea81b-f27e-4831-a801-bc256f699290	OUT	70.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.234+00	2025-04-25 07:02:58.234+00	\N
+81bdec73-379f-4a25-a781-f275a9765aad	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.235+00	2025-04-25 07:02:58.235+00	\N
+a3f6278c-7c6a-4d45-bed6-68b6276045a4	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	22.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.236+00	2025-04-25 07:02:58.236+00	\N
+6ed68024-3e2d-4224-b629-cc3a6071b1fc	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.28+00	2025-04-25 07:02:58.28+00	\N
+6b7e9a78-f09a-45b3-8d16-45d7034c112e	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	46.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.281+00	2025-04-25 07:02:58.281+00	\N
+8836f789-d7bb-45c7-bb85-8457eced1069	f10eee81-3438-4965-8c14-4640f17c903b	OUT	26.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.282+00	2025-04-25 07:02:58.282+00	\N
+7cbf067a-7f59-46ea-8946-7e9560b9f30d	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	28.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.282+00	2025-04-25 07:02:58.282+00	\N
+521c51e0-88c7-4e32-89b2-168909e31793	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.285+00	2025-04-25 07:02:58.285+00	\N
+82bcbc54-b408-45c9-a44c-21ac6179f92f	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	20.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.286+00	2025-04-25 07:02:58.286+00	\N
+8fd15ca6-edce-433c-8689-62ef4f22669b	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	33.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.287+00	2025-04-25 07:02:58.287+00	\N
+8fe8fbc2-7a03-467c-a846-9a593207d7b7	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	28.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.287+00	2025-04-25 07:02:58.287+00	\N
+cc301a8d-178f-4b48-950f-064ee33e9827	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	27.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.288+00	2025-04-25 07:02:58.288+00	\N
+bcde9d74-1c82-4888-9dcd-8252a0775152	4037f584-89a4-41ac-9f68-28bb72216538	OUT	15.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.289+00	2025-04-25 07:02:58.289+00	\N
+e2fa2a08-768d-4d85-9ee7-11b34c959261	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	159.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.289+00	2025-04-25 07:02:58.289+00	\N
+c530f871-46a2-4c6b-ae70-d8517275200c	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	8.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.29+00	2025-04-25 07:02:58.29+00	\N
+b033277e-9082-4b6a-af04-c9593d85fe06	d1116894-2f0b-4473-b907-11f837669963	OUT	88.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.291+00	2025-04-25 07:02:58.291+00	\N
+2a8b05ab-d6f7-4eee-bb64-949e421f74b1	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	201.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.291+00	2025-04-25 07:02:58.291+00	\N
+12150e29-090c-45c1-8f1e-6c8668ec779e	538fa5f1-f7cf-4706-9711-197079e80529	OUT	54.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.292+00	2025-04-25 07:02:58.292+00	\N
+b99d79c5-4a34-4d6c-b090-2da2bf2a34ee	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	113.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.293+00	2025-04-25 07:02:58.293+00	\N
+e9e1879a-885c-4953-951f-c4d6e9c85410	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	15.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.294+00	2025-04-25 07:02:58.294+00	\N
+b5c63597-d179-4232-9296-27e9704fac11	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	92.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.295+00	2025-04-25 07:02:58.295+00	\N
+64dcb650-2f6f-4f64-9d9d-3a44c1c3ede9	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	115.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.295+00	2025-04-25 07:02:58.295+00	\N
+8f08f7c9-10bb-421c-8369-3dea7cca6485	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	161.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.296+00	2025-04-25 07:02:58.296+00	\N
+41913626-5116-4bfa-9a64-6b01e723b301	619c37b6-0b66-422a-916e-be96eb242f77	OUT	14.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.297+00	2025-04-25 07:02:58.297+00	\N
+0dc38a0a-5209-4a40-98d6-c2cc03a4a1be	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	26.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.298+00	2025-04-25 07:02:58.298+00	\N
+2157462a-fadf-4006-bee3-c0da7ca47ede	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	24.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.299+00	2025-04-25 07:02:58.299+00	\N
+67096f42-4dec-43a6-988a-30f6cc8b6b08	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	51.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.299+00	2025-04-25 07:02:58.299+00	\N
+c280e5a1-345a-48f2-b39f-d80bc66a9557	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	254.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.3+00	2025-04-25 07:02:58.3+00	\N
+0fbbeed9-dfcc-44f4-8c5b-77fcc5802db5	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	126.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.302+00	2025-04-25 07:02:58.302+00	\N
+0408a589-f95c-43b8-9db9-ce995d339a2f	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	113.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.305+00	2025-04-25 07:02:58.305+00	\N
+bba0f2ab-a878-4c9b-a4da-02229dc5cadc	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	87.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.306+00	2025-04-25 07:02:58.306+00	\N
+a0a149b3-ac53-49d9-a1ab-0b46ab0f58d3	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	24.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.307+00	2025-04-25 07:02:58.307+00	\N
+a848c27c-2bfe-423b-8686-5a7cac091807	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	110.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.308+00	2025-04-25 07:02:58.308+00	\N
+9847486c-9923-49ff-9010-1750d9ab56c5	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	45.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.309+00	2025-04-25 07:02:58.309+00	\N
+898dd24a-b153-4d94-a4cb-945056fbdbdb	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	13.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.31+00	2025-04-25 07:02:58.31+00	\N
+23edee0a-5199-4f6f-95bc-594e753fecbc	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	29.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.311+00	2025-04-25 07:02:58.311+00	\N
+aeb28980-1bbc-4d88-8c14-3ec7130ebe2f	9987a243-da19-45ae-8099-dda63c577d11	OUT	139.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.313+00	2025-04-25 07:02:58.313+00	\N
+c06665ef-71bf-4591-be2c-6f6ae26a5af8	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	10.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.313+00	2025-04-25 07:02:58.313+00	\N
+37cedef6-8151-4cf1-939c-08b5ff486233	0c7d088e-3454-4924-9b68-e70142714a17	OUT	30.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.314+00	2025-04-25 07:02:58.314+00	\N
+3f05dbc2-9768-47d7-92d4-f2d7fa53849a	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	20.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.317+00	2025-04-25 07:02:58.317+00	\N
+c9a35a1f-51b8-4143-b980-8be5ec113921	70809504-e675-4650-8c6c-69e13c5dc199	OUT	33.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.318+00	2025-04-25 07:02:58.318+00	\N
+26556693-3413-49f8-9908-7a51e2340a1d	db15050e-1566-4aad-b957-1f67746c468a	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.318+00	2025-04-25 07:02:58.318+00	\N
+f74e4b20-5a17-489b-8bc1-b2b7841f8bd2	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	14.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.319+00	2025-04-25 07:02:58.319+00	\N
+6c0ed10b-05ff-4e96-9674-cea7273473b9	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	16.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.32+00	2025-04-25 07:02:58.32+00	\N
+dc24e37a-d70a-40da-8133-20efc9a499ef	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	14.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.32+00	2025-04-25 07:02:58.32+00	\N
+75e088f0-dd0b-4df7-8a68-2ceed4354bd9	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	13.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.321+00	2025-04-25 07:02:58.321+00	\N
+07b18d37-bb83-446f-a330-e048e4abbb95	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	23.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.321+00	2025-04-25 07:02:58.321+00	\N
+a349882e-6a00-4fdc-b31d-b768c8b69139	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	21.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.322+00	2025-04-25 07:02:58.322+00	\N
+559d38c3-f958-4c7d-b76f-0553244f83c3	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.322+00	2025-04-25 07:02:58.322+00	\N
+cc99f1ba-991d-47dc-bb3d-4ae85139ab63	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.323+00	2025-04-25 07:02:58.323+00	\N
+ecbcaa03-050e-45ab-bdb9-39a5443d4b66	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	42.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.325+00	2025-04-25 07:02:58.325+00	\N
+6cf6d6fa-78ce-4fc9-900d-6e1369e5d2ef	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	355.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.325+00	2025-04-25 07:02:58.325+00	\N
+d5eee1b9-f378-4fa5-8151-f8e8c5b8794f	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.326+00	2025-04-25 07:02:58.326+00	\N
+2c002b82-2216-4a7a-9600-12f44264f35c	67190dce-2601-4780-8660-ae8f696d7006	OUT	97.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.327+00	2025-04-25 07:02:58.327+00	\N
+d830cb80-f242-4620-9d9e-5924a3f5d49e	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	10.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.328+00	2025-04-25 07:02:58.328+00	\N
+fd51e024-c14d-4aeb-aa3b-8debdcc03541	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.381+00	2025-04-25 07:02:58.381+00	\N
+1aed8795-1de6-4a40-ab80-b6090e779eba	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.382+00	2025-04-25 07:02:58.382+00	\N
+81d8c4ce-89c3-4eee-8443-fe5c2cabbbac	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	224.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.383+00	2025-04-25 07:02:58.383+00	\N
+06e8a008-82b3-4191-981e-940221df6198	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	783.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.384+00	2025-04-25 07:02:58.384+00	\N
+cbe3f377-64fe-48fe-bc2b-bb629214a2fb	37223484-5648-4f06-92de-7eaa33d317f8	OUT	68.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.384+00	2025-04-25 07:02:58.384+00	\N
+2b8691a3-2b20-4af8-9c82-20059fef57a7	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.386+00	2025-04-25 07:02:58.386+00	\N
+42eef214-3492-4439-b0f2-7f3575c78e3e	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	14.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.387+00	2025-04-25 07:02:58.387+00	\N
+df9d5cff-be10-45c8-86d4-0b714d0fb699	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	18.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.388+00	2025-04-25 07:02:58.388+00	\N
+9070ec97-ea09-4a49-bb1b-7b20f50d3d86	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	15.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.388+00	2025-04-25 07:02:58.388+00	\N
+f5f9ae4f-d453-444e-b94d-dfcc83ff6e9d	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	33.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.389+00	2025-04-25 07:02:58.389+00	\N
+6e3ecbb7-70c3-4a51-ad1c-902b064d9bf4	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.389+00	2025-04-25 07:02:58.389+00	\N
+d9f26e75-58bd-45d8-af1b-3332e8db5efa	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	184.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.39+00	2025-04-25 07:02:58.39+00	\N
+5ae7e08f-8719-4235-b197-131ba636e364	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	47.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.391+00	2025-04-25 07:02:58.391+00	\N
+862048ed-f2d6-482f-a668-6ee0c8a523d2	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	87.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.391+00	2025-04-25 07:02:58.391+00	\N
+a34d492c-ff21-48ba-a1b9-38558342f348	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	21.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.392+00	2025-04-25 07:02:58.392+00	\N
+6dfeb51b-bebb-41ca-878d-8e7b546f8c14	2af25b32-de64-4886-afd3-63d44c3db648	OUT	396.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.393+00	2025-04-25 07:02:58.393+00	\N
+42a330f1-3754-47ad-aff7-ace739d27c9a	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	323.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.394+00	2025-04-25 07:02:58.394+00	\N
+5bb8f358-4d4c-4d9e-a7be-483fabdb0b92	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	110.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.394+00	2025-04-25 07:02:58.394+00	\N
+22e2e57f-f744-4c8a-b829-309f480ea1bc	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	118.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.395+00	2025-04-25 07:02:58.395+00	\N
+63ac8d02-d341-4a17-996a-0c2cb64392c0	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	26.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.395+00	2025-04-25 07:02:58.395+00	\N
+9a62a325-baea-49ca-8184-65dc370eaa3e	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	28.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.396+00	2025-04-25 07:02:58.396+00	\N
+4920b91a-4177-4937-9049-c56d7acca917	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.397+00	2025-04-25 07:02:58.397+00	\N
+2b8b2b60-1896-4b35-a488-72f091b7ee20	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.397+00	2025-04-25 07:02:58.397+00	\N
+9e371f0e-0f26-4564-8614-31127655cfc6	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	23.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.398+00	2025-04-25 07:02:58.398+00	\N
+3f147683-1a5f-4165-9da6-3094065c1915	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.4+00	2025-04-25 07:02:58.4+00	\N
+8fc14529-6d11-4fab-a2d8-fe9f83922e3f	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	6.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.403+00	2025-04-25 07:02:58.403+00	\N
+1a175140-7fc6-46ce-b293-11658318823f	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	8.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.405+00	2025-04-25 07:02:58.405+00	\N
+ff840f2d-9c0b-4d78-b9eb-191c7d6e8ddc	40888ace-1283-4b98-a9d9-70200531558b	OUT	9.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.406+00	2025-04-25 07:02:58.406+00	\N
+38bfa05b-b45f-4198-b5c6-46ddef86e2c9	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	3.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.406+00	2025-04-25 07:02:58.406+00	\N
+229f8f9e-0559-4f84-a3dd-50e323d5724d	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.407+00	2025-04-25 07:02:58.407+00	\N
+a26e2988-030e-4ebc-b2d0-0ded9c006a65	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	5.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.408+00	2025-04-25 07:02:58.408+00	\N
+c00bb59f-6bab-4d56-9767-2bf06a692565	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.409+00	2025-04-25 07:02:58.409+00	\N
+8f87d184-9b17-499a-be64-a979eef4415e	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.41+00	2025-04-25 07:02:58.41+00	\N
+869d34f1-9527-415d-8869-013abb6924aa	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	0.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.41+00	2025-04-25 07:02:58.41+00	\N
+92ef7d05-4653-4742-bad1-b188f61d0658	133fd452-75ea-45c0-9023-b22711b64da0	OUT	29.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.411+00	2025-04-25 07:02:58.411+00	\N
+d0f2490c-d71c-4615-989f-bd10fab94c55	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	51.00	2024-12-31 00:00:00+00	Monthly Consumption - 12/31/2024	t	2025-04-25 07:02:58.411+00	2025-04-25 07:02:58.411+00	\N
+cc7d911c-b456-4fef-a99d-784adac56a6b	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.413+00	2025-04-25 07:02:58.413+00	\N
+e835cb8d-9ca7-4fd3-95b7-c0ddd1803ab9	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.414+00	2025-04-25 07:02:58.414+00	\N
+33f45880-61ba-4c4c-8c6b-d3fae9cc873a	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	9.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.415+00	2025-04-25 07:02:58.415+00	\N
+18825c6b-f748-4ca8-acb1-c9cc837ec7b2	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	9.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.48+00	2025-04-25 07:02:58.48+00	\N
+d292f5c4-fcb0-4c21-a043-61b39d8e7490	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.481+00	2025-04-25 07:02:58.481+00	\N
+3786093e-f544-4b6c-9d46-c1aa0305260f	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.482+00	2025-04-25 07:02:58.482+00	\N
+42e79694-54a2-4d04-8d58-0eef95cdf0da	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.483+00	2025-04-25 07:02:58.483+00	\N
+00a43087-ef4c-4d5c-94cf-bc89b97e3b4c	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.483+00	2025-04-25 07:02:58.483+00	\N
+873376b2-788e-4f61-bee0-ec3d9491568a	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.484+00	2025-04-25 07:02:58.484+00	\N
+84ec6ac2-8530-4efe-8973-58cae804c872	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.484+00	2025-04-25 07:02:58.484+00	\N
+d92a84b3-399c-46f4-afa3-0f713861d822	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.486+00	2025-04-25 07:02:58.486+00	\N
+b0366598-abf3-4175-a850-f18d2fc83d6d	c41c8950-8578-435c-83f1-8aca424fe012	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.487+00	2025-04-25 07:02:58.487+00	\N
+af2eccc1-2590-45ad-bab7-0adf3645475c	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.488+00	2025-04-25 07:02:58.488+00	\N
+f170f113-1141-41b1-8406-0c0eed59eb59	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	7.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.488+00	2025-04-25 07:02:58.488+00	\N
+cb119c32-e58f-454e-b7cc-eb5c5e882373	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	2.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.489+00	2025-04-25 07:02:58.489+00	\N
+cdbc6f24-4e52-4dff-ba67-22816315ca11	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	4.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.489+00	2025-04-25 07:02:58.489+00	\N
+6db58391-657d-40e2-ac05-fad0f507affc	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	3.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.49+00	2025-04-25 07:02:58.49+00	\N
+ddfc6ba6-a22c-480d-802e-4e5674424a50	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	8.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.49+00	2025-04-25 07:02:58.49+00	\N
+5f99f4bf-5994-431d-bfd8-4d1b945cabff	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	3.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.491+00	2025-04-25 07:02:58.491+00	\N
+12b559d4-df4d-4391-ba2c-0accaef83c49	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.491+00	2025-04-25 07:02:58.491+00	\N
+abc93414-35d6-4426-9d08-67570550692d	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	21.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.493+00	2025-04-25 07:02:58.493+00	\N
+914f429e-4301-42fd-b3a5-0999314e3297	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.493+00	2025-04-25 07:02:58.493+00	\N
+28c44dcc-68e7-45e8-be7c-f5760eda8942	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.494+00	2025-04-25 07:02:58.494+00	\N
+975242e8-73a8-484b-b581-ea3ee9740877	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	45.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.494+00	2025-04-25 07:02:58.494+00	\N
+9cd35507-f2c9-4e7d-b91d-ed56392a438b	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	57.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.495+00	2025-04-25 07:02:58.495+00	\N
+0d53b9a3-2d93-40a8-83de-3bb5c51ad058	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.495+00	2025-04-25 07:02:58.495+00	\N
+6434feb2-3080-409a-8972-d577ba95ea32	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.496+00	2025-04-25 07:02:58.496+00	\N
+78b06709-5dfd-4f40-b1ba-387bc1d1cbad	3101f24e-322b-4a36-8499-698393193a9e	OUT	507.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.496+00	2025-04-25 07:02:58.496+00	\N
+cd1f71db-4955-474b-9630-d9fd051589db	5698162c-9d89-467a-ae2c-2767b6a15ead	OUT	20.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.497+00	2025-04-25 07:02:58.497+00	\N
+1dfe0c9b-0cd6-4810-a33f-93bfbefcae73	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	116.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.497+00	2025-04-25 07:02:58.497+00	\N
+68f40b01-7fda-4a4c-b4bd-35598cfa3a64	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	28.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.499+00	2025-04-25 07:02:58.499+00	\N
+d16632cf-1d2b-49d8-8446-d72f19b466bd	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	8.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.499+00	2025-04-25 07:02:58.499+00	\N
+8f903255-95e4-44ca-9fc1-8864733feb90	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	324.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.5+00	2025-04-25 07:02:58.5+00	\N
+20f759d4-bc93-4869-b03f-a0f183ace32b	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.5+00	2025-04-25 07:02:58.5+00	\N
+b82803b8-87e6-443b-9aac-dda74923f300	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	58.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.501+00	2025-04-25 07:02:58.501+00	\N
+d5dc2570-2b44-4799-8070-cf5de2fc795c	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	94.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.501+00	2025-04-25 07:02:58.501+00	\N
+5220e1e6-9777-46af-9912-be18aebe5f7c	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	174.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.502+00	2025-04-25 07:02:58.502+00	\N
+bccddfaf-5a4d-4bb7-8d38-d97525a8f1b2	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	14.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.502+00	2025-04-25 07:02:58.502+00	\N
+40233510-3afa-4275-9ddb-f22d86ce94c0	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	6.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.503+00	2025-04-25 07:02:58.503+00	\N
+d571e59a-f8cc-4767-9e27-a0ba4b94f21a	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	7.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.504+00	2025-04-25 07:02:58.504+00	\N
+f4b456e5-c619-4142-aea7-16341bb0fcac	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	71.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.505+00	2025-04-25 07:02:58.505+00	\N
+ccb2d561-7354-483c-b6bf-07ae37984959	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	278.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.505+00	2025-04-25 07:02:58.505+00	\N
+93c25f74-04b6-4805-a7a6-7adaa22be910	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	91.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.506+00	2025-04-25 07:02:58.506+00	\N
+7e00fa0b-7ab0-4ea9-b52d-46e2d7048f58	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	36.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.506+00	2025-04-25 07:02:58.506+00	\N
+37e93e77-1c71-4cea-a51e-9c0cca94c673	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	313.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.507+00	2025-04-25 07:02:58.507+00	\N
+0212311a-884a-4c6e-bc43-00cb333617c5	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	59.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.508+00	2025-04-25 07:02:58.508+00	\N
+c1ef9bc3-3f66-4350-9fbc-68e4b4d8617a	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	59.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.508+00	2025-04-25 07:02:58.508+00	\N
+45a7a33c-2f35-4a9c-9f2e-5ce970e29f50	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	25.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.58+00	2025-04-25 07:02:58.58+00	\N
+2d202679-5b7c-416f-a0d2-b3e7ce1f3e2f	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	13.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.581+00	2025-04-25 07:02:58.581+00	\N
+21e3fefb-1a1a-4b00-b9f6-848d51062351	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	134.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.583+00	2025-04-25 07:02:58.583+00	\N
+305fb04a-fc69-4ba3-a5f7-fa98810c2cff	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	157.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.583+00	2025-04-25 07:02:58.583+00	\N
+d41a5952-4eb7-436c-a4a3-f0c2ae2f4b11	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	531.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.584+00	2025-04-25 07:02:58.584+00	\N
+9bf43c82-d51f-4661-b60e-eb40c46e2c52	af4259c9-07df-435a-a936-b69495916dda	OUT	322.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.584+00	2025-04-25 07:02:58.584+00	\N
+4ef81003-7aa7-430a-89b8-8984048583a9	4a74547a-da83-41eb-a462-ead451407e61	OUT	49.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.585+00	2025-04-25 07:02:58.585+00	\N
+d7732b91-92a1-4332-9f0e-6b7f0dba60cf	f985c888-f64f-4e62-b52e-a20264cda995	OUT	14.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.586+00	2025-04-25 07:02:58.586+00	\N
+06175ba3-8bbe-4da3-9f6f-07d0447d957a	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	61.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.586+00	2025-04-25 07:02:58.586+00	\N
+da5b2b90-5f29-4903-921b-36d663996ae6	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.587+00	2025-04-25 07:02:58.587+00	\N
+abf96c9d-430d-4bb2-b349-349ac5e3e963	c6aea81b-f27e-4831-a801-bc256f699290	OUT	115.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.587+00	2025-04-25 07:02:58.587+00	\N
+7d94de31-3e91-4265-9125-1f045e352951	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.588+00	2025-04-25 07:02:58.588+00	\N
+5c3850ba-f325-4337-814d-86fa55828978	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	30.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.588+00	2025-04-25 07:02:58.588+00	\N
+bd182c60-052e-4397-8e3d-94b0115f1286	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.59+00	2025-04-25 07:02:58.59+00	\N
+a03b7d53-f98e-4e40-bfa1-244fe5710152	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.59+00	2025-04-25 07:02:58.59+00	\N
+0c3cc87a-83c7-47dc-8cee-0f13fba78244	f10eee81-3438-4965-8c14-4640f17c903b	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.591+00	2025-04-25 07:02:58.591+00	\N
+edb1a7d4-f2f2-4022-9717-e92b3dc0025e	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	57.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.591+00	2025-04-25 07:02:58.591+00	\N
+07b35f04-532f-4df2-8462-03dc98ac68a2	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	63.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.592+00	2025-04-25 07:02:58.592+00	\N
+07b48091-10a5-41c5-a448-4137d248cb5e	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.592+00	2025-04-25 07:02:58.592+00	\N
+5b6529ef-3dce-4201-b2e2-2911e867e50e	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	77.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.593+00	2025-04-25 07:02:58.593+00	\N
+0d69af83-718a-45ef-b6af-e1468b11ef1d	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	42.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.594+00	2025-04-25 07:02:58.594+00	\N
+025c396f-ffaa-4ad5-96f9-47c1ce517d1c	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	53.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.594+00	2025-04-25 07:02:58.594+00	\N
+1e472853-0545-4fe2-9f23-77b0e3f7aa40	4037f584-89a4-41ac-9f68-28bb72216538	OUT	43.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.596+00	2025-04-25 07:02:58.596+00	\N
+7180ae66-3725-4f08-b928-abb2db451a05	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	83.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.596+00	2025-04-25 07:02:58.596+00	\N
+fcb5b05d-78b3-429a-b038-00c419e96083	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.597+00	2025-04-25 07:02:58.597+00	\N
+e123340d-4273-4c93-9708-270bc22a9acd	d1116894-2f0b-4473-b907-11f837669963	OUT	152.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.597+00	2025-04-25 07:02:58.597+00	\N
+35a7664c-6605-456a-8271-ea36e5adba18	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	241.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.598+00	2025-04-25 07:02:58.598+00	\N
+b0b9bf60-485c-4e09-9885-362ab19cfe83	538fa5f1-f7cf-4706-9711-197079e80529	OUT	95.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.598+00	2025-04-25 07:02:58.598+00	\N
+95467ecf-e3f6-4759-8a93-ae0ae723ec26	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	99.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.599+00	2025-04-25 07:02:58.599+00	\N
+6b332a05-42c0-4e5e-be3c-7a78eac3d7d9	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	109.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.599+00	2025-04-25 07:02:58.599+00	\N
+3d00a403-5422-4340-84bc-48796491e9cc	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	89.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.6+00	2025-04-25 07:02:58.6+00	\N
+44b62b2b-9aa8-46bf-9a7c-005241e936fc	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	325.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.6+00	2025-04-25 07:02:58.6+00	\N
+1d193766-cea6-436c-a07d-81b80a89d510	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	161.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.602+00	2025-04-25 07:02:58.602+00	\N
+b5848176-785a-4d5d-8c96-4a14e32f3f22	619c37b6-0b66-422a-916e-be96eb242f77	OUT	46.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.603+00	2025-04-25 07:02:58.603+00	\N
+9bdaad54-1141-42a8-a5da-cd9ac1ef9d95	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	55.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.603+00	2025-04-25 07:02:58.603+00	\N
+f833daba-0d33-4ae0-b03f-83a0d4ce7580	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	44.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.604+00	2025-04-25 07:02:58.604+00	\N
+bba6e2c0-9de3-4b5b-9159-0f1231a8f1ff	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.604+00	2025-04-25 07:02:58.604+00	\N
+f689fb50-f962-49cb-8017-3e6be4e18480	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	220.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.605+00	2025-04-25 07:02:58.605+00	\N
+d68364ee-caa8-47ea-8f91-561bbd0872dd	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	143.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.606+00	2025-04-25 07:02:58.606+00	\N
+8b39ea75-4fbd-4a45-8ebd-06749191929b	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	158.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.606+00	2025-04-25 07:02:58.606+00	\N
+4019bb77-223c-40ba-b1eb-18031cf6900c	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	70.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.607+00	2025-04-25 07:02:58.607+00	\N
+7ddde7d2-6ab3-4f94-90bb-a70c4a3e2bdb	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	11.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.68+00	2025-04-25 07:02:58.68+00	\N
+8b37dbde-8ffa-42f3-b799-0e5333ff33c0	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	33.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.681+00	2025-04-25 07:02:58.681+00	\N
+a09396da-6f84-4403-9e04-8f162739c5d5	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	21.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.683+00	2025-04-25 07:02:58.683+00	\N
+14846ae6-7e74-491e-bcbe-ad7564c68881	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.683+00	2025-04-25 07:02:58.683+00	\N
+4da866d4-fc18-4e42-b00d-b14d3563095e	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	37.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.684+00	2025-04-25 07:02:58.684+00	\N
+8b3a7396-2007-49a9-93b3-c6a4f3e1d1a5	9987a243-da19-45ae-8099-dda63c577d11	OUT	338.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.685+00	2025-04-25 07:02:58.685+00	\N
+5b2b1d31-b301-4baa-95a6-f68ccc1f75b7	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	10.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.685+00	2025-04-25 07:02:58.685+00	\N
+dc669063-abda-4ad0-92d0-faec52471828	0c7d088e-3454-4924-9b68-e70142714a17	OUT	49.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.686+00	2025-04-25 07:02:58.686+00	\N
+2e118d60-8d5e-4637-a3e0-9a6490c6a276	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	25.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.686+00	2025-04-25 07:02:58.686+00	\N
+db9d42ea-8fa7-42b5-8481-da398d6c7143	70809504-e675-4650-8c6c-69e13c5dc199	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.687+00	2025-04-25 07:02:58.687+00	\N
+1e4fa690-6316-4153-8c9d-35ef359f3eb7	db15050e-1566-4aad-b957-1f67746c468a	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.687+00	2025-04-25 07:02:58.687+00	\N
+2df10d9b-03ea-4f17-ac28-0c599fdea409	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.688+00	2025-04-25 07:02:58.688+00	\N
+b620e2a8-0fca-4aed-af62-99286a75e460	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	13.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.689+00	2025-04-25 07:02:58.689+00	\N
+09b6c75d-17f2-41bc-b791-29434bac5de9	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	56.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.691+00	2025-04-25 07:02:58.691+00	\N
+d40dcc96-3fb6-4995-9a47-bbf9ceb14cd1	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	59.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.691+00	2025-04-25 07:02:58.691+00	\N
+94170abe-d7bd-4f27-907d-0d7466f7dc49	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	32.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.692+00	2025-04-25 07:02:58.692+00	\N
+d28120ea-a39d-41c4-9b28-49e37af60432	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	32.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.692+00	2025-04-25 07:02:58.692+00	\N
+809d2fab-864f-4c1f-bd4c-3bd3044f5a37	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.693+00	2025-04-25 07:02:58.693+00	\N
+0485121a-bd4d-4dfc-9fbf-44a5c576266b	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.694+00	2025-04-25 07:02:58.694+00	\N
+5224a523-d3ba-4d39-bb89-79274ce483e6	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	35.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.695+00	2025-04-25 07:02:58.695+00	\N
+3b0bd79c-a773-402b-907f-78ea10af5656	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	352.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.695+00	2025-04-25 07:02:58.695+00	\N
+dd23bf71-c8cd-417b-804d-c74b63eb9c37	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.696+00	2025-04-25 07:02:58.696+00	\N
+685be9a5-85b2-4bf6-a75e-bc424ff82c66	67190dce-2601-4780-8660-ae8f696d7006	OUT	247.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.697+00	2025-04-25 07:02:58.697+00	\N
+779ebbb3-0a85-49f1-9e3e-9d76f19e2df6	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	43.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.698+00	2025-04-25 07:02:58.698+00	\N
+fc937dfa-40be-4fe2-9619-9ae7c4342a9a	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	13.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.698+00	2025-04-25 07:02:58.698+00	\N
+abdb7947-0d9c-4f46-b109-ea178829e222	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.699+00	2025-04-25 07:02:58.699+00	\N
+8ab3b5d4-dc91-4e77-b2fd-0d0cd42ac9b6	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	136.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.7+00	2025-04-25 07:02:58.7+00	\N
+7332973a-55aa-4089-915d-a4e792b10664	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	596.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.7+00	2025-04-25 07:02:58.7+00	\N
+c3a038f6-c7f3-4f9f-8670-25e6fb14cc13	37223484-5648-4f06-92de-7eaa33d317f8	OUT	58.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.701+00	2025-04-25 07:02:58.701+00	\N
+08e67dac-387b-4b03-8f28-31165f183410	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	123.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.701+00	2025-04-25 07:02:58.701+00	\N
+a28e1bef-3189-4cbb-8f9f-b4ed0c96beb3	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.702+00	2025-04-25 07:02:58.702+00	\N
+15c613a4-cb9a-44ca-966d-26dcd6e87c0d	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	27.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.702+00	2025-04-25 07:02:58.702+00	\N
+ed48ecf5-4019-4cb3-90d3-fc3e757ea889	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	38.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.704+00	2025-04-25 07:02:58.704+00	\N
+83200979-93f6-4224-addb-ad200e91fa93	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	47.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.704+00	2025-04-25 07:02:58.704+00	\N
+33ee78b0-5943-49cb-9311-5cbb558a771f	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.705+00	2025-04-25 07:02:58.705+00	\N
+82371ec5-e417-4c06-a293-0d1ef79c10cb	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	209.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.705+00	2025-04-25 07:02:58.705+00	\N
+56b180c6-b92b-476b-9574-0696408b51d6	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	13.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.706+00	2025-04-25 07:02:58.706+00	\N
+57d0bcd8-b328-4ef4-b2f9-80cef7a50a6e	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	223.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.706+00	2025-04-25 07:02:58.706+00	\N
+e02657b4-a264-4788-997d-02b1b9126dd3	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.707+00	2025-04-25 07:02:58.707+00	\N
+05dc0c14-2f75-4e4c-8496-a1c325e69574	2af25b32-de64-4886-afd3-63d44c3db648	OUT	588.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.707+00	2025-04-25 07:02:58.707+00	\N
+db719427-4625-4ca3-af87-f53be6f15b05	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	515.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.708+00	2025-04-25 07:02:58.708+00	\N
+2e1b3495-899a-4d6f-9c5c-26f52b0ae8b4	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	65.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.709+00	2025-04-25 07:02:58.709+00	\N
+20b3f447-573f-4aac-9f3b-34c2ef5e12aa	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	172.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.71+00	2025-04-25 07:02:58.71+00	\N
+02bfac1f-9aba-42d7-8609-b406138b9adf	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	15.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.711+00	2025-04-25 07:02:58.711+00	\N
+448e72f7-3ad8-4c38-a14a-79bf40c03ea5	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	80.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.711+00	2025-04-25 07:02:58.711+00	\N
+9b9c6d6a-d46a-40b8-b5aa-cfada8032f05	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	88.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.712+00	2025-04-25 07:02:58.712+00	\N
+6d2dc0c0-bf44-4a8c-8180-8ba11e8ce9ee	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	62.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.712+00	2025-04-25 07:02:58.712+00	\N
+f07808e0-7c31-43ae-a979-23250c1c5a87	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.713+00	2025-04-25 07:02:58.713+00	\N
+1f8f7e65-ddd5-43fc-8fd4-3535f20bfe2c	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.78+00	2025-04-25 07:02:58.78+00	\N
+13ba9d6f-f7a1-4837-8598-4c48b68643ad	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.781+00	2025-04-25 07:02:58.781+00	\N
+bca1234b-5a5e-4310-a232-7d0bbd486a2d	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.781+00	2025-04-25 07:02:58.781+00	\N
+6d511be0-ffe0-46ee-b9d1-c8fcb5c53498	40888ace-1283-4b98-a9d9-70200531558b	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.783+00	2025-04-25 07:02:58.783+00	\N
+1d81c0e2-3f3e-4e45-bd80-747e3514b824	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.783+00	2025-04-25 07:02:58.783+00	\N
+301a0d41-2e22-4bcc-89b2-c3e565233491	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.783+00	2025-04-25 07:02:58.783+00	\N
+e27d6488-4d4d-4dd0-a794-087bd2e1bfaa	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.784+00	2025-04-25 07:02:58.784+00	\N
+b3eb4459-7208-4ff7-a26c-880886dd7884	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	93.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.784+00	2025-04-25 07:02:58.784+00	\N
+1e6d73d9-89e4-4dda-8124-8bfe96cabf76	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.785+00	2025-04-25 07:02:58.785+00	\N
+a17a7c15-e479-454b-88ce-36bc598575fa	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	0.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.785+00	2025-04-25 07:02:58.785+00	\N
+f672b663-9af3-4202-899d-a80c43dd8328	133fd452-75ea-45c0-9023-b22711b64da0	OUT	49.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.786+00	2025-04-25 07:02:58.786+00	\N
+df44603a-d7fc-424f-8713-9bdc091fdc78	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	32.00	2024-11-30 00:00:00+00	Monthly Consumption - 11/30/2024	t	2025-04-25 07:02:58.786+00	2025-04-25 07:02:58.786+00	\N
+64d0dfe0-ea1c-45a3-aefc-f4af10242552	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.787+00	2025-04-25 07:02:58.787+00	\N
+8ca3b194-8a87-4b21-91ac-cda8a851fda2	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.787+00	2025-04-25 07:02:58.787+00	\N
+9da83cf8-93c0-496c-ac01-9dc2609d5554	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.788+00	2025-04-25 07:02:58.788+00	\N
+81478ab2-74b3-4040-9daa-c07c720d40f3	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.788+00	2025-04-25 07:02:58.788+00	\N
+6b990b7c-145f-41fe-955f-08090e6a0dd1	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.789+00	2025-04-25 07:02:58.789+00	\N
+dcb4ffbe-7856-4ea9-a757-fb62f87dfc4e	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.789+00	2025-04-25 07:02:58.789+00	\N
+23c8afc5-f5fb-4530-bb0f-4c541c0b42e6	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.79+00	2025-04-25 07:02:58.79+00	\N
+28cdb847-b028-43a5-a396-c1f0d0ed3043	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.79+00	2025-04-25 07:02:58.79+00	\N
+5c3ea423-486a-482c-8b72-c31a9d1ab034	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.791+00	2025-04-25 07:02:58.791+00	\N
+5feb8394-4262-4823-9392-f9bb1b871536	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.791+00	2025-04-25 07:02:58.791+00	\N
+97bd6e25-c437-4276-88fb-92dd4b13415e	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.792+00	2025-04-25 07:02:58.792+00	\N
+822de8db-1f85-4d95-b22c-d7eb32511823	c41c8950-8578-435c-83f1-8aca424fe012	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.792+00	2025-04-25 07:02:58.792+00	\N
+6f55b552-2f42-406b-b725-f2d5a8a14448	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.793+00	2025-04-25 07:02:58.793+00	\N
+97468691-dcd9-4022-b397-2222364dc868	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.793+00	2025-04-25 07:02:58.793+00	\N
+523f08c3-56c6-4a48-b146-fa76d303de61	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.794+00	2025-04-25 07:02:58.794+00	\N
+028a1224-22e3-4707-8329-17e807f449e2	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.794+00	2025-04-25 07:02:58.794+00	\N
+6927e67f-bd04-4fee-a04b-edd40b827973	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.794+00	2025-04-25 07:02:58.794+00	\N
+f33db698-ea7a-4bfc-951f-7e97692d0af9	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.795+00	2025-04-25 07:02:58.795+00	\N
+81d1e1bf-ebb2-4db8-bc10-cc0cb91b57f2	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.795+00	2025-04-25 07:02:58.795+00	\N
+6ec9934c-d1ce-4db7-9842-40b20abcadd9	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.796+00	2025-04-25 07:02:58.796+00	\N
+f485e8ae-43ae-44a7-8ccd-bfdaaa5cf4a8	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	21.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.796+00	2025-04-25 07:02:58.796+00	\N
+a3ec57a2-1a0a-4692-bd95-9618b253db52	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	28.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.797+00	2025-04-25 07:02:58.797+00	\N
+b7d63e04-c7f2-4090-9efc-bf77bb454f16	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	16.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.798+00	2025-04-25 07:02:58.798+00	\N
+921cf8d6-41c8-4bf1-ad1d-d15444e6a11c	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	53.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.798+00	2025-04-25 07:02:58.798+00	\N
+ac9e6208-b40d-4f20-88c6-de78bea3bd5a	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	120.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.799+00	2025-04-25 07:02:58.799+00	\N
+7d56898a-0011-4ee8-a929-a06e2ea4aa14	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	7.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.799+00	2025-04-25 07:02:58.799+00	\N
+727d1e2b-c949-49e8-8fc6-8129e7e47433	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.8+00	2025-04-25 07:02:58.8+00	\N
+05a32514-9297-419e-85b7-190eb1abd4db	3101f24e-322b-4a36-8499-698393193a9e	OUT	649.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:58.8+00	2025-04-25 07:02:58.8+00	\N
+8cd022c4-8312-4dc3-bf7c-889e138f8254	5698162c-9d89-467a-ae2c-2767b6a15ead	OUT	13.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.801+00	2025-04-25 07:02:58.801+00	\N
+061d82ad-0b4f-425a-8435-c624f0ab7567	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	146.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.801+00	2025-04-25 07:02:58.801+00	\N
+5b4291d9-bc7d-4cab-a35f-d6c07fb7537d	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.802+00	2025-04-25 07:02:58.802+00	\N
+54b8ec60-4957-4d82-9add-ae9d6c47d25f	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.803+00	2025-04-25 07:02:58.803+00	\N
+8c4aedfb-b031-40d3-9f7f-d9805c742687	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	37.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.804+00	2025-04-25 07:02:58.804+00	\N
+436063cf-cd0d-47c3-8541-a3ccb1278b29	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	57.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.804+00	2025-04-25 07:02:58.804+00	\N
+8adfe751-7194-4135-b120-39e746c2a886	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	32.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.805+00	2025-04-25 07:02:58.805+00	\N
+51df5891-575f-44a5-8eb1-18fc6eada208	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	40.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.805+00	2025-04-25 07:02:58.805+00	\N
+d48f161d-c7ce-457e-9a44-b8c193b9906b	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	127.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.88+00	2025-04-25 07:02:58.88+00	\N
+f6121de9-95f5-46a7-b0cc-b71ccca7d79c	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	12.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.881+00	2025-04-25 07:02:58.881+00	\N
+d766f322-351f-49b0-98ad-6df4750166d8	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	19.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.882+00	2025-04-25 07:02:58.882+00	\N
+29be8072-9f04-4dea-9173-bd0156b1c1d6	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	11.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.882+00	2025-04-25 07:02:58.882+00	\N
+f2134797-134a-4492-ab85-c086e190263a	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	38.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.883+00	2025-04-25 07:02:58.883+00	\N
+8cc094ea-26e4-4fdb-9525-62d4b43ab62a	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	317.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.884+00	2025-04-25 07:02:58.884+00	\N
+9351abef-dc69-40e6-abd6-29f18dacdd90	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	81.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.885+00	2025-04-25 07:02:58.885+00	\N
+c4dbe1db-8dc2-4b54-ab9c-ec55cd2c6483	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	86.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.886+00	2025-04-25 07:02:58.886+00	\N
+5ecfab9b-0bea-4a9e-b207-0a08e2f8917a	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	84.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.886+00	2025-04-25 07:02:58.886+00	\N
+8bbfca4d-8020-42e8-9a73-b9a96db161ef	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	126.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.886+00	2025-04-25 07:02:58.886+00	\N
+85200dc5-572f-463d-88a4-30bd0499f21d	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	86.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.887+00	2025-04-25 07:02:58.887+00	\N
+7abc4222-612b-400f-968c-fee6a2757893	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	33.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.887+00	2025-04-25 07:02:58.887+00	\N
+0819b00c-da8f-40f9-8112-3cd05eb3d317	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	26.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.888+00	2025-04-25 07:02:58.888+00	\N
+c1a4367e-be35-4e1b-ade3-195d47dd5a6e	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	131.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.888+00	2025-04-25 07:02:58.888+00	\N
+e1f367c8-b1d2-49bd-88e5-cd3bc0a77134	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	115.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.889+00	2025-04-25 07:02:58.889+00	\N
+0b81d5ec-771c-49e5-bf54-d08a63c4c8d2	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	343.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.89+00	2025-04-25 07:02:58.89+00	\N
+511201a2-d546-4506-840f-ff37f591f5c2	af4259c9-07df-435a-a936-b69495916dda	OUT	325.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.89+00	2025-04-25 07:02:58.89+00	\N
+8ff5adec-0e2c-4f26-be76-94e5e3bbd4d7	4a74547a-da83-41eb-a462-ead451407e61	OUT	45.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.891+00	2025-04-25 07:02:58.891+00	\N
+c1d8c014-8c24-4993-8de7-f5b1820cd050	f985c888-f64f-4e62-b52e-a20264cda995	OUT	32.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.891+00	2025-04-25 07:02:58.891+00	\N
+aaa832f5-506d-4135-867f-1fb82bf5c568	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	56.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.892+00	2025-04-25 07:02:58.892+00	\N
+29c8f905-bf82-4bbb-a45c-fc67ff031ba3	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	10.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.892+00	2025-04-25 07:02:58.892+00	\N
+9322cd9d-5945-4b48-8ca8-c297ebe53c1f	c6aea81b-f27e-4831-a801-bc256f699290	OUT	105.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.893+00	2025-04-25 07:02:58.893+00	\N
+b2a96817-ff01-4a91-8c70-e77a7699008a	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.893+00	2025-04-25 07:02:58.893+00	\N
+2377fa2d-482a-4561-ac7d-f00ca285c3be	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	34.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.893+00	2025-04-25 07:02:58.893+00	\N
+4c842bd1-7ac2-4e5c-99f0-93f06c523e12	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	70.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.894+00	2025-04-25 07:02:58.894+00	\N
+a5d01b1f-af6d-472f-b274-386241705057	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	23.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.895+00	2025-04-25 07:02:58.895+00	\N
+c8038470-3593-44ed-a868-7963845ae7a4	f10eee81-3438-4965-8c14-4640f17c903b	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.896+00	2025-04-25 07:02:58.896+00	\N
+09557597-a829-48d8-a5c7-2d47d24eb8e0	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	79.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.896+00	2025-04-25 07:02:58.896+00	\N
+c17acc54-2a97-4cc2-b656-f6c62ece1048	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	82.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.896+00	2025-04-25 07:02:58.896+00	\N
+f7211647-cbbd-40fd-a26a-ae8cbda8e3a3	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	96.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.897+00	2025-04-25 07:02:58.897+00	\N
+5f7f99e9-dd4a-4501-af02-c4b739a796d1	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	101.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.897+00	2025-04-25 07:02:58.897+00	\N
+6619153f-cfac-42b1-9c47-347e87a1c92f	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	36.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.9+00	2025-04-25 07:02:58.9+00	\N
+58d9dbc6-f75f-4bb6-b91c-58448c6869be	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	31.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.9+00	2025-04-25 07:02:58.9+00	\N
+d9144743-8cbe-4bde-a30f-dd48c2654938	4037f584-89a4-41ac-9f68-28bb72216538	OUT	39.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.901+00	2025-04-25 07:02:58.901+00	\N
+d8cb6ed2-0279-4ee0-8569-2a71e3a99d72	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	230.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.902+00	2025-04-25 07:02:58.902+00	\N
+2047a415-4014-4a7f-a2f2-06506923fe6b	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.902+00	2025-04-25 07:02:58.902+00	\N
+d0d29052-34fb-4376-a20d-2e5689403fc9	d1116894-2f0b-4473-b907-11f837669963	OUT	189.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.902+00	2025-04-25 07:02:58.902+00	\N
+371259f0-cb49-4114-8d68-422699ed89d5	a81a5cd7-1d01-49e0-987c-419d628472f2	OUT	293.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:58.903+00	2025-04-25 07:02:58.903+00	\N
+61d1fb1c-120a-4532-86dc-a43d57697cb7	538fa5f1-f7cf-4706-9711-197079e80529	OUT	101.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.903+00	2025-04-25 07:02:58.903+00	\N
+a1ff53d0-f89c-4c30-9da3-2849961f5d44	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	210.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.98+00	2025-04-25 07:02:58.98+00	\N
+6ea51b19-8b04-4432-a553-55aa940fa0cc	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	131.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.981+00	2025-04-25 07:02:58.981+00	\N
+70df0514-21ba-426d-ae52-3bf9978ac6c1	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	172.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.981+00	2025-04-25 07:02:58.981+00	\N
+24840b85-d01c-4969-92be-2b19b7965b53	41fd7109-37a5-45e0-9c87-0656bf194cc9	OUT	415.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:58.982+00	2025-04-25 07:02:58.982+00	\N
+e182a2c1-d96c-4e9d-978d-1d6dad3c4610	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	198.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.982+00	2025-04-25 07:02:58.982+00	\N
+0c30f042-542e-42fe-bbf0-e89871198516	619c37b6-0b66-422a-916e-be96eb242f77	OUT	62.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.984+00	2025-04-25 07:02:58.984+00	\N
+36fc035b-e376-4877-b8d1-eb03d07d7b92	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	45.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.984+00	2025-04-25 07:02:58.984+00	\N
+32915c2c-fc95-47c1-a3e4-fef8a2227aeb	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	31.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.985+00	2025-04-25 07:02:58.985+00	\N
+6599d82f-104f-499b-bc8b-38b91f5fdf5f	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	43.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.985+00	2025-04-25 07:02:58.985+00	\N
+5f18647e-5874-43ef-85b3-ac405bc979ca	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	127.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.986+00	2025-04-25 07:02:58.986+00	\N
+bc48d32c-bd99-42c0-a212-57a4c105f656	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	162.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.986+00	2025-04-25 07:02:58.986+00	\N
+24800efd-0902-4b8c-9119-9e6c7dd9957d	9d84fa50-480c-4c5a-9114-ca89723cfe37	OUT	305.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:58.986+00	2025-04-25 07:02:58.986+00	\N
+d3baa6fe-e5cb-43b2-85a5-ad8956588b72	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	164.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.987+00	2025-04-25 07:02:58.987+00	\N
+787e0278-9bb2-473e-a36d-6d91ea15e6f1	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	13.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.987+00	2025-04-25 07:02:58.987+00	\N
+7b345ad0-b54a-4a7b-b6e6-3fc365dcdeb1	a5876edb-57b3-4c7b-9554-091a8d25d099	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:58.988+00	2025-04-25 07:02:58.988+00	\N
+da7348d5-26ed-4f42-a2e6-1b3528e21576	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	18.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.989+00	2025-04-25 07:02:58.989+00	\N
+a69a305d-e546-4d6c-baa1-89410e79d4b9	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	22.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.989+00	2025-04-25 07:02:58.989+00	\N
+be260ed6-9770-49f9-a8b0-e95be83ce369	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	36.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.99+00	2025-04-25 07:02:58.99+00	\N
+fc72c114-2ca6-43c9-a921-f5b1b643cf1f	9987a243-da19-45ae-8099-dda63c577d11	OUT	172.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.99+00	2025-04-25 07:02:58.99+00	\N
+5f42898b-15c5-404a-b8c6-fa1c0cbd3b34	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.99+00	2025-04-25 07:02:58.99+00	\N
+410d89f1-6e57-4546-a28b-59b7a822cbf5	0c7d088e-3454-4924-9b68-e70142714a17	OUT	23.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.991+00	2025-04-25 07:02:58.991+00	\N
+e84a9283-ee24-48cd-9352-d365d85a78ee	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	46.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.991+00	2025-04-25 07:02:58.991+00	\N
+b240783e-e09d-47b8-b1b4-824fede68701	70809504-e675-4650-8c6c-69e13c5dc199	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.992+00	2025-04-25 07:02:58.992+00	\N
+93cdccf7-26c5-4491-9b28-d8b8669174d6	db15050e-1566-4aad-b957-1f67746c468a	OUT	15.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.992+00	2025-04-25 07:02:58.992+00	\N
+6dac578b-4b72-42cd-91d9-21de55e3d41d	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	21.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.992+00	2025-04-25 07:02:58.992+00	\N
+4158ede7-6ddb-435f-83ec-77561b665cf1	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.993+00	2025-04-25 07:02:58.993+00	\N
+56c0b17b-7f5f-4a71-b2f7-387cb17514d8	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	43.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.994+00	2025-04-25 07:02:58.994+00	\N
+638387d6-c8b6-485f-9973-f5b4b2a41a0d	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.994+00	2025-04-25 07:02:58.994+00	\N
+6aa2c9c5-790f-495b-a54b-ab167fddebd4	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.995+00	2025-04-25 07:02:58.995+00	\N
+547614bd-e0c3-44d4-8fd1-e12c2d06d27e	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.995+00	2025-04-25 07:02:58.995+00	\N
+83409044-f46c-4d21-8848-6c7bc6f2ba99	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.995+00	2025-04-25 07:02:58.995+00	\N
+196d21c7-d665-4543-9acf-b1cabdd790d6	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.996+00	2025-04-25 07:02:58.996+00	\N
+51330d2e-5ad3-4ab1-b20a-3c436e7dccaa	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	46.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.996+00	2025-04-25 07:02:58.996+00	\N
+b0f81b69-c2df-4e34-8b00-def792a47b98	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	539.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.997+00	2025-04-25 07:02:58.997+00	\N
+7cada89a-9578-4c2f-88d5-fd5614b548b9	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.997+00	2025-04-25 07:02:58.997+00	\N
+0287d7d2-c3ab-42a5-8547-768ebe920512	67190dce-2601-4780-8660-ae8f696d7006	OUT	79.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.998+00	2025-04-25 07:02:58.998+00	\N
+5a55dfd7-7681-4fd4-b0ee-bef54b40a381	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	30.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.998+00	2025-04-25 07:02:58.998+00	\N
+5c68d7b6-9e76-447f-a862-3e7a1d7959d9	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.999+00	2025-04-25 07:02:58.999+00	\N
+c5546750-35ca-4ba0-9dc7-84abc851b749	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	36.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.999+00	2025-04-25 07:02:58.999+00	\N
+cc5af4ce-8730-46a3-8ce7-de755a0c846d	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	303.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:58.999+00	2025-04-25 07:02:58.999+00	\N
+f440e8cd-3a4e-4f7c-8d8e-c12af886af57	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	683.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59+00	2025-04-25 07:02:59+00	\N
+380a1829-339d-40fd-b434-e31a980c5061	37223484-5648-4f06-92de-7eaa33d317f8	OUT	113.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59+00	2025-04-25 07:02:59+00	\N
+3367935f-bdd9-4ea6-be4f-f4a8b6819d19	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	123.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.001+00	2025-04-25 07:02:59.001+00	\N
+ee873aab-87fe-4360-a068-3304f56921f2	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	149.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.001+00	2025-04-25 07:02:59.001+00	\N
+5f2b93ef-ac07-4cf4-adeb-e7755b4c5c12	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	25.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.001+00	2025-04-25 07:02:59.001+00	\N
+49327ae8-fe9f-4231-9dff-54c062d125c3	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	18.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.002+00	2025-04-25 07:02:59.002+00	\N
+38fe6ae7-b4a3-4413-b91a-8d78d88747d6	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	115.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.003+00	2025-04-25 07:02:59.003+00	\N
+b72e44f9-5c47-4399-bcd2-6e59b206191a	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.003+00	2025-04-25 07:02:59.003+00	\N
+22c421ec-c79e-4e82-9ea8-387802691de6	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	290.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.003+00	2025-04-25 07:02:59.003+00	\N
+9b83a5fe-f2e8-42a7-ba6a-7a4146468e48	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	70.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.004+00	2025-04-25 07:02:59.004+00	\N
+48a5f17b-0df2-408c-8d6e-d8261ebd9cec	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	259.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.004+00	2025-04-25 07:02:59.004+00	\N
+f1f333de-37f5-4ba7-a46e-1c3f1af63035	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.005+00	2025-04-25 07:02:59.005+00	\N
+6a0c6ab2-6d9d-4960-9896-52bf2f8d905d	2af25b32-de64-4886-afd3-63d44c3db648	OUT	372.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.005+00	2025-04-25 07:02:59.005+00	\N
+95f960e2-a8d7-42fc-b37d-ec4c2cab15b5	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	440.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.005+00	2025-04-25 07:02:59.005+00	\N
+8c3a4f4a-cec7-41b2-a5bf-3805a9aeafa0	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	77.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.006+00	2025-04-25 07:02:59.006+00	\N
+4f43ec12-5174-4085-a0e1-489559ba77e7	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	254.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.007+00	2025-04-25 07:02:59.007+00	\N
+c12f9e3f-2e42-49d2-8467-3f714df8d9e1	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	20.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.08+00	2025-04-25 07:02:59.08+00	\N
+f27498f9-a1e1-4ab5-bb2d-3b93bb5db7a7	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	247.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.081+00	2025-04-25 07:02:59.081+00	\N
+20007214-731c-4605-95fe-10547ea62636	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	108.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.081+00	2025-04-25 07:02:59.081+00	\N
+0b79debe-5cb9-4c42-bf69-015580cf2624	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	103.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.081+00	2025-04-25 07:02:59.081+00	\N
+d8c868af-c3a7-41a3-92e0-453f74b74c85	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	103.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.082+00	2025-04-25 07:02:59.082+00	\N
+36cf5c33-bbdf-4aef-af22-04a7e30072dc	bb444182-207f-45de-a3f8-c90e29ad90ad	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.082+00	2025-04-25 07:02:59.082+00	\N
+bb3dde5a-8620-4fe8-b8b5-d7ba0914f623	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.083+00	2025-04-25 07:02:59.083+00	\N
+e209523d-7f36-42b2-9e85-4cac44efcfd4	5054a542-2406-4a73-9b22-5fdeb5f5f642	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.083+00	2025-04-25 07:02:59.083+00	\N
+aebef6ee-1efd-4b5e-b98a-e614a299f626	40888ace-1283-4b98-a9d9-70200531558b	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.083+00	2025-04-25 07:02:59.083+00	\N
+9e110fd8-395c-4fa3-b312-7f65ca1476c3	dee70458-7a73-41d5-95f5-7a833350f3aa	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.085+00	2025-04-25 07:02:59.085+00	\N
+e333accc-19b8-4e18-87fb-6dafd7031981	c48004c1-4854-4845-a1fb-cca95861e90a	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.085+00	2025-04-25 07:02:59.085+00	\N
+7b2c1101-656e-4887-b6bf-4fc0c328fea1	5e9023f5-f412-42ea-a178-e1975fb13c19	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.085+00	2025-04-25 07:02:59.085+00	\N
+89a20693-c0a8-4ab6-ad47-0e7c98c90447	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	58.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.086+00	2025-04-25 07:02:59.086+00	\N
+e3308ff8-1e85-4006-b76d-b48626db5954	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.086+00	2025-04-25 07:02:59.086+00	\N
+5cda6fd1-6a2a-45c1-ac01-eb93f1876c35	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	0.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.086+00	2025-04-25 07:02:59.086+00	\N
+70d3435f-9e24-401b-ae6a-7c229c2cf6b9	133fd452-75ea-45c0-9023-b22711b64da0	OUT	48.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.087+00	2025-04-25 07:02:59.087+00	\N
+17589b1d-cadd-483d-9653-f6847866e351	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	83.00	2024-10-31 00:00:00+00	Monthly Consumption - 10/31/2024	t	2025-04-25 07:02:59.087+00	2025-04-25 07:02:59.087+00	\N
+dc67232d-9288-4be4-9355-1fd51cdcee7c	7465e001-52c5-44e0-a3aa-2caa680bb44e	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.088+00	2025-04-25 07:02:59.088+00	\N
+a1a879e9-a916-4b6f-8b5a-df9e84bdd3db	49219c9c-1b07-4057-b363-cb55c8d2fcaa	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.089+00	2025-04-25 07:02:59.089+00	\N
+aa7756d0-1cef-42a3-832d-7a35b245425b	043246cc-f78d-49c8-bcab-8e9f42257178	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.089+00	2025-04-25 07:02:59.089+00	\N
+f7d5c879-af4a-46ca-9d68-b122535339b6	957b389a-df69-4b4a-803e-aa6aed47312e	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.09+00	2025-04-25 07:02:59.09+00	\N
+13d540a0-280e-4fbd-9151-0e2834beceeb	3067b9fd-6966-4161-96ec-3d2faabe3d87	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.09+00	2025-04-25 07:02:59.09+00	\N
+ad2efe95-7a94-4204-9a9c-5d39b043b702	5211ee64-e872-4b32-8ce3-1c1a118f9373	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.09+00	2025-04-25 07:02:59.09+00	\N
+97def79e-69fe-48b0-8607-92b124b1e335	dafcc2c6-7438-4350-a808-d0908244de6b	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.091+00	2025-04-25 07:02:59.091+00	\N
+cfe53fd8-1bf8-441d-8c2f-7b478b83e115	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.091+00	2025-04-25 07:02:59.091+00	\N
+2b1d6bb9-2d34-42d9-9594-d9132482f349	f00e13b1-5879-4c4f-821a-927b76c20aef	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.091+00	2025-04-25 07:02:59.091+00	\N
+26b33727-1796-4b17-8a4d-1536670b3d97	e6febfc1-c57a-4459-a72b-89a4357ed21a	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.092+00	2025-04-25 07:02:59.092+00	\N
+ca47c741-147b-4e1f-a4b2-a9cd40b6921c	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.092+00	2025-04-25 07:02:59.092+00	\N
+9bc05fd3-34ad-4be2-914d-26cd67f90b7b	c41c8950-8578-435c-83f1-8aca424fe012	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.093+00	2025-04-25 07:02:59.093+00	\N
+a85cfd5e-de1a-4406-93e0-e85f75228811	8b446b13-5977-4382-80f1-c145c4ff8c28	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.094+00	2025-04-25 07:02:59.094+00	\N
+5383ad01-c26c-451d-b351-9b6fb9f1bb6f	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.094+00	2025-04-25 07:02:59.094+00	\N
+334dee52-54e1-459d-ab16-6b78ea31a62c	71108d69-b791-4b1d-9cae-7ebd91dec569	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.094+00	2025-04-25 07:02:59.094+00	\N
+91465e24-d626-461d-baa2-fb8abc3346af	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.095+00	2025-04-25 07:02:59.095+00	\N
+c66b6285-6c33-4ab3-8c3d-7c3a82c33621	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.095+00	2025-04-25 07:02:59.095+00	\N
+b6c2618c-83e9-4bcb-a09a-bc767f33096b	a9d95b92-b40b-477e-9fad-90d174617f80	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.096+00	2025-04-25 07:02:59.096+00	\N
+1576c4ee-5561-4285-843a-9af9608532f3	3927e84b-e35f-4c88-bb49-93aa3370eb6b	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.096+00	2025-04-25 07:02:59.096+00	\N
+0253d2f4-9d48-48eb-b7b1-70c84ab75879	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.096+00	2025-04-25 07:02:59.096+00	\N
+c7243434-7afb-4c09-aa34-0d567601361f	84e10830-9923-4bd8-a704-75b8a62d18c7	OUT	37.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.097+00	2025-04-25 07:02:59.097+00	\N
+d8d56b29-301a-4601-bdf4-0930eb9230be	12e8c770-8592-4d69-9b4e-873b88b0124f	OUT	25.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.098+00	2025-04-25 07:02:59.098+00	\N
+4780b9bc-5096-4d82-9b11-cd65ead54485	16bfeff9-7c35-4570-9ea8-5c624361a8b2	OUT	45.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.098+00	2025-04-25 07:02:59.098+00	\N
+54f01986-03ea-4643-9c2d-f57bdf9e36d2	6bb361ed-d52b-4c0d-a920-dbb09c7ec814	OUT	119.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.099+00	2025-04-25 07:02:59.099+00	\N
+201e8e84-638c-43f3-89a5-0ed3b2d02369	db090aec-b37c-40ce-83c5-a82fe8d884b8	OUT	156.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.099+00	2025-04-25 07:02:59.099+00	\N
+28c1aaca-022c-4a49-8b9e-882fc75a834f	21eb31d1-ac0c-488f-bbfa-c1b660a6239e	OUT	15.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.1+00	2025-04-25 07:02:59.1+00	\N
+cba28698-3bbc-4d7e-9b13-72bccacb1154	8421a0f1-ccbc-40f1-a781-19f620c84eab	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.101+00	2025-04-25 07:02:59.101+00	\N
+978765dc-c105-46b5-a8be-f24cd6e74fc5	5698162c-9d89-467a-ae2c-2767b6a15ead	OUT	59.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.102+00	2025-04-25 07:02:59.102+00	\N
+4f779342-8bcd-4868-b0c9-02a8e1471b83	1985e7d8-91f8-45a6-9377-445a0052056a	OUT	296.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.102+00	2025-04-25 07:02:59.102+00	\N
+6e3a84c8-72c8-4dbc-ae28-a72e08694415	38eb47a0-6474-4d13-b72b-7e2bd4bf75fa	OUT	12.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.103+00	2025-04-25 07:02:59.103+00	\N
+7241fb74-bd2d-4633-a694-0816a503472e	d77449a9-6533-40ad-b711-af427fc5d53e	OUT	23.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.107+00	2025-04-25 07:02:59.107+00	\N
+faa70463-1606-47d0-85a4-ffda912c03e2	4c65ac22-e2d3-4df3-83f9-962b3574e85b	OUT	224.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.18+00	2025-04-25 07:02:59.18+00	\N
+1f2e1f55-abe1-41ec-a160-f2f09b071cee	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	OUT	79.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.181+00	2025-04-25 07:02:59.181+00	\N
+f2945808-d01e-4e22-937a-6c1955b0f70a	8a6295c5-a8a1-459e-95e5-3a99537f792b	OUT	75.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.182+00	2025-04-25 07:02:59.182+00	\N
+dd896ddd-c452-45d9-8a3f-5a1ff6544d55	690d8675-5f55-4faa-b512-c706ccc5afde	OUT	174.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.182+00	2025-04-25 07:02:59.182+00	\N
+a4367277-c7d0-4f60-b4b1-2aef0b6a03c3	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	OUT	243.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.183+00	2025-04-25 07:02:59.183+00	\N
+1ab6e7ba-7b48-4aad-8bec-ea730085a744	90d3abe5-d026-4ba5-8d65-4d86b20b609c	OUT	19.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.183+00	2025-04-25 07:02:59.183+00	\N
+d48e776c-bb95-4de2-8d7c-1898fbf5ad8d	e6eaaa59-cd1c-4100-b4c5-e1c2436076be	OUT	73.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.184+00	2025-04-25 07:02:59.184+00	\N
+7534c826-235c-49b3-8275-36492be3dbd7	b9db925a-e9e0-4688-b301-af9143c00daa	OUT	43.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.184+00	2025-04-25 07:02:59.184+00	\N
+9d85ec48-9440-4a50-a696-70701c672d54	c688e992-127e-4be0-8f40-5b03a31d9939	OUT	65.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.185+00	2025-04-25 07:02:59.185+00	\N
+75fbd732-860e-4979-97fc-b3793b467406	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	OUT	428.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.186+00	2025-04-25 07:02:59.186+00	\N
+5e4d94b2-e138-4242-bd9f-d769ffc105a2	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	OUT	97.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.187+00	2025-04-25 07:02:59.187+00	\N
+3f4fb051-4dc2-4643-b4e7-54244625efd1	bf8afeb3-e6f8-48ed-8a53-e2f6f0c54fb6	OUT	33.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.187+00	2025-04-25 07:02:59.187+00	\N
+4dcb3320-502a-463c-aec4-9062bbd631ab	6b8141d6-1c53-4788-a0de-938429be7e67	OUT	426.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.188+00	2025-04-25 07:02:59.188+00	\N
+edaffd6d-2960-45c3-98e5-1a432227007a	7e93b44a-7620-463d-9de2-8ed44f9be58d	OUT	92.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.188+00	2025-04-25 07:02:59.188+00	\N
+8b180f8a-c48d-4bd5-85aa-10886f998c1b	e15a84df-6a31-4d9d-845a-f5d56c398d3d	OUT	115.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.189+00	2025-04-25 07:02:59.189+00	\N
+113b3183-43ca-4f0c-ac69-22c9c36d245f	ec262571-6900-4cdb-8f74-e40b14b17d80	OUT	15.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.189+00	2025-04-25 07:02:59.189+00	\N
+46db01b2-4e90-4abe-a3b2-8c6a867c09f1	709f6326-0e0f-485a-9965-66f8d11bcbc0	OUT	19.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.19+00	2025-04-25 07:02:59.19+00	\N
+f560a503-df5e-4bf1-9fdb-f4691df4325f	94d7482a-b13f-4527-b57c-4edd6c630257	OUT	182.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.19+00	2025-04-25 07:02:59.19+00	\N
+7eabe1cb-f3f4-4d6c-a5f0-1f16bc861a67	9d7f2d3b-4ee9-4c02-aafc-14cefe559557	OUT	244.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.191+00	2025-04-25 07:02:59.191+00	\N
+4bc66419-a7ce-42f7-8e38-14289fa886ae	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	OUT	410.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.192+00	2025-04-25 07:02:59.192+00	\N
+871f49b5-b2d3-4ac5-be29-103ef09e16ec	af4259c9-07df-435a-a936-b69495916dda	OUT	274.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.193+00	2025-04-25 07:02:59.193+00	\N
+fbeb1d94-1045-48f4-aa63-56796f1f27a4	4a74547a-da83-41eb-a462-ead451407e61	OUT	105.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.193+00	2025-04-25 07:02:59.193+00	\N
+11d44ca0-4c2b-4da3-8ec5-53efb9e45430	f985c888-f64f-4e62-b52e-a20264cda995	OUT	81.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.194+00	2025-04-25 07:02:59.194+00	\N
+e8844bb9-e41a-462f-b1f6-3530faa2180d	f75d2a64-2710-4546-8e9c-d0a5c8008c75	OUT	81.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.194+00	2025-04-25 07:02:59.194+00	\N
+1bf0e2ea-b9d2-4b6a-8d9b-4f1342fbaef9	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	OUT	111.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.195+00	2025-04-25 07:02:59.195+00	\N
+6a307b44-5201-46bf-9a08-3ddd6090e75c	c6aea81b-f27e-4831-a801-bc256f699290	OUT	88.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.195+00	2025-04-25 07:02:59.195+00	\N
+31dff240-23c1-47e7-bc8e-d965d6fad692	8ed81c0f-150e-4eef-8dee-e206374cb86b	OUT	70.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.196+00	2025-04-25 07:02:59.196+00	\N
+426c44b9-b4ea-48db-9fec-d7caf9f86677	26912293-b83f-425a-b7c6-8090d90c62ab	OUT	22.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.196+00	2025-04-25 07:02:59.196+00	\N
+f1f6e585-0cc8-4933-877d-f05ca116de85	4fec1fbc-1190-42d7-b569-d7f1580561b7	OUT	30.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.197+00	2025-04-25 07:02:59.197+00	\N
+1ff16430-c18f-46a3-8c4b-16f932064c5b	6814678d-ffdb-4cb8-91db-5b0fdb69fc6b	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.197+00	2025-04-25 07:02:59.197+00	\N
+27d73d2b-eb6c-40c4-8dcd-328bcd9d9367	f10eee81-3438-4965-8c14-4640f17c903b	OUT	31.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.199+00	2025-04-25 07:02:59.199+00	\N
+d34c1db4-65d4-41ba-b072-295c1a8ad3f2	7dae25a0-08b2-422a-bfd9-84ca60c1223a	OUT	111.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.199+00	2025-04-25 07:02:59.199+00	\N
+cf961e36-5f42-4d2f-88b8-ab5a525cddb0	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	OUT	83.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.2+00	2025-04-25 07:02:59.2+00	\N
+2d7db613-57e7-4f4b-b3fd-e3cf44c6b952	f3957def-9de6-4e72-9960-9a9ceac670ab	OUT	74.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.2+00	2025-04-25 07:02:59.2+00	\N
+54cf07ca-e9bf-4a31-9f69-bb66d8098dd1	cafac31f-e7cb-4f48-b704-df84d5e84ad8	OUT	208.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.201+00	2025-04-25 07:02:59.201+00	\N
+3c64d0da-927a-47a5-9879-82a752f895f9	06dd426a-6c0e-4f0b-9b25-8e3da38d66d9	OUT	62.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.201+00	2025-04-25 07:02:59.201+00	\N
+2d91c962-1a72-4e76-b923-158367f58b27	26f51408-3b5f-45bb-85dc-b6ab7a0ea9e3	OUT	143.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.202+00	2025-04-25 07:02:59.202+00	\N
+e281bd13-4afb-453c-a02d-655a25c5737e	4037f584-89a4-41ac-9f68-28bb72216538	OUT	60.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.202+00	2025-04-25 07:02:59.202+00	\N
+71bb0da8-be8d-4204-b56f-327859dae207	239425e4-90bf-4048-9f7e-6aa4f5a8365e	OUT	280.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.203+00	2025-04-25 07:02:59.203+00	\N
+5b9b3f7d-2653-4cd5-997f-e1a106587ec2	20f5d863-c219-485f-ba56-4b7cbace2645	OUT	48.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.203+00	2025-04-25 07:02:59.203+00	\N
+72f8b859-eb4f-44cf-af9f-a351b7d8bdd1	d1116894-2f0b-4473-b907-11f837669963	OUT	137.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.205+00	2025-04-25 07:02:59.205+00	\N
+6349c1e0-b5f9-4bfd-a0bc-b9bc916160db	538fa5f1-f7cf-4706-9711-197079e80529	OUT	74.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.206+00	2025-04-25 07:02:59.206+00	\N
+1cb46a97-531f-4f2e-8a99-376100edcc38	5fd052eb-9eb1-4dd0-854d-00af93c252ef	OUT	275.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.206+00	2025-04-25 07:02:59.206+00	\N
+0a553b66-ef15-4eeb-961f-f94132aa1a7c	33b804dd-22bc-4504-9a36-9c840b35aa08	OUT	140.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.207+00	2025-04-25 07:02:59.207+00	\N
+62a53095-8a27-435d-9c87-4a62dcfe3606	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	OUT	160.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.207+00	2025-04-25 07:02:59.207+00	\N
+62024894-c610-4b42-b01f-8b751578bb36	1c14eed6-b659-4435-821d-1cfa0d52c2f4	OUT	177.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.208+00	2025-04-25 07:02:59.208+00	\N
+76ed5b6d-d276-4e18-83c2-258746e6e34d	619c37b6-0b66-422a-916e-be96eb242f77	OUT	52.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.209+00	2025-04-25 07:02:59.209+00	\N
+67cec363-8844-4e5d-af42-2387552d09ef	5afe5513-aa31-4b59-8734-cac79b685f3f	OUT	54.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.21+00	2025-04-25 07:02:59.21+00	\N
+7384c6a9-5842-4970-b282-b8094e331bef	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	OUT	37.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.211+00	2025-04-25 07:02:59.211+00	\N
+9dffbad5-020e-45ca-a0f3-d69daea21fc3	182e431b-ee09-42e3-a93c-f62c289cf3d7	OUT	87.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.211+00	2025-04-25 07:02:59.211+00	\N
+67cabd2d-8c72-4456-b72f-4d2cebbbf694	c904d337-67b8-450c-964f-39ab2c70eaa3	OUT	282.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.212+00	2025-04-25 07:02:59.212+00	\N
+b2e8136b-d967-40eb-9dd4-f409c2069588	10122c70-0fd8-4889-b2c6-2a6252569200	OUT	261.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.212+00	2025-04-25 07:02:59.212+00	\N
+57a3e8bf-f5ef-4f9a-b83c-6e4a1c5114e8	15efc96f-2728-4830-937d-5d4f529bdd4b	OUT	126.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.213+00	2025-04-25 07:02:59.213+00	\N
+32a8e611-1a7b-4681-9a82-0f2f8e6310fb	6802b141-d15a-4ded-b1af-e51c89c3cae5	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.214+00	2025-04-25 07:02:59.214+00	\N
+03118e45-4006-49c4-b579-313e4ff42820	71578227-eb61-4a5b-9e77-b0fb6820f6d5	OUT	38.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.215+00	2025-04-25 07:02:59.215+00	\N
+7e8f7cb6-cb11-4d7c-aaed-376181bad1b6	22e71b98-2a32-4077-b0d3-d0882a2674d5	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.216+00	2025-04-25 07:02:59.216+00	\N
+20e66859-23b7-492a-a7db-7672b2d1b942	af619843-42f3-4ccb-a145-54c64adf4f6f	OUT	101.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.28+00	2025-04-25 07:02:59.28+00	\N
+e479c46e-cae9-4b3f-ba7c-9a9f6a6c37dc	9987a243-da19-45ae-8099-dda63c577d11	OUT	441.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.281+00	2025-04-25 07:02:59.281+00	\N
+16ed62a7-11a6-4fb7-924f-480b491969a4	8f8c1dab-1010-47a4-9931-7b7858e4a11c	OUT	16.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.281+00	2025-04-25 07:02:59.281+00	\N
+f06e94d9-067f-49c2-9753-0e66b30db0ae	0c7d088e-3454-4924-9b68-e70142714a17	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.282+00	2025-04-25 07:02:59.282+00	\N
+1f58716c-37c1-41e6-96e3-b080be11a389	ee40ba6a-5b01-4a1f-8249-f31f6589c414	OUT	24.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.282+00	2025-04-25 07:02:59.282+00	\N
+4c18c3e4-c2b8-4e53-8875-d3b18bf2dd51	70809504-e675-4650-8c6c-69e13c5dc199	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.283+00	2025-04-25 07:02:59.283+00	\N
+75603c68-d73e-44a9-a33b-810045435c48	db15050e-1566-4aad-b957-1f67746c468a	OUT	43.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.284+00	2025-04-25 07:02:59.284+00	\N
+eff9132b-47e6-4b77-8a0b-34c1ed0424a1	4e4e32e9-17ec-41fe-8109-b9939be0561d	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.284+00	2025-04-25 07:02:59.284+00	\N
+e4bb29bf-b83c-49a7-80f1-1a8d2213ad62	267a90e8-cca5-4c53-8f47-73d8b7836272	OUT	19.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.285+00	2025-04-25 07:02:59.285+00	\N
+345d9f2e-dc27-4d43-b6f8-3e7812e643f7	b8d50281-a494-4288-b7ba-ce6fc0f2bfc7	OUT	7.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.285+00	2025-04-25 07:02:59.285+00	\N
+5b02dfff-6f93-4ff1-834e-711d4507bf95	82e68c33-2f5c-4482-9063-8f98243fec03	OUT	53.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.286+00	2025-04-25 07:02:59.286+00	\N
+f79153b8-f6cf-4174-bb77-a6df4ee878aa	40a09f66-dd19-4b48-afb7-efe1ea353a41	OUT	13.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.287+00	2025-04-25 07:02:59.287+00	\N
+3c531b45-d048-4b8f-9142-e735a8d5a996	4e319128-6d79-411b-b07f-7cf04613c0e5	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.288+00	2025-04-25 07:02:59.288+00	\N
+3551633e-5831-46ae-badc-6acbb8947f7a	bbcb03dc-3fe7-47f9-acd6-b748095e0103	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.288+00	2025-04-25 07:02:59.288+00	\N
+664b5fec-9d46-4f78-b362-d1d37f2af17c	fe625b93-f72a-49c2-b2f5-1617a2402fc0	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.289+00	2025-04-25 07:02:59.289+00	\N
+035ead83-f9bd-4ad4-937f-df57cc49094b	b2a7761c-3479-4fd8-b914-7cb1b466aeef	OUT	32.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.289+00	2025-04-25 07:02:59.289+00	\N
+2557ac82-4956-4e24-a166-c116f3cd66ae	26a9d26e-acef-4519-b22d-79556b4d62ea	OUT	502.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.29+00	2025-04-25 07:02:59.29+00	\N
+fd8868b9-1945-4064-9562-a87d343f430a	0fff1be0-c4ae-4b09-a56a-94795b6ee450	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.29+00	2025-04-25 07:02:59.29+00	\N
+d51aa8d0-94d6-4e0f-af08-bb823ea2fff6	67190dce-2601-4780-8660-ae8f696d7006	OUT	231.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.291+00	2025-04-25 07:02:59.291+00	\N
+128cc766-19a5-4d2b-9d52-47d58b8f35fc	31b095f3-d72f-4870-b711-8681ebfaa0b4	OUT	16.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.291+00	2025-04-25 07:02:59.291+00	\N
+350b6cf3-a7d5-41f6-a17c-b75a805cd3bf	b82deb6a-925d-4ece-a1b4-51e8e80a2460	OUT	29.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.293+00	2025-04-25 07:02:59.293+00	\N
+44fce35b-cc7f-4ef9-a6e9-cffd372e3346	74010f7a-381f-4fe9-9cf9-ac5e1b1d354d	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.293+00	2025-04-25 07:02:59.293+00	\N
+0b73dbe2-bfbe-4057-be0d-a7820f479755	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	OUT	489.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.294+00	2025-04-25 07:02:59.294+00	\N
+731db070-b9ee-4c52-861d-22f9f12a9d7f	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	892.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.294+00	2025-04-25 07:02:59.294+00	\N
+fff8fbcd-70ed-4615-b72b-85cd2717010d	37223484-5648-4f06-92de-7eaa33d317f8	OUT	103.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.295+00	2025-04-25 07:02:59.295+00	\N
+1f4145d0-1d70-41c4-9fdb-221136e12353	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	OUT	154.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.295+00	2025-04-25 07:02:59.295+00	\N
+3ad82d07-9910-43f3-9334-733e02abc393	e6febfc1-c57a-4459-a72b-89a4357ed21a	IN	446.00	2024-11-23 00:00:00+00	NEW	f	2025-04-25 07:03:24.802+00	2025-04-25 07:03:24.802+00	\N
+0c9fc95b-0344-41a9-9a6f-0f4142022800	881bef50-07c0-49bb-9cd1-fd77401f5746	OUT	114.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.296+00	2025-04-25 07:02:59.296+00	\N
+9c990b1e-9a5f-4baa-bb99-d0d69980822e	8b9bc0fa-0898-4f06-a212-b69d24563e01	OUT	21.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.296+00	2025-04-25 07:02:59.296+00	\N
+4338902d-617a-4928-b17c-a6ac342de5fc	cd2f2713-2c16-46e2-91a6-a46d34166527	OUT	142.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.297+00	2025-04-25 07:02:59.297+00	\N
+85a1db9b-a4b9-45d2-9149-a3486d0abafc	e84ce1cf-a0e8-4210-bb46-a95e62804fb3	OUT	130.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.297+00	2025-04-25 07:02:59.297+00	\N
+1b4fee22-8011-4959-985a-a9ce085ca9c7	9ec636d6-2773-4a7a-b8a6-26ab852155ba	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.299+00	2025-04-25 07:02:59.299+00	\N
+cff6c57c-b205-43f8-ba9f-0a3ada4516f8	7f99ee7f-9612-40d1-89e7-f20588aeea0c	OUT	309.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.299+00	2025-04-25 07:02:59.299+00	\N
+732cd619-ab66-4333-b9ff-84305a14f330	193bb0a9-5e47-439a-95b5-91bd5fe9ee65	OUT	90.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.3+00	2025-04-25 07:02:59.3+00	\N
+0addb94e-82dd-48cb-90da-36cb66608ada	d3ca9255-2b14-42d7-8940-f11eedbfa16d	OUT	258.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.3+00	2025-04-25 07:02:59.3+00	\N
+fc489196-c02d-44f7-9e29-cf84975fa3ff	190becbb-2919-4ebf-aa19-619a06a12fe5	OUT	32.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.301+00	2025-04-25 07:02:59.301+00	\N
+5d793dcd-1594-468b-995a-b09904b107eb	2af25b32-de64-4886-afd3-63d44c3db648	OUT	618.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.301+00	2025-04-25 07:02:59.301+00	\N
+7f6e5e1d-d49f-4fb9-b6ee-f635739acccc	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	OUT	468.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.302+00	2025-04-25 07:02:59.302+00	\N
+7f4609b9-5ef1-4579-a62d-9378ef6c4dcc	ab54ac15-dfb7-4edb-802c-a02562188e54	OUT	145.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.302+00	2025-04-25 07:02:59.302+00	\N
+eefd2c8d-2e1a-4267-8dac-34ccaf3c3eba	661c2cb7-b78f-4584-a043-a4ca8873ec25	OUT	190.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.303+00	2025-04-25 07:02:59.303+00	\N
+5e65c5ac-3ac0-4479-92c2-ae3f087fae81	d2a5608b-c8ef-4461-be88-fe0e2bd85a01	OUT	27.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.303+00	2025-04-25 07:02:59.303+00	\N
+edce7a35-d416-4db8-922c-6a81f7c65725	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	OUT	179.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.304+00	2025-04-25 07:02:59.304+00	\N
+571b4941-7d2e-483f-8cc1-cceec378c887	e852932d-64b6-40ba-b4e6-b000b1782f13	OUT	115.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.305+00	2025-04-25 07:02:59.305+00	\N
+6ebaf88c-93e5-4aed-87b8-5c64f3b17862	1efa20b9-506e-47f2-b3e2-d2fc6c56b332	OUT	133.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.305+00	2025-04-25 07:02:59.305+00	\N
+d21c4441-5d14-4a1c-a040-3c439af2f394	7549f07b-d87f-4ef6-9b57-cc5e57adb3d6	OUT	97.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.306+00	2025-04-25 07:02:59.306+00	\N
+7aae311b-8939-463d-ae5c-b2ec37d63d71	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	OUT	81.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.311+00	2025-04-25 07:02:59.311+00	\N
+e575f865-852f-4af4-8f03-47e76d93f38e	e6126504-c564-454a-b29c-d93b3edff9f8	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.312+00	2025-04-25 07:02:59.312+00	\N
+ccfe7f57-b0b5-49ba-9565-fcab91584486	9dbc7f56-ffcf-42e2-9319-43ccf27f727e	OUT	0.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.312+00	2025-04-25 07:02:59.312+00	\N
+99745855-784b-4417-afdb-fc486daa7cf5	133fd452-75ea-45c0-9023-b22711b64da0	OUT	168.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.313+00	2025-04-25 07:02:59.313+00	\N
+6ed6a763-3b63-464e-bc6e-e78b6f53049d	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	OUT	72.00	2024-09-30 00:00:00+00	Monthly Consumption - 9/30/2024	t	2025-04-25 07:02:59.313+00	2025-04-25 07:02:59.313+00	\N
+d37c785b-6af2-4e4a-a648-405bc0b84c4a	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	IN	1126.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.018+00	2025-04-25 07:03:10.018+00	\N
+63fa1065-280e-49ff-ac21-0e5ad122e843	e51cc773-61dd-4219-a85b-7803c1e676c3	IN	2698.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.019+00	2025-04-25 07:03:10.019+00	\N
+41bab309-d5a1-47e4-8413-73f339c07ade	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	IN	485.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.019+00	2025-04-25 07:03:10.019+00	\N
+6041ef99-54b9-4931-865d-d2c3d5af7905	3367f8cc-7c4d-4119-bc1f-b763d8d55dbd	IN	236.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.021+00	2025-04-25 07:03:10.021+00	\N
+fa9390fc-e5c8-427d-9529-8454312e72f0	3520b985-7a28-4781-8893-3f442cc6d9b6	IN	624.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.022+00	2025-04-25 07:03:10.022+00	\N
+71914de4-3933-43f0-8be0-6a1c38183352	a787e796-4385-412c-b2c5-27c9247f9894	IN	572.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.022+00	2025-04-25 07:03:10.022+00	\N
+55926188-6007-418b-b713-cff78ebfa146	a3cac384-7ef5-4e60-92ab-dbe191cba8d2	IN	540.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.023+00	2025-04-25 07:03:10.023+00	\N
+23050e33-4a4d-408b-bb65-1b8ea8151fee	6b39aa6c-f45d-4fed-83ce-e52cb6405a1f	IN	774.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.023+00	2025-04-25 07:03:10.023+00	\N
+7f16aefb-8aa8-47b8-8db9-20279a36ce1e	3176c92d-701d-4ad3-b33d-69351138bc92	IN	93.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.024+00	2025-04-25 07:03:10.024+00	\N
+cc408e67-e0ba-40f6-a9e3-d4433b010983	10667ae4-4839-4c17-88a3-c9b9a202d6cb	IN	861.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.024+00	2025-04-25 07:03:10.024+00	\N
+68af9784-293d-4b17-91f2-4d14c07d4791	11046707-e54b-44e5-8d87-0c1ab5b5d34d	IN	244.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.025+00	2025-04-25 07:03:10.025+00	\N
+72db6286-1756-4efc-bee7-93357cd1cfab	74143383-eaff-438b-973e-f36bccd350d0	IN	70.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.025+00	2025-04-25 07:03:10.025+00	\N
+770480c8-1907-49fe-b945-478dd8cfcbdb	0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	IN	423.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.026+00	2025-04-25 07:03:10.026+00	\N
+2f06d84b-9c41-4f3d-b6d5-2297d27d3625	1353dc63-9c99-4a11-aca6-b04daaee59b9	IN	428.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.026+00	2025-04-25 07:03:10.026+00	\N
+cc8aecec-5521-4c5e-849b-e561a341bb57	013663d3-e71d-46c2-b4b4-f8b9cb042d8c	IN	209.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.028+00	2025-04-25 07:03:10.028+00	\N
+66f1556e-0b49-4029-b170-db603ddc42c5	f5465b38-1aa7-486a-a7de-465c89565a2e	IN	373.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.028+00	2025-04-25 07:03:10.028+00	\N
+69bfb19a-47b7-4d5c-b503-241cfc9db578	056aec11-d847-4816-9217-898f31bbd4fb	OUT	183.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.029+00	2025-04-25 07:03:10.029+00	\N
+5749bbe7-6bea-41bf-8b8f-148f0a08475a	5ddf1010-2b30-459e-9a5a-377d0de9381e	IN	235.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.029+00	2025-04-25 07:03:10.029+00	\N
+fc0416f2-e300-4c3d-adb5-8c6d3eeee29a	7ad9a54b-9a6f-4bf7-969b-7baec42d6ef6	IN	438.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.03+00	2025-04-25 07:03:10.03+00	\N
+475cc9dd-7555-4093-93cf-78e9bcde8855	56e305de-ba92-4e70-9dcc-6e38303920c0	IN	264.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.03+00	2025-04-25 07:03:10.03+00	\N
+67c0c684-a161-4c30-b895-51eacc0fdc1b	a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	IN	87.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.031+00	2025-04-25 07:03:10.031+00	\N
+c6e1d5ff-312a-49c2-8be0-c3fbc8355971	64a4936d-1945-4964-bd49-b281eb85fb6c	IN	989.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.032+00	2025-04-25 07:03:10.032+00	\N
+a575631d-7fe9-4f66-80f5-b73211571ea1	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	IN	2748.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.032+00	2025-04-25 07:03:10.032+00	\N
+77be0f03-9a3b-48d7-9953-b8d63bcc6cef	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	IN	739.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.033+00	2025-04-25 07:03:10.033+00	\N
+0a59ec10-4893-4946-8fba-25a094ce1528	9c7487c5-4437-4c71-94de-4958578e6252	IN	132.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.033+00	2025-04-25 07:03:10.033+00	\N
+60d54ba8-c2b5-43d5-aa34-cdf6d3692ec3	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	IN	149.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.035+00	2025-04-25 07:03:10.035+00	\N
+30e43784-0c99-4980-98ad-a304c096322b	d7931935-f352-48e1-b2b3-198d95bb615d	IN	395.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.036+00	2025-04-25 07:03:10.036+00	\N
+50d8f825-e190-42d3-8e7a-c320ecbeda61	255586d4-5afd-424b-84fd-6a1ae34bed3e	IN	479.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.036+00	2025-04-25 07:03:10.036+00	\N
+8440f625-015f-44b5-a161-d1150c7bd4a1	aff2a5a9-1324-4beb-a479-106b2c5979d7	IN	64.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.037+00	2025-04-25 07:03:10.037+00	\N
+f101fcdd-144a-470e-bef0-c1ee7d3b4885	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	IN	382.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.037+00	2025-04-25 07:03:10.037+00	\N
+a86e85db-b0ef-4b64-b08f-a1de303eddfc	9a94fcd6-aaad-4420-b82a-7ac28528b598	IN	252.00	2024-01-09 00:00:00+00	Initial Stock	f	2025-04-25 07:03:10.038+00	2025-04-25 07:03:10.038+00	\N
+ce42099f-c26f-461e-a235-2e2087ac6258	76caa84f-1750-4310-a140-cec3684c5ee0	OUT	134.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.038+00	2025-04-25 07:03:10.038+00	\N
+8eeaf7eb-432e-403b-817b-afa54272dd3b	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	OUT	520.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.039+00	2025-04-25 07:03:10.039+00	\N
+3e7d33d9-a2c9-45a7-8c76-71a48a1417c4	e51cc773-61dd-4219-a85b-7803c1e676c3	OUT	8545.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.039+00	2025-04-25 07:03:10.039+00	\N
+5dcdb0dc-8f0a-41dc-934c-c6468b1680db	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	OUT	485.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.04+00	2025-04-25 07:03:10.04+00	\N
+96382581-0ee1-46d2-8f2d-0cc8a510c75a	3367f8cc-7c4d-4119-bc1f-b763d8d55dbd	OUT	0.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.04+00	2025-04-25 07:03:10.04+00	\N
+7921b8b3-a879-4b3a-b416-79d026af69da	3520b985-7a28-4781-8893-3f442cc6d9b6	OUT	72.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.041+00	2025-04-25 07:03:10.041+00	\N
+063ff92f-8a6b-49df-b088-31cf7e22f210	a787e796-4385-412c-b2c5-27c9247f9894	OUT	153.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.042+00	2025-04-25 07:03:10.042+00	\N
+bddfa2f6-dd70-43ad-8e11-0465d990742e	a3cac384-7ef5-4e60-92ab-dbe191cba8d2	OUT	137.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.042+00	2025-04-25 07:03:10.042+00	\N
+2fbd1794-bc33-49a5-8843-2c3bb64570fb	6b39aa6c-f45d-4fed-83ce-e52cb6405a1f	OUT	16.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.043+00	2025-04-25 07:03:10.043+00	\N
+13b30bc1-4c51-4138-8ed4-070f9858a144	3176c92d-701d-4ad3-b33d-69351138bc92	OUT	165.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.043+00	2025-04-25 07:03:10.043+00	\N
+9ee39945-9436-49df-be87-6a9210c77be0	10667ae4-4839-4c17-88a3-c9b9a202d6cb	OUT	311.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.043+00	2025-04-25 07:03:10.043+00	\N
+42d6df48-711b-45e2-a521-ac92cb61e3ff	11046707-e54b-44e5-8d87-0c1ab5b5d34d	OUT	104.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.044+00	2025-04-25 07:03:10.044+00	\N
+9d3787ea-3f5a-4754-8c3a-81002db152b6	74143383-eaff-438b-973e-f36bccd350d0	OUT	124.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.044+00	2025-04-25 07:03:10.044+00	\N
+54d319ee-cf7b-42d1-9e61-1a2f7b791445	0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	OUT	211.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.045+00	2025-04-25 07:03:10.045+00	\N
+34b4604f-8a2f-49f5-80bd-fd65c69e96f7	1353dc63-9c99-4a11-aca6-b04daaee59b9	OUT	53.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.046+00	2025-04-25 07:03:10.046+00	\N
+984e5035-8f18-4dcf-9a33-7951deb5263e	013663d3-e71d-46c2-b4b4-f8b9cb042d8c	OUT	0.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.046+00	2025-04-25 07:03:10.046+00	\N
+56b973ef-9dc9-4db1-8327-e6a75f731baa	f5465b38-1aa7-486a-a7de-465c89565a2e	OUT	87.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.047+00	2025-04-25 07:03:10.047+00	\N
+b0608692-e8b4-4b13-8935-db78e3ae2bb2	056aec11-d847-4816-9217-898f31bbd4fb	OUT	49.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.116+00	2025-04-25 07:03:10.116+00	\N
+2690b63a-068e-4de0-8129-8cdd7150e8e6	5ddf1010-2b30-459e-9a5a-377d0de9381e	OUT	270.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.117+00	2025-04-25 07:03:10.117+00	\N
+a3f83505-17a5-429d-afeb-27b1a1c11b8d	7ad9a54b-9a6f-4bf7-969b-7baec42d6ef6	OUT	118.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.118+00	2025-04-25 07:03:10.118+00	\N
+e8b52fde-2def-41de-b9a6-ebefe72198b6	56e305de-ba92-4e70-9dcc-6e38303920c0	OUT	48.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.118+00	2025-04-25 07:03:10.118+00	\N
+f2afc023-286e-48bd-9dfa-83a81c366c89	a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	OUT	65.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.119+00	2025-04-25 07:03:10.119+00	\N
+ad1dad3c-1c0d-4828-8665-713cca08f9ed	64a4936d-1945-4964-bd49-b281eb85fb6c	OUT	648.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.119+00	2025-04-25 07:03:10.119+00	\N
+8ce15a0d-4412-461b-8d41-d1ab0e2a3fd4	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	OUT	1023.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.12+00	2025-04-25 07:03:10.12+00	\N
+5b52efad-4445-4a4b-9b25-b8df2021245e	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	OUT	358.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.121+00	2025-04-25 07:03:10.121+00	\N
+d6fbed1d-9aee-4343-8956-9ff6cb7bc0a3	9c7487c5-4437-4c71-94de-4958578e6252	OUT	24.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.122+00	2025-04-25 07:03:10.122+00	\N
+237ebc22-18ef-4d7f-a0c3-d9cc9ac7a204	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	OUT	544.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.122+00	2025-04-25 07:03:10.122+00	\N
+5e0a6b30-4fdc-406a-8a47-fb1cc0ce189b	d7931935-f352-48e1-b2b3-198d95bb615d	OUT	288.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.123+00	2025-04-25 07:03:10.123+00	\N
+b1f0ecc5-acd1-47c7-b410-bb8bdfb1fd18	255586d4-5afd-424b-84fd-6a1ae34bed3e	OUT	119.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.123+00	2025-04-25 07:03:10.123+00	\N
+ef9ec92b-839c-4510-b928-327b10c0a845	aff2a5a9-1324-4beb-a479-106b2c5979d7	OUT	208.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.124+00	2025-04-25 07:03:10.124+00	\N
+d66ff795-9cfe-4f39-8ca7-dd777ab15417	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	OUT	235.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.124+00	2025-04-25 07:03:10.124+00	\N
+366ee46f-d1bb-4c94-be08-1891152930be	9a94fcd6-aaad-4420-b82a-7ac28528b598	OUT	114.00	2025-01-31 00:00:00+00	Monthly Consumption - 1/31/2025	t	2025-04-25 07:03:10.125+00	2025-04-25 07:03:10.125+00	\N
+43e7637c-2867-428f-86ba-9bc9ac86b707	76caa84f-1750-4310-a140-cec3684c5ee0	OUT	153.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.125+00	2025-04-25 07:03:10.125+00	\N
+ded385d8-d788-47b6-8fcd-5748ab60b316	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	OUT	823.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.126+00	2025-04-25 07:03:10.126+00	\N
+a33f19d9-5be1-4507-bc48-bef06f1c1459	e51cc773-61dd-4219-a85b-7803c1e676c3	OUT	3784.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.127+00	2025-04-25 07:03:10.127+00	\N
+039df37c-5aeb-4e3b-8778-eed62d22aa71	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	OUT	428.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.128+00	2025-04-25 07:03:10.128+00	\N
+86bacc2a-cd44-4b08-a837-bc88da1f8ca8	3367f8cc-7c4d-4119-bc1f-b763d8d55dbd	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.128+00	2025-04-25 07:03:10.128+00	\N
+04333600-d21e-4cf3-ad76-83aa9917026f	3520b985-7a28-4781-8893-3f442cc6d9b6	OUT	105.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.129+00	2025-04-25 07:03:10.129+00	\N
+061f9505-b808-4076-8587-3ec1757e52fa	a787e796-4385-412c-b2c5-27c9247f9894	OUT	127.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.129+00	2025-04-25 07:03:10.129+00	\N
+0bb0d6c8-6b7c-4d12-8562-fd3ab4d03132	a3cac384-7ef5-4e60-92ab-dbe191cba8d2	OUT	152.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.129+00	2025-04-25 07:03:10.129+00	\N
+787f6ee8-428a-4691-bede-1bfc00be78d8	6b39aa6c-f45d-4fed-83ce-e52cb6405a1f	OUT	70.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.13+00	2025-04-25 07:03:10.13+00	\N
+180d9ee6-b207-41fc-bd16-485d21dbb810	3176c92d-701d-4ad3-b33d-69351138bc92	OUT	16.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.13+00	2025-04-25 07:03:10.13+00	\N
+fbdbf587-b981-4594-8865-159a25c11c6a	10667ae4-4839-4c17-88a3-c9b9a202d6cb	OUT	265.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.132+00	2025-04-25 07:03:10.132+00	\N
+068681c7-c3f3-409e-a421-d734721a5461	11046707-e54b-44e5-8d87-0c1ab5b5d34d	OUT	140.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.133+00	2025-04-25 07:03:10.133+00	\N
+01c0f544-ce24-405c-9a4e-4a1bcfd9a092	74143383-eaff-438b-973e-f36bccd350d0	OUT	8.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.134+00	2025-04-25 07:03:10.134+00	\N
+e73cef8a-9834-462b-936f-5f08e12e53fa	0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	OUT	87.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.135+00	2025-04-25 07:03:10.135+00	\N
+41d6cdf8-e935-4883-a453-195f5d2dc436	1353dc63-9c99-4a11-aca6-b04daaee59b9	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.136+00	2025-04-25 07:03:10.136+00	\N
+08fbe228-f1ca-446c-a290-44309afaed69	013663d3-e71d-46c2-b4b4-f8b9cb042d8c	OUT	28.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.136+00	2025-04-25 07:03:10.136+00	\N
+47d40cec-8190-4be0-a82c-9d89b3af2251	f5465b38-1aa7-486a-a7de-465c89565a2e	OUT	13.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.137+00	2025-04-25 07:03:10.137+00	\N
+17f3fa43-c2cd-4c21-b015-10a45d8ecb7c	056aec11-d847-4816-9217-898f31bbd4fb	OUT	160.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.138+00	2025-04-25 07:03:10.138+00	\N
+158e85e8-9eff-45df-8ab3-f6b3a36ab405	5ddf1010-2b30-459e-9a5a-377d0de9381e	OUT	191.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.138+00	2025-04-25 07:03:10.138+00	\N
+a2010066-fc74-43db-9247-adf51a9719a4	7ad9a54b-9a6f-4bf7-969b-7baec42d6ef6	OUT	60.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.139+00	2025-04-25 07:03:10.139+00	\N
+3a963418-ab99-49f8-be05-a5344ba990ea	56e305de-ba92-4e70-9dcc-6e38303920c0	OUT	29.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.139+00	2025-04-25 07:03:10.139+00	\N
+e4830718-bc7e-425b-8672-2deb2157defa	a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	OUT	7.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.14+00	2025-04-25 07:03:10.14+00	\N
+947f8313-3580-4c05-a77a-3cdd761263a2	64a4936d-1945-4964-bd49-b281eb85fb6c	OUT	387.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.142+00	2025-04-25 07:03:10.142+00	\N
+1dca4557-31fe-4a86-ae60-6710acd10d67	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	OUT	1120.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.142+00	2025-04-25 07:03:10.142+00	\N
+5f796758-c482-4eff-8361-e589e01266f7	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	OUT	123.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.143+00	2025-04-25 07:03:10.143+00	\N
+baf7159e-29f5-4bea-a2cf-034159119968	9c7487c5-4437-4c71-94de-4958578e6252	OUT	0.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.143+00	2025-04-25 07:03:10.143+00	\N
+665cba8d-da26-4925-ae5c-7940079968e2	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	OUT	365.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.144+00	2025-04-25 07:03:10.144+00	\N
+47ea808f-7609-4a8a-94f8-18369bb78809	d7931935-f352-48e1-b2b3-198d95bb615d	OUT	528.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.145+00	2025-04-25 07:03:10.145+00	\N
+4431fe5f-d09a-41ed-bc0f-a9a321b54c0b	255586d4-5afd-424b-84fd-6a1ae34bed3e	OUT	223.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.145+00	2025-04-25 07:03:10.145+00	\N
+82e747de-25fc-4487-80df-3d4ccef72139	aff2a5a9-1324-4beb-a479-106b2c5979d7	OUT	315.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.146+00	2025-04-25 07:03:10.146+00	\N
+3b3c980e-4b04-4a51-a008-5df61f390e78	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	OUT	66.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.217+00	2025-04-25 07:03:10.217+00	\N
+c15d5e24-67f3-4ffb-bdde-f002d99a5131	9a94fcd6-aaad-4420-b82a-7ac28528b598	OUT	107.00	2025-02-28 00:00:00+00	Monthly Consumption - 2/28/2025	t	2025-04-25 07:03:10.218+00	2025-04-25 07:03:10.218+00	\N
+d4b9dedb-1ede-44f8-9f7a-4b5669686f16	76caa84f-1750-4310-a140-cec3684c5ee0	OUT	134.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.22+00	2025-04-25 07:03:10.22+00	\N
+0b0b463b-4900-4fc8-89c5-519621908685	4f28cf9c-4024-4bde-aa1c-c7022a8ffe80	OUT	1280.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.221+00	2025-04-25 07:03:10.221+00	\N
+f44907c8-a3a0-45d2-b5ac-90e5f3dce93a	e51cc773-61dd-4219-a85b-7803c1e676c3	OUT	3174.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.221+00	2025-04-25 07:03:10.221+00	\N
+98dea3ff-5f96-4a7a-bc2f-28f663672eb2	1afc08b4-efc0-4af5-9b65-40c0f6c81f9c	OUT	590.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.222+00	2025-04-25 07:03:10.222+00	\N
+1c677afc-eabb-4202-86db-0ce2868078a7	3367f8cc-7c4d-4119-bc1f-b763d8d55dbd	OUT	15.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.223+00	2025-04-25 07:03:10.223+00	\N
+b747601b-fe02-4ede-b07e-a32b06550aaa	3520b985-7a28-4781-8893-3f442cc6d9b6	OUT	128.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.223+00	2025-04-25 07:03:10.223+00	\N
+4fa0d1c7-8e5c-4371-9f9c-bcd4bc2792c0	a787e796-4385-412c-b2c5-27c9247f9894	OUT	92.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.224+00	2025-04-25 07:03:10.224+00	\N
+4d0ff347-1e16-469d-8c67-48bbdfc83b38	a3cac384-7ef5-4e60-92ab-dbe191cba8d2	OUT	251.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.227+00	2025-04-25 07:03:10.227+00	\N
+81d48f92-df18-40ac-b8d5-fc266f976d7a	6b39aa6c-f45d-4fed-83ce-e52cb6405a1f	OUT	191.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.227+00	2025-04-25 07:03:10.227+00	\N
+1d074cae-46e6-4dea-9c27-314ab88f5331	3176c92d-701d-4ad3-b33d-69351138bc92	OUT	0.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.228+00	2025-04-25 07:03:10.228+00	\N
+8be4a88b-124b-4a68-aecc-9c79b700d3ae	10667ae4-4839-4c17-88a3-c9b9a202d6cb	OUT	418.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.23+00	2025-04-25 07:03:10.23+00	\N
+642d319e-bef5-4962-a13d-5416708f2a76	11046707-e54b-44e5-8d87-0c1ab5b5d34d	OUT	171.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.23+00	2025-04-25 07:03:10.23+00	\N
+3ae73dc7-0ec8-4780-b57a-f21f1ecd122f	74143383-eaff-438b-973e-f36bccd350d0	OUT	88.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.231+00	2025-04-25 07:03:10.231+00	\N
+d741e358-5b0f-49b7-b171-66bdf09ddb6e	0a9b52aa-6e18-4261-9e92-0f8b8d6e3764	OUT	75.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.232+00	2025-04-25 07:03:10.232+00	\N
+c3992d88-6f03-481d-a9e5-f44380352fe1	1353dc63-9c99-4a11-aca6-b04daaee59b9	OUT	0.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.232+00	2025-04-25 07:03:10.232+00	\N
+9e28fc44-6b22-4412-999d-80c4fd96b359	013663d3-e71d-46c2-b4b4-f8b9cb042d8c	OUT	24.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.233+00	2025-04-25 07:03:10.233+00	\N
+d600fc1a-9760-404d-bea0-e8f6a6c7d858	f5465b38-1aa7-486a-a7de-465c89565a2e	OUT	53.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.233+00	2025-04-25 07:03:10.233+00	\N
+74044de7-e8cd-4710-80e7-3b30748668ba	5ddf1010-2b30-459e-9a5a-377d0de9381e	OUT	110.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.235+00	2025-04-25 07:03:10.235+00	\N
+16ebb7d8-0781-453a-8eb8-cbd77602cdee	7ad9a54b-9a6f-4bf7-969b-7baec42d6ef6	OUT	26.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.235+00	2025-04-25 07:03:10.235+00	\N
+88fb7a8a-5273-4657-8978-2b00402bb88d	56e305de-ba92-4e70-9dcc-6e38303920c0	OUT	10.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.237+00	2025-04-25 07:03:10.237+00	\N
+8c9c7723-b6c9-4e06-992c-121d4235d547	a02d7e03-0c33-4901-afeb-a7a3ecf0a8d2	OUT	0.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.238+00	2025-04-25 07:03:10.238+00	\N
+39e43675-8481-4d22-ad82-303a5816872d	64a4936d-1945-4964-bd49-b281eb85fb6c	OUT	891.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.238+00	2025-04-25 07:03:10.238+00	\N
+228b2aed-f0af-4a85-aa3b-c4fdb793ba7b	18dfeade-9fbc-4ad5-a026-fc57f3c7f057	OUT	1364.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.239+00	2025-04-25 07:03:10.239+00	\N
+c0deced3-89b8-4969-9206-097f0f54ff90	1cb6cbaf-b0f9-4b71-ac4e-3b40bf3991f1	OUT	208.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.239+00	2025-04-25 07:03:10.239+00	\N
+fae3ff25-4601-4323-ab02-6af64df5ad03	9c7487c5-4437-4c71-94de-4958578e6252	OUT	13.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.24+00	2025-04-25 07:03:10.24+00	\N
+795c20e1-315d-4a81-a90f-c7ef0c270af0	ed47c77a-f8c6-424f-a06a-e73e8e7c0063	OUT	156.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.24+00	2025-04-25 07:03:10.24+00	\N
+e305fcd8-c12a-4649-9426-522fc31a2f92	d7931935-f352-48e1-b2b3-198d95bb615d	OUT	238.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.241+00	2025-04-25 07:03:10.241+00	\N
+d7a379cc-21fc-44c6-ad6a-9dd6ce8375f1	255586d4-5afd-424b-84fd-6a1ae34bed3e	OUT	257.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.241+00	2025-04-25 07:03:10.241+00	\N
+d3333732-c755-42fd-8f3e-51038bdd33c2	aff2a5a9-1324-4beb-a479-106b2c5979d7	OUT	303.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.242+00	2025-04-25 07:03:10.242+00	\N
+401f42be-6775-4c39-906d-cf841162a761	2fdce684-3cdc-4df2-adc1-0c210e7d3dd2	OUT	171.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.244+00	2025-04-25 07:03:10.244+00	\N
+36c94eac-69a0-418b-a005-1bb610092fdd	9a94fcd6-aaad-4420-b82a-7ac28528b598	OUT	110.00	2025-03-31 00:00:00+00	Monthly Consumption - 3/31/2025	t	2025-04-25 07:03:10.244+00	2025-04-25 07:03:10.244+00	\N
+333efc3d-e433-4135-9d74-05e3c5e09ad1	bce6eefe-11b8-4b47-bc73-2e3a8a7ff708	IN	547.00	2024-11-23 00:00:00+00	101	f	2025-04-25 07:03:23.895+00	2025-04-25 07:03:23.895+00	\N
+d3c554dc-7782-491a-8c34-3919358f1ad7	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	1087.00	2024-09-04 00:00:00+00	102	f	2025-04-25 07:03:23.903+00	2025-04-25 07:03:23.903+00	\N
+f149b914-c470-4db4-bf05-449e5983a07c	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	486.00	2024-10-09 00:00:00+00	102	f	2025-04-25 07:03:23.908+00	2025-04-25 07:03:23.908+00	\N
+87ff79f9-5a7b-49ff-9bfa-772d7a63fb47	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	547.00	2024-11-16 00:00:00+00	102	f	2025-04-25 07:03:23.913+00	2025-04-25 07:03:23.913+00	\N
+7a6825d2-d1d6-4f46-9402-f2c680feb32b	37223484-5648-4f06-92de-7eaa33d317f8	IN	493.00	2024-10-09 00:00:00+00		f	2025-04-25 07:03:23.984+00	2025-04-25 07:03:23.984+00	\N
+cec83303-3ae2-481e-96f6-02dddf91d9e6	90fe4f69-0e6e-4b0a-9527-7f08ece06a85	IN	506.00	2024-10-16 00:00:00+00		f	2025-04-25 07:03:23.989+00	2025-04-25 07:03:23.989+00	\N
+d32d0d6c-ce9b-49f1-a267-a09803151805	881bef50-07c0-49bb-9cd1-fd77401f5746	IN	432.00	2024-10-16 00:00:00+00		f	2025-04-25 07:03:23.994+00	2025-04-25 07:03:23.994+00	\N
+bbc2706e-becf-4562-b0de-0fa178c841b1	7f99ee7f-9612-40d1-89e7-f20588aeea0c	IN	524.00	2024-11-04 00:00:00+00		f	2025-04-25 07:03:23.999+00	2025-04-25 07:03:23.999+00	\N
+387dbb27-d1b6-4fa2-834d-eab64f0228dd	d3ca9255-2b14-42d7-8940-f11eedbfa16d	IN	548.00	2024-11-04 00:00:00+00		f	2025-04-25 07:03:24.083+00	2025-04-25 07:03:24.083+00	\N
+0a0ee48e-670c-4ab3-a27d-5fef492989c7	2af25b32-de64-4886-afd3-63d44c3db648	IN	540.00	2024-09-04 00:00:00+00		f	2025-04-25 07:03:24.183+00	2025-04-25 07:03:24.183+00	\N
+2c756510-3d46-42ec-a5e4-676f51413e24	2af25b32-de64-4886-afd3-63d44c3db648	IN	537.00	2024-10-09 00:00:00+00		f	2025-04-25 07:03:24.28+00	2025-04-25 07:03:24.28+00	\N
+824a95a0-8a12-4039-864d-3d3fc5706144	2af25b32-de64-4886-afd3-63d44c3db648	IN	533.00	2024-11-16 00:00:00+00		f	2025-04-25 07:03:24.381+00	2025-04-25 07:03:24.381+00	\N
+81245d72-fc86-49ed-b6e2-98cbc2a3bef0	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	506.00	2024-11-04 00:00:00+00		f	2025-04-25 07:03:24.387+00	2025-04-25 07:03:24.387+00	\N
+56f9b74b-50b1-418e-9f91-251dd4f4c44b	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	531.00	2024-10-09 00:00:00+00		f	2025-04-25 07:03:24.392+00	2025-04-25 07:03:24.392+00	\N
+eefadab4-d8bd-47a5-bd37-9449a5fa6166	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	513.00	2024-09-04 00:00:00+00		f	2025-04-25 07:03:24.397+00	2025-04-25 07:03:24.397+00	\N
+f9ec02da-a059-4e11-9df1-4933670b5dab	3149c741-4dd9-4c6b-b31a-f1c5e232f65a	IN	560.00	2024-09-24 00:00:00+00		f	2025-04-25 07:03:24.484+00	2025-04-25 07:03:24.484+00	\N
+78496a4f-3d82-40ae-b1f5-20700ef41e08	9057c24b-9e04-4fd9-bbc3-a6ee796f9761	IN	497.00	2024-09-19 00:00:00+00	918	f	2025-04-25 07:03:24.489+00	2025-04-25 07:03:24.489+00	\N
+0da65c70-4552-4463-942e-32ba1f069b9e	4c65ac22-e2d3-4df3-83f9-962b3574e85b	IN	1051.00	2024-11-04 00:00:00+00	917	f	2025-04-25 07:03:24.494+00	2025-04-25 07:03:24.494+00	\N
+a49a1c4b-a15a-4f11-9658-41259d8b0bb9	3101f24e-322b-4a36-8499-698393193a9e	IN	1562.00	2024-09-06 00:00:00+00	910	f	2025-04-25 07:03:24.499+00	2025-04-25 07:03:24.499+00	\N
+4140ef47-999c-4985-8cec-1427926ba14e	3101f24e-322b-4a36-8499-698393193a9e	IN	250.00	2024-11-19 00:00:00+00	910	f	2025-04-25 07:03:24.504+00	2025-04-25 07:03:24.504+00	\N
+01d6a44e-0a51-452c-9f45-3685dca357bb	3101f24e-322b-4a36-8499-698393193a9e	IN	477.00	2024-11-23 00:00:00+00	910	f	2025-04-25 07:03:24.508+00	2025-04-25 07:03:24.508+00	\N
+f00ceabb-6155-47ee-9479-521f9d6906a7	c4e8031d-faad-4e83-93eb-b3e7e33fcb48	IN	519.00	2024-11-29 00:00:00+00	932	f	2025-04-25 07:03:24.513+00	2025-04-25 07:03:24.513+00	\N
+56f6c85e-f0e3-4483-9805-89e566501e1b	9987a243-da19-45ae-8099-dda63c577d11	IN	1450.00	2024-10-14 00:00:00+00		f	2025-04-25 07:03:24.583+00	2025-04-25 07:03:24.583+00	\N
+e650a88c-e956-4190-a91a-b58dd4ca84b4	1985e7d8-91f8-45a6-9377-445a0052056a	IN	520.00	2024-09-24 00:00:00+00	913	f	2025-04-25 07:03:24.588+00	2025-04-25 07:03:24.588+00	\N
+3a6808de-0e86-4c33-b6c2-5f7228085235	bf9253b2-c833-4c27-a3f2-e6150aab0c6b	IN	1037.00	2024-09-06 00:00:00+00	922	f	2025-04-25 07:03:24.593+00	2025-04-25 07:03:24.593+00	\N
+b44c674a-41c1-4af8-9851-01666cde7e57	4fec1fbc-1190-42d7-b569-d7f1580561b7	IN	238.00	2024-10-29 00:00:00+00	RED SAC, 951	f	2025-04-25 07:03:24.599+00	2025-04-25 07:03:24.599+00	\N
+103b7b17-c2e9-41ba-b71b-43003ac9cfb1	c6aea81b-f27e-4831-a801-bc256f699290	IN	523.00	2024-10-26 00:00:00+00	OFF W SPK, 948	f	2025-04-25 07:03:24.604+00	2025-04-25 07:03:24.604+00	\N
+8726d3d8-5001-4519-9c3c-ecf6e522e8d2	3fe8e967-024f-4dd7-9926-6bc51b91c1b0	IN	500.00	2024-11-19 00:00:00+00	NEW	f	2025-04-25 07:03:24.609+00	2025-04-25 07:03:24.609+00	\N
+bd026056-b2b4-47e0-9511-b207d2820ea6	239425e4-90bf-4048-9f7e-6aa4f5a8365e	IN	1028.00	2024-09-27 00:00:00+00	970	f	2025-04-25 07:03:24.614+00	2025-04-25 07:03:24.614+00	\N
+1c4a28f8-a2a1-4be0-b47a-c6d83d1e8f18	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	1060.00	2024-10-15 00:00:00+00	CEDAR WOOD, 974	f	2025-04-25 07:03:24.684+00	2025-04-25 07:03:24.684+00	\N
+8bb9111f-f28c-425e-8173-38df468c285d	67190dce-2601-4780-8660-ae8f696d7006	IN	522.00	2024-11-23 00:00:00+00		f	2025-04-25 07:03:24.689+00	2025-04-25 07:03:24.689+00	\N
+cfb605a4-a3b2-4497-ab1f-e0548d8c5c57	10122c70-0fd8-4889-b2c6-2a6252569200	IN	397.00	2024-10-09 00:00:00+00	BLK MARBLE, 986	f	2025-04-25 07:03:24.694+00	2025-04-25 07:03:24.694+00	\N
+8592d55a-97e4-4789-9ff2-83a2978d3439	49219c9c-1b07-4057-b363-cb55c8d2fcaa	IN	520.00	2024-11-04 00:00:00+00	NEW	f	2025-04-25 07:03:24.7+00	2025-04-25 07:03:24.7+00	\N
+a3a52fd1-f614-43fd-8b31-07713714518f	043246cc-f78d-49c8-bcab-8e9f42257178	IN	530.00	2024-11-12 00:00:00+00	NEW	f	2025-04-25 07:03:24.706+00	2025-04-25 07:03:24.706+00	\N
+572e47dc-524c-4133-a7c9-b205c2b5a11e	957b389a-df69-4b4a-803e-aa6aed47312e	IN	541.00	2024-11-12 00:00:00+00	NEW	f	2025-04-25 07:03:24.713+00	2025-04-25 07:03:24.713+00	\N
+8ea172f9-9902-4c8c-b265-e62697d0d806	3067b9fd-6966-4161-96ec-3d2faabe3d87	IN	506.00	2024-11-19 00:00:00+00	NEW	f	2025-04-25 07:03:24.784+00	2025-04-25 07:03:24.784+00	\N
+6ea348f1-8dec-4ad6-938e-b9940704bc99	5211ee64-e872-4b32-8ce3-1c1a118f9373	IN	523.00	2024-11-12 00:00:00+00	NEW	f	2025-04-25 07:03:24.789+00	2025-04-25 07:03:24.789+00	\N
+1c808fc7-940c-4c19-905a-332913985bde	dafcc2c6-7438-4350-a808-d0908244de6b	IN	289.00	2024-11-04 00:00:00+00	NEW	f	2025-04-25 07:03:24.793+00	2025-04-25 07:03:24.793+00	\N
+93b2677c-f2c5-4e13-a645-05280c5dd16e	f00e13b1-5879-4c4f-821a-927b76c20aef	IN	489.00	2024-11-23 00:00:00+00	NEW	f	2025-04-25 07:03:24.798+00	2025-04-25 07:03:24.798+00	\N
+140e17cf-892a-4a38-adb3-1dad7c5ce330	76e5b49b-a1a3-4bd2-92ae-c2c45a921c14	IN	239.00	2024-11-12 00:00:00+00	NEW	f	2025-04-25 07:03:24.806+00	2025-04-25 07:03:24.806+00	\N
+bd405c7c-0928-4b21-b27b-8e01820bbc50	c41c8950-8578-435c-83f1-8aca424fe012	IN	243.00	2024-11-12 00:00:00+00	NEW	f	2025-04-25 07:03:24.885+00	2025-04-25 07:03:24.885+00	\N
+6143a67b-dfaf-4b4d-9d06-98c79721382e	db090aec-b37c-40ce-83c5-a82fe8d884b8	IN	510.00	2024-11-14 00:00:00+00		f	2025-04-25 07:03:24.897+00	2025-04-25 07:03:24.897+00	\N
+25aca47e-f103-4e21-841f-ee72c23a6c15	db090aec-b37c-40ce-83c5-a82fe8d884b8	IN	492.00	2024-11-23 00:00:00+00		f	2025-04-25 07:03:24.906+00	2025-04-25 07:03:24.906+00	\N
+5ffe6fd3-2a46-43b7-b932-00384a888598	690d8675-5f55-4faa-b512-c706ccc5afde	IN	939.00	2024-10-02 00:00:00+00	GOLD, 920	f	2025-04-25 07:03:24.91+00	2025-04-25 07:03:24.91+00	\N
+e6cabf1e-626b-42b0-b4d2-a505beef9753	cf65c8a6-2a27-4f0e-a52e-f87148b9411b	IN	1003.00	2024-09-22 00:00:00+00	RICH CHERRYWOOD, 931	f	2025-04-25 07:03:24.915+00	2025-04-25 07:03:24.915+00	\N
+d06e8ff8-b532-438e-b42f-63bc84aa38bf	6b8141d6-1c53-4788-a0de-938429be7e67	IN	678.00	2024-09-19 00:00:00+00	WHITE MARBLE, 936	f	2025-04-25 07:03:24.919+00	2025-04-25 07:03:24.919+00	\N
+c4bd5f21-3d99-42ec-bc88-0c57aeaece2a	6b8141d6-1c53-4788-a0de-938429be7e67	IN	937.00	2024-10-11 00:00:00+00	936	f	2025-04-25 07:03:24.924+00	2025-04-25 07:03:24.924+00	\N
+5542d08c-2180-4d42-adee-afb7cae7bc23	e15a84df-6a31-4d9d-845a-f5d56c398d3d	IN	512.00	2024-11-29 00:00:00+00	DRK BLK MARBLE, 938	f	2025-04-25 07:03:24.928+00	2025-04-25 07:03:24.928+00	\N
+6e5ef003-d613-4695-8265-8ad91eda052b	b78e4ee9-8875-42cc-b3e0-2d75fa6ab928	IN	1190.00	2024-10-02 00:00:00+00	OFF W MTLK, 943	f	2025-04-25 07:03:24.984+00	2025-04-25 07:03:24.984+00	\N
+ec747ade-4bff-4c5f-afe8-df765c0c796b	af4259c9-07df-435a-a936-b69495916dda	IN	1201.00	2024-10-04 00:00:00+00	GREY MTLK, 944	f	2025-04-25 07:03:24.988+00	2025-04-25 07:03:24.988+00	\N
+d0254aca-4397-44cf-a093-49a280b08813	aa20c5be-abd9-4c33-afa3-90f33a3b4e78	IN	596.00	2024-09-24 00:00:00+00	954	f	2025-04-25 07:03:24.992+00	2025-04-25 07:03:24.992+00	\N
+a4d08f35-3b1d-4e78-8ffc-8c892c33d720	133fd452-75ea-45c0-9023-b22711b64da0	IN	192.00	2024-09-22 00:00:00+00		f	2025-04-25 07:03:24.997+00	2025-04-25 07:03:24.997+00	\N
+b993e7a0-399f-4d6f-a207-3cea4178813f	4d2a92c3-afa4-4492-aa57-7a5d730b48a2	IN	530.00	2024-11-19 00:00:00+00		f	2025-04-25 07:03:25.004+00	2025-04-25 07:03:25.004+00	\N
+d1c8fb8b-2344-4d23-84b5-de138d0fab3d	7dae25a0-08b2-422a-bfd9-84ca60c1223a	IN	248.00	2024-10-09 00:00:00+00		f	2025-04-25 07:03:25.009+00	2025-04-25 07:03:25.009+00	\N
+76644a53-66de-45c9-b6ba-24cab0fc09a8	d858dc83-8e69-4b5d-ac91-4efe1cc965a7	IN	205.00	2024-11-04 00:00:00+00		f	2025-04-25 07:03:25.013+00	2025-04-25 07:03:25.013+00	\N
+6f9be313-ab7f-4875-9676-1c5bc8e5181b	f3957def-9de6-4e72-9960-9a9ceac670ab	IN	253.00	2024-09-04 00:00:00+00		f	2025-04-25 07:03:25.085+00	2025-04-25 07:03:25.085+00	\N
+c9671127-816d-4c04-83bd-7aae2b85bf13	cafac31f-e7cb-4f48-b704-df84d5e84ad8	IN	495.00	2024-09-27 00:00:00+00		f	2025-04-25 07:03:25.09+00	2025-04-25 07:03:25.09+00	\N
+c614e25f-dcf5-46c5-8998-84ff2bace5d3	d1116894-2f0b-4473-b907-11f837669963	IN	512.00	2024-09-10 00:00:00+00		f	2025-04-25 07:03:25.096+00	2025-04-25 07:03:25.096+00	\N
+c6ed6658-5f83-4e61-a078-725c5da50a62	a81a5cd7-1d01-49e0-987c-419d628472f2	IN	269.00	2024-09-04 00:00:00+00		f	2025-04-25 07:03:25.102+00	2025-04-25 07:03:25.102+00	\N
+eea24bba-6868-4848-9afe-2c7993863ed7	a81a5cd7-1d01-49e0-987c-419d628472f2	IN	241.00	2024-11-04 00:00:00+00		f	2025-04-25 07:03:25.107+00	2025-04-25 07:03:25.107+00	\N
+c25af5a9-3c10-41a7-a6f4-af6afe2a6dc6	a81a5cd7-1d01-49e0-987c-419d628472f2	IN	496.00	2024-11-23 00:00:00+00		f	2025-04-25 07:03:25.111+00	2025-04-25 07:03:25.111+00	\N
+b161fca9-254a-4ddc-a1fd-c9fd9e3abd2b	a81a5cd7-1d01-49e0-987c-419d628472f2	IN	265.00	2024-09-27 00:00:00+00		f	2025-04-25 07:03:25.182+00	2025-04-25 07:03:25.182+00	\N
+bbd79690-6537-4ae2-b072-bebfc1cf8453	538fa5f1-f7cf-4706-9711-197079e80529	IN	517.00	2024-11-04 00:00:00+00		f	2025-04-25 07:03:25.187+00	2025-04-25 07:03:25.187+00	\N
+cce5a2c3-70c9-4957-a26f-d9d0908cd001	5fd052eb-9eb1-4dd0-854d-00af93c252ef	IN	1059.00	2024-09-24 00:00:00+00		f	2025-04-25 07:03:25.192+00	2025-04-25 07:03:25.192+00	\N
+41f3f7d1-9380-4cb1-92db-dc30a2228e9c	33b804dd-22bc-4504-9a36-9c840b35aa08	IN	365.00	2024-11-23 00:00:00+00		f	2025-04-25 07:03:25.196+00	2025-04-25 07:03:25.196+00	\N
+168477f9-e60a-46ac-89d0-8dc58ac16253	937b2d8d-2b97-4cb0-a20a-d36fa4ec9be0	IN	509.00	2024-09-04 00:00:00+00		f	2025-04-25 07:03:25.201+00	2025-04-25 07:03:25.201+00	\N
+53c32464-0252-4a6c-920b-d46faf74fdab	41fd7109-37a5-45e0-9c87-0656bf194cc9	IN	994.00	2024-09-06 00:00:00+00		f	2025-04-25 07:03:25.205+00	2025-04-25 07:03:25.205+00	\N
+b24c152d-a8f6-41e2-91c9-d4ef5ea28db9	1c14eed6-b659-4435-821d-1cfa0d52c2f4	IN	448.00	2024-11-11 00:00:00+00		f	2025-04-25 07:03:25.209+00	2025-04-25 07:03:25.209+00	\N
+3f11b420-4e8a-45e4-b3b4-f51e4859cbdc	1c14eed6-b659-4435-821d-1cfa0d52c2f4	IN	430.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.282+00	2025-04-25 07:03:25.282+00	\N
+cd7a8c2c-d323-4fcf-b2bb-6933f5a2216c	619c37b6-0b66-422a-916e-be96eb242f77	IN	172.00	2024-09-12 00:00:00+00		f	2025-04-25 07:03:25.287+00	2025-04-25 07:03:25.287+00	\N
+645a65af-1687-4964-811c-40fb877225fd	619c37b6-0b66-422a-916e-be96eb242f77	IN	245.00	2024-10-02 00:00:00+00		f	2025-04-25 07:03:25.291+00	2025-04-25 07:03:25.291+00	\N
+ade9a3b9-24e8-429c-b15a-3100afac0e14	c904d337-67b8-450c-964f-39ab2c70eaa3	IN	474.00	2024-11-04 00:00:00+00		f	2025-04-25 07:03:25.296+00	2025-04-25 07:03:25.296+00	\N
+57c1ca43-1502-472a-a7d0-718ac6434701	9d84fa50-480c-4c5a-9114-ca89723cfe37	IN	463.00	2024-09-10 00:00:00+00		f	2025-04-25 07:03:25.3+00	2025-04-25 07:03:25.3+00	\N
+0a2f4e4e-c001-4a45-af70-e1a7f75c37f5	9d84fa50-480c-4c5a-9114-ca89723cfe37	IN	510.00	2024-11-14 00:00:00+00		f	2025-04-25 07:03:25.305+00	2025-04-25 07:03:25.305+00	\N
+8c18e8fc-2f1c-4a2a-8016-721dc811e5bb	9d84fa50-480c-4c5a-9114-ca89723cfe37	IN	479.00	2024-11-23 00:00:00+00		f	2025-04-25 07:03:25.309+00	2025-04-25 07:03:25.309+00	\N
+a6a7fe53-7af2-41ac-8809-f2c1dc3296ce	15efc96f-2728-4830-937d-5d4f529bdd4b	IN	509.00	2024-09-27 00:00:00+00		f	2025-04-25 07:03:25.313+00	2025-04-25 07:03:25.313+00	\N
+8fa52250-0c8d-43f9-b7cd-b6996b35e381	bb444182-207f-45de-a3f8-c90e29ad90ad	IN	140.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.385+00	2025-04-25 07:03:25.385+00	\N
+8384bc79-c6ba-413d-a91a-00ba662fd8db	02aaa1b1-cd1f-4df8-9578-3e8598b26f32	IN	81.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.39+00	2025-04-25 07:03:25.39+00	\N
+0ec3cb5e-c39b-45c9-9d1d-98b6c4e64f63	5054a542-2406-4a73-9b22-5fdeb5f5f642	IN	198.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.396+00	2025-04-25 07:03:25.396+00	\N
+92b96e3c-ea11-49f8-861f-8ae0e2c6ef70	40888ace-1283-4b98-a9d9-70200531558b	IN	182.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.4+00	2025-04-25 07:03:25.4+00	\N
+88a9b683-4633-4deb-8b85-a8bdbfeeee70	dee70458-7a73-41d5-95f5-7a833350f3aa	IN	90.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.417+00	2025-04-25 07:03:25.417+00	\N
+0715c066-7ac6-4607-b2c1-10676a42aee2	5e9023f5-f412-42ea-a178-e1975fb13c19	IN	140.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.482+00	2025-04-25 07:03:25.482+00	\N
+9f6d4ac5-362a-4184-b157-7a1d08b9ee56	8b446b13-5977-4382-80f1-c145c4ff8c28	IN	117.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.491+00	2025-04-25 07:03:25.491+00	\N
+144f0a1f-beb5-4aea-b340-8d5cc2acf271	b3c6683f-bad1-40ac-9d37-f16dadc0e55e	IN	105.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.52+00	2025-04-25 07:03:25.52+00	\N
+0e692e9c-1a58-4279-b9b4-609d0a1d0229	71108d69-b791-4b1d-9cae-7ebd91dec569	IN	112.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.525+00	2025-04-25 07:03:25.525+00	\N
+4fd4188b-60cf-4f41-b655-49b166e68a5d	b7dd6bec-ef9a-4a9f-9852-0788444f8e46	IN	93.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.53+00	2025-04-25 07:03:25.53+00	\N
+133032b1-89fe-4d43-bf9f-b19adbbb0eb6	0a4da614-dba2-47b9-9a9d-f0675aeb0f96	IN	124.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.582+00	2025-04-25 07:03:25.582+00	\N
+969527cc-b017-4695-a796-8c18e0afe47c	a9d95b92-b40b-477e-9fad-90d174617f80	IN	98.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.589+00	2025-04-25 07:03:25.589+00	\N
+752277bb-32be-4d72-a553-ca8eda07536a	3927e84b-e35f-4c88-bb49-93aa3370eb6b	IN	136.00	2024-11-12 00:00:00+00		f	2025-04-25 07:03:25.594+00	2025-04-25 07:03:25.594+00	\N
+1f509c4b-72fd-4ab4-a0f0-02f10c05369b	af619843-42f3-4ccb-a145-54c64adf4f6f	IN	515.00	2024-10-30 00:00:00+00		f	2025-04-25 07:03:25.602+00	2025-04-25 07:03:25.602+00	\N
+946dc7dc-0819-42b7-8a8d-47b0e7a1648c	94d7482a-b13f-4527-b57c-4edd6c630257	IN	540.00	2024-11-15 00:00:00+00		f	2025-04-25 07:03:25.607+00	2025-04-25 07:03:25.607+00	\N
+49b86759-4436-460e-96a0-49286e787aea	a5876edb-57b3-4c7b-9554-091a8d25d099	IN	426.00	2024-10-17 00:00:00+00		f	2025-04-25 07:03:25.615+00	2025-04-25 07:03:25.615+00	\N
+d9a16b9c-fccb-4821-a94a-7adb194a9e9a	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	289.00	2024-10-14 00:00:00+00		f	2025-04-25 07:03:25.684+00	2025-04-25 07:03:25.684+00	\N
+e5399e96-6d00-41e8-864e-81f2cb2ab411	e4dfccb6-ac5e-4990-b5ed-620cc928dacf	IN	517.00	2024-11-22 00:00:00+00		f	2025-04-25 07:03:25.689+00	2025-04-25 07:03:25.689+00	\N
+37aadc77-16c7-442c-a7e2-173bbbb05880	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	531.00	2024-12-03 00:00:00+00		f	2025-04-25 07:03:25.695+00	2025-04-25 07:03:25.695+00	\N
+8c865bac-6f59-439c-8a89-74d352d6e465	8331a016-472e-47ef-a62a-f0f97780a8ac	IN	558.00	2024-12-16 00:00:00+00		f	2025-04-25 07:03:25.703+00	2025-04-25 07:03:25.703+00	\N
+747b8b77-453e-46e0-aa8b-0218e93a0e9b	2af25b32-de64-4886-afd3-63d44c3db648	IN	535.00	2024-12-03 00:00:00+00		f	2025-04-25 07:03:25.709+00	2025-04-25 07:03:25.709+00	\N
+e60cb08e-91b1-4d53-841b-e1c501639315	dfd9ce83-5efc-4b18-a502-72b530d6fa1a	IN	510.00	2024-12-16 00:00:00+00		f	2025-04-25 07:03:25.783+00	2025-04-25 07:03:25.783+00	\N
+88364a95-d2a1-4214-9af9-990d7fbf47fc	ab54ac15-dfb7-4edb-802c-a02562188e54	IN	502.00	2024-12-30 00:00:00+00		f	2025-04-25 07:03:25.787+00	2025-04-25 07:03:25.787+00	\N
+446e05cb-3e49-4f01-8e75-bbed92597211	1985e7d8-91f8-45a6-9377-445a0052056a	IN	500.00	2024-12-29 00:00:00+00		f	2025-04-25 07:03:25.792+00	2025-04-25 07:03:25.792+00	\N
+614d6f32-c4ee-41c7-9188-8d7e853ffe00	26a9d26e-acef-4519-b22d-79556b4d62ea	IN	446.00	2024-12-29 00:00:00+00		f	2025-04-25 07:03:25.796+00	2025-04-25 07:03:25.796+00	\N
+8884ff6b-f927-437f-9db8-3de6538c97b5	10122c70-0fd8-4889-b2c6-2a6252569200	IN	514.00	2024-12-19 00:00:00+00		f	2025-04-25 07:03:25.801+00	2025-04-25 07:03:25.801+00	\N
+b025999e-7a41-4e48-bb57-0f44183db992	e71fb2ec-8fa9-4bcc-bce0-25a581fe9bef	IN	484.00	2024-12-31 00:00:00+00		f	2025-04-25 07:03:25.805+00	2025-04-25 07:03:25.805+00	\N
+60e3e489-483b-488e-99a3-479cf1f325f2	7465e001-52c5-44e0-a3aa-2caa680bb44e	IN	524.00	2024-12-04 00:00:00+00		f	2025-04-25 07:03:25.881+00	2025-04-25 07:03:25.881+00	\N
+75f83e56-edb6-49d0-aa91-6898fbcba1f8	d1116894-2f0b-4473-b907-11f837669963	IN	512.00	2024-12-29 00:00:00+00		f	2025-04-25 07:03:25.886+00	2025-04-25 07:03:25.886+00	\N
+04078b7e-843b-4f7d-bd26-a26ae106da4f	41fd7109-37a5-45e0-9c87-0656bf194cc9	IN	973.00	2024-12-06 00:00:00+00		f	2025-04-25 07:03:25.892+00	2025-04-25 07:03:25.892+00	\N
+91e4ac65-7958-44ae-a5ba-b6d1ab5cc965	5afe5513-aa31-4b59-8734-cac79b685f3f	IN	257.00	2024-12-06 00:00:00+00		f	2025-04-25 07:03:25.896+00	2025-04-25 07:03:25.896+00	\N
+2aeb862e-ae31-4d5c-a86d-cfb552f60045	b2d09daa-3fe9-469e-9dfd-f53f06f4ff48	IN	242.00	2024-12-06 00:00:00+00		f	2025-04-25 07:03:25.901+00	2025-04-25 07:03:25.901+00	\N
+b257fc05-f1fb-474c-b7bb-c4e8a36320be	c904d337-67b8-450c-964f-39ab2c70eaa3	IN	470.00	2024-12-29 00:00:00+00		f	2025-04-25 07:03:25.905+00	2025-04-25 07:03:25.905+00	\N
+e141f625-eb8f-450a-b33c-74c8bdca4f30	c48004c1-4854-4845-a1fb-cca95861e90a	IN	52.00	2024-12-04 00:00:00+00		f	2025-04-25 07:03:25.91+00	2025-04-25 07:03:25.91+00	\N
+849d7ae4-ce1c-4ead-8ea8-3df65cefb434	c48004c1-4854-4845-a1fb-cca95861e90a	IN	109.00	2024-12-29 00:00:00+00		f	2025-04-25 07:03:25.981+00	2025-04-25 07:03:25.981+00	\N
+0797eae9-a13f-4449-94a0-a624c9334d74	8331a016-472e-47ef-a62a-f0f97780a8ac	OUT	480.00	2025-05-30 00:00:00+00	Monthly Consumption - 5/30/2025	t	2025-06-04 15:17:47.903+00	2025-06-04 15:17:47.903+00	bulk_inventory_1749050267029_cc7s58hyz
+\.
+
+
+--
+-- Data for Name: Users; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public."Users" (id, username, email, password, role, "createdAt", "updatedAt", version, "firstName", "lastName", "phoneNumber") FROM stdin;
+00000000-0000-0000-0000-000000000000	admin	admin@artis.com	$2b$10$k0HObKi30H9ohbqAPjTy2.NvW0IG8waJFCtyI578EzB1MJo1LPske	admin	2025-01-06 15:43:59.042+00	2025-02-09 12:58:27.232+00	8	User	Admin	0000000000
+24b3fb92-6465-45ba-b09d-6bfcbcc2a109	karan	karan@artis.com	$2b$10$AeOxMhbyB.sFhQeTIAnuj.Vfg9xsOdaXgF5FLldc2JzfHtJK4xHCa	user	2025-02-09 12:41:42.116+00	2025-02-12 11:24:25.881+00	5	User	User	0000000001
+9e83a1d9-4a48-49d2-b645-46d35d63f895	salesexec	sales@exec.com	$2b$10$A9w9PLG8NZOGt7MtiIs//OXWOI/scf4kDc/BzHDqxaq0/0uEGsRZ2	SALES_EXECUTIVE	2025-02-16 07:13:23.664+00	2025-03-04 03:32:53.958+00	5	sales	exec	1234565432
+\.
+
+
+--
+-- Data for Name: distributors; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.distributors (id, name, city, state, "phoneNumber", catalogs, latitude, longitude, "createdAt", "updatedAt") FROM stdin;
+105	New Pyare Lal	Chandigarh	Chandigarh	9872976291	{Woodrica}	\N	\N	2025-05-14 12:11:37.601+00	2025-05-14 12:11:37.601+00
+106	Mahadev Trading Co.	Delhi	Delhi NCR		{Artvio}	\N	\N	2025-05-14 12:11:37.611+00	2025-05-14 12:11:37.611+00
+107	Advance Marketing	Surat	Gujarat		{Artvio}	\N	\N	2025-05-14 12:11:37.613+00	2025-05-14 12:11:37.613+00
+108	Alpha Laminates	Rajkot	Gujarat		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.615+00	2025-05-14 12:11:37.615+00
+109	Kailash Sales Corp	Ahemdabad	Gujarat		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.619+00	2025-05-14 12:11:37.619+00
+110	Samarpan Laminates	Vadodara	Gujarat		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.621+00	2025-05-14 12:11:37.621+00
+111	Rahul Trading	Kaithal	Haryana		{Woodrica}	\N	\N	2025-05-14 12:11:37.623+00	2025-05-14 12:11:37.623+00
+112	Mica Sales	Gurugram	Haryana		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.625+00	2025-05-14 12:11:37.625+00
+113	Nature Deco Wood	Gurugram	Haryana		{Woodrica}	\N	\N	2025-05-14 12:11:37.627+00	2025-05-14 12:11:37.627+00
+114	SK Enterprises	Gurugram	Haryana		{Artvio}	\N	\N	2025-05-14 12:11:37.629+00	2025-05-14 12:11:37.629+00
+115	R.D. Trading Co.	Hisar	Haryana		{Woodrica}	\N	\N	2025-05-14 12:11:37.631+00	2025-05-14 12:11:37.631+00
+116	Singal Developers	Hisar	Haryana		{Artvio}	\N	\N	2025-05-14 12:11:37.632+00	2025-05-14 12:11:37.632+00
+117	Saawariya Lam	Ranchi	Jharkhand		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.634+00	2025-05-14 12:11:37.634+00
+118	Vrinda Lam 	Dhanbad	Jharkhand		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.636+00	2025-05-14 12:11:37.636+00
+119	Euro Surface Décor	Bengluru	Karnataka		{Artvio}	\N	\N	2025-05-14 12:11:37.638+00	2025-05-14 12:11:37.638+00
+120	Balaji Trading	Bengluru	Karnataka		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.64+00	2025-05-14 12:11:37.64+00
+121	Shruti Ply Agency	Belgaum	Karnataka		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.642+00	2025-05-14 12:11:37.642+00
+122	Seth Interio	Gwalior	Madhya Pradesh		{Artis,Woodrica,Artvio}	\N	\N	2025-05-14 12:11:37.645+00	2025-05-14 12:11:37.645+00
+123	Banke Bihari Traders	Bhopal	Madhya Pradesh		{Artvio}	\N	\N	2025-05-14 12:11:37.646+00	2025-05-14 12:11:37.646+00
+124	Shivraj Trading	Bhopal	Madhya Pradesh		{Artis}	\N	\N	2025-05-14 12:11:37.651+00	2025-05-14 12:11:37.651+00
+125	Shri Krishna Plywood	Singrauli	Madhya Pradesh		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.653+00	2025-05-14 12:11:37.653+00
+126	GS Traders	Satna	Madhya Pradesh		{Woodrica}	\N	\N	2025-05-14 12:11:37.655+00	2025-05-14 12:11:37.655+00
+127	Siddhi Vinayak Dist.	Jabalpur	Madhya Pradesh		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.656+00	2025-05-14 12:11:37.656+00
+128	Lotus Plywood Agency	Pune	Maharashtra		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.658+00	2025-05-14 12:11:37.658+00
+129	Golden Plywood	Kolhapur	Maharashtra		{Woodrica}	\N	\N	2025-05-14 12:11:37.66+00	2025-05-14 12:11:37.66+00
+130	Bharat Timber & Ply	Vasai	Maharashtra		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.662+00	2025-05-14 12:11:37.662+00
+131	Keshriya Distributors	Pune	Maharashtra		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.664+00	2025-05-14 12:11:37.664+00
+132	Shiv Laminates	Latur	Maharashtra		{Woodrica}	\N	\N	2025-05-14 12:11:37.666+00	2025-05-14 12:11:37.666+00
+133	Rajgiri Ply & Wood	Mumbai	Maharashtra		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.668+00	2025-05-14 12:11:37.668+00
+134	Shankar Glass	Gondia	Maharashtra		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.669+00	2025-05-14 12:11:37.669+00
+135	Shree Mahalaxmi Lam	Nagpur	Maharashtra		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.671+00	2025-05-14 12:11:37.671+00
+136	Star Laminate	Thane	Maharashtra		{Artvio}	\N	\N	2025-05-14 12:11:37.673+00	2025-05-14 12:11:37.673+00
+137	Garg Plywood and Laminates	Ludhiana	Punjab		{Artvio}	\N	\N	2025-05-14 12:11:37.675+00	2025-05-14 12:11:37.675+00
+138	Goyal Laminates	Bathinda	Punjab		{Woodrica}	\N	\N	2025-05-14 12:11:37.68+00	2025-05-14 12:11:37.68+00
+139	Guru Nanak Sales	Jalandhar	Punjab		{Woodrica}	\N	\N	2025-05-14 12:11:37.682+00	2025-05-14 12:11:37.682+00
+140	National Traders	Bathinda	Punjab		{Artvio}	\N	\N	2025-05-14 12:11:37.684+00	2025-05-14 12:11:37.684+00
+141	Shree OM Traders	Amritsar	Punjab		{Artvio}	\N	\N	2025-05-14 12:11:37.686+00	2025-05-14 12:11:37.686+00
+142	Rajkot Timber	Patiala	Punjab		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.688+00	2025-05-14 12:11:37.688+00
+143	Mittal Traders	Jaipur	Rajasthan		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.69+00	2025-05-14 12:11:37.69+00
+144	Perfect Plywood	Udaipur	Rajasthan		{Artvio}	\N	\N	2025-05-14 12:11:37.692+00	2025-05-14 12:11:37.692+00
+145	Satyam Laminates	Jaipur	Rajasthan		{Artvio}	\N	\N	2025-05-14 12:11:37.694+00	2025-05-14 12:11:37.694+00
+146	Bhavya Laminates	Hyderabad	Telangana		{Artvio}	\N	\N	2025-05-14 12:11:37.696+00	2025-05-14 12:11:37.696+00
+147	Sri Balaji Wood Decor	Hyderabad	Telangana		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.698+00	2025-05-14 12:11:37.698+00
+148	GR Traders	Lucknow	Uttar Pradesh		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.699+00	2025-05-14 12:11:37.699+00
+149	Innovative World	Kanpur	Uttar Pradesh		{Artis}	\N	\N	2025-05-14 12:11:37.701+00	2025-05-14 12:11:37.701+00
+150	Das Plywood	Kanpur	Uttar Pradesh		{Woodrica}	\N	\N	2025-05-14 12:11:37.703+00	2025-05-14 12:11:37.703+00
+151	Janta Laminates	Meerut	Uttar Pradesh		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.705+00	2025-05-14 12:11:37.705+00
+152	Jindal Trading Co.	Kanpur	Uttar Pradesh		{Artvio}	\N	\N	2025-05-14 12:11:37.707+00	2025-05-14 12:11:37.707+00
+153	Kanha Plywood and H/W	Jhansi	Uttar Pradesh		{Artis,Woodrica}	\N	\N	2025-05-14 12:11:37.709+00	2025-05-14 12:11:37.709+00
+154	Shri Radhey Hardware	Agra	Uttar Pradesh		{Woodrica}	\N	\N	2025-05-14 12:11:37.711+00	2025-05-14 12:11:37.711+00
+155	Tulsi Enterprises	Rampur	Uttar Pradesh		{Woodrica}	\N	\N	2025-05-14 12:11:37.713+00	2025-05-14 12:11:37.713+00
+156	Gopalji Laminates	Dehradun	Uttarakhand		{Woodrica}	\N	\N	2025-05-14 12:11:37.715+00	2025-05-14 12:11:37.715+00
+157	J H Sunmica	Kashipur	Uttarakhand		{Woodrica}	\N	\N	2025-05-14 12:11:37.716+00	2025-05-14 12:11:37.716+00
+158	Liberty Plywood	Haldwani	Uttarakhand		{Artvio}	\N	\N	2025-05-14 12:11:37.718+00	2025-05-14 12:11:37.718+00
+159	JRM Décor	Kolkata	West Bengal		{Woodrica}	\N	\N	2025-05-14 12:11:37.72+00	2025-05-14 12:11:37.72+00
+160	OM Sundaram	Kolkata	West Bengal		{Artis,Artvio}	\N	\N	2025-05-14 12:11:37.722+00	2025-05-14 12:11:37.722+00
+161	Pakeeza Ply	Srinagar	Kashmir		{Woodrica}	\N	\N	2025-05-14 12:11:37.724+00	2025-05-14 12:11:37.724+00
+\.
+
+
+--
+-- Name: distributors_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.distributors_id_seq', 161, true);
+
+
+--
+-- Name: Attendance Attendance_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Attendance"
+    ADD CONSTRAINT "Attendance_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Attendances Attendances_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Attendances"
+    ADD CONSTRAINT "Attendances_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: DealerVisits DealerVisits_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."DealerVisits"
+    ADD CONSTRAINT "DealerVisits_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Leads Leads_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Leads"
+    ADD CONSTRAINT "Leads_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Messages Messages_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Messages"
+    ADD CONSTRAINT "Messages_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Products Products_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Products"
+    ADD CONSTRAINT "Products_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: SalesTeams SalesTeams_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."SalesTeams"
+    ADD CONSTRAINT "SalesTeams_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: SequelizeMeta SequelizeMeta_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."SequelizeMeta"
+    ADD CONSTRAINT "SequelizeMeta_pkey" PRIMARY KEY (name);
+
+
+--
+-- Name: Transactions Transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Transactions"
+    ADD CONSTRAINT "Transactions_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Users Users_email_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key1" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key10; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key10" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key100; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key100" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key101; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key101" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key102; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key102" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key103; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key103" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key104; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key104" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key105; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key105" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key106; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key106" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key107; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key107" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key11; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key11" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key12; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key12" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key13; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key13" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key14; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key14" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key15; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key15" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key16; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key16" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key17; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key17" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key18; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key18" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key19; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key19" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key2; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key2" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key20; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key20" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key21; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key21" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key22; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key22" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key23; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key23" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key24; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key24" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key25; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key25" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key26; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key26" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key27; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key27" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key28; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key28" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key29; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key29" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key3; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key3" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key30; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key30" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key31; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key31" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key32; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key32" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key33; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key33" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key34; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key34" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key35; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key35" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key36; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key36" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key37; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key37" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key38; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key38" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key39; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key39" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key4; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key4" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key40; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key40" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key41; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key41" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key42; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key42" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key43; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key43" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key44; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key44" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key45; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key45" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key46; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key46" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key47; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key47" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key48; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key48" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key49; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key49" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key5; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key5" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key50; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key50" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key51; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key51" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key52; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key52" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key53; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key53" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key54; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key54" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key55; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key55" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key56; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key56" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key57; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key57" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key58; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key58" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key59; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key59" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key6; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key6" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key60; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key60" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key61; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key61" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key62; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key62" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key63; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key63" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key64; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key64" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key65; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key65" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key66; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key66" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key67; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key67" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key68; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key68" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key69; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key69" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key7; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key7" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key70; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key70" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key71; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key71" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key72; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key72" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key73; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key73" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key74; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key74" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key75; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key75" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key76; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key76" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key77; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key77" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key78; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key78" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key79; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key79" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key8; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key8" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key80; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key80" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key81; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key81" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key82; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key82" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key83; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key83" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key84; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key84" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key85; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key85" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key86; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key86" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key87; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key87" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key88; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key88" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key89; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key89" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key9; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key9" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key90; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key90" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key91; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key91" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key92; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key92" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key93; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key93" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key94; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key94" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key95; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key95" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key96; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key96" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key97; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key97" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key98; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key98" UNIQUE (email);
+
+
+--
+-- Name: Users Users_email_key99; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_email_key99" UNIQUE (email);
+
+
+--
+-- Name: Users Users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_pkey" PRIMARY KEY (id);
+
+
+--
+-- Name: Users Users_username_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key1; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key1" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key10; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key10" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key100; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key100" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key101; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key101" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key102; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key102" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key103; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key103" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key104; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key104" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key105; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key105" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key106; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key106" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key107; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key107" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key11; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key11" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key12; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key12" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key13; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key13" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key14; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key14" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key15; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key15" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key16; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key16" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key17; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key17" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key18; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key18" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key19; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key19" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key2; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key2" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key20; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key20" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key21; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key21" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key22; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key22" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key23; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key23" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key24; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key24" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key25; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key25" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key26; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key26" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key27; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key27" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key28; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key28" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key29; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key29" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key3; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key3" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key30; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key30" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key31; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key31" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key32; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key32" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key33; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key33" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key34; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key34" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key35; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key35" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key36; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key36" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key37; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key37" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key38; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key38" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key39; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key39" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key4; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key4" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key40; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key40" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key41; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key41" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key42; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key42" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key43; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key43" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key44; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key44" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key45; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key45" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key46; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key46" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key47; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key47" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key48; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key48" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key49; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key49" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key5; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key5" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key50; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key50" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key51; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key51" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key52; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key52" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key53; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key53" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key54; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key54" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key55; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key55" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key56; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key56" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key57; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key57" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key58; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key58" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key59; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key59" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key6; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key6" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key60; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key60" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key61; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key61" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key62; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key62" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key63; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key63" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key64; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key64" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key65; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key65" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key66; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key66" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key67; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key67" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key68; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key68" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key69; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key69" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key7; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key7" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key70; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key70" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key71; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key71" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key72; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key72" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key73; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key73" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key74; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key74" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key75; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key75" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key76; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key76" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key77; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key77" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key78; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key78" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key79; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key79" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key8; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key8" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key80; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key80" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key81; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key81" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key82; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key82" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key83; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key83" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key84; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key84" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key85; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key85" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key86; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key86" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key87; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key87" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key88; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key88" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key89; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key89" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key9; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key9" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key90; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key90" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key91; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key91" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key92; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key92" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key93; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key93" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key94; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key94" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key95; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key95" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key96; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key96" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key97; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key97" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key98; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key98" UNIQUE (username);
+
+
+--
+-- Name: Users Users_username_key99; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Users"
+    ADD CONSTRAINT "Users_username_key99" UNIQUE (username);
+
+
+--
+-- Name: distributors distributors_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.distributors
+    ADD CONSTRAINT distributors_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: Attendance unique_attendance_per_day; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Attendance"
+    ADD CONSTRAINT unique_attendance_per_day UNIQUE ("salesTeamId", date);
+
+
+--
+-- Name: Products unique_supplier_code_constraint; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Products"
+    ADD CONSTRAINT unique_supplier_code_constraint UNIQUE ("supplierCode", supplier);
+
+
+--
+-- Name: attendance_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX attendance_date ON public."Attendance" USING btree (date);
+
+
+--
+-- Name: attendance_sales_team_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX attendance_sales_team_id ON public."Attendance" USING btree ("salesTeamId");
+
+
+--
+-- Name: attendance_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX attendance_status ON public."Attendance" USING btree (status);
+
+
+--
+-- Name: attendances_sales_team_id_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX attendances_sales_team_id_date ON public."Attendances" USING btree ("salesTeamId", date);
+
+
+--
+-- Name: dealer_visits_is_offline_entry_synced_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dealer_visits_is_offline_entry_synced_at ON public."DealerVisits" USING btree ("isOfflineEntry", "syncedAt");
+
+
+--
+-- Name: dealer_visits_offline_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX dealer_visits_offline_id ON public."DealerVisits" USING btree ("offlineId") WHERE ("offlineId" IS NOT NULL);
+
+
+--
+-- Name: dealer_visits_sales_team_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dealer_visits_sales_team_id ON public."DealerVisits" USING btree ("salesTeamId");
+
+
+--
+-- Name: dealer_visits_sales_team_id_visit_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dealer_visits_sales_team_id_visit_date ON public."DealerVisits" USING btree ("salesTeamId", "visitDate");
+
+
+--
+-- Name: dealer_visits_visit_date; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX dealer_visits_visit_date ON public."DealerVisits" USING btree ("visitDate");
+
+
+--
+-- Name: messages_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX messages_created_at ON public."Messages" USING btree ("createdAt");
+
+
+--
+-- Name: messages_is_read; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX messages_is_read ON public."Messages" USING btree ("isRead");
+
+
+--
+-- Name: messages_receiver_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX messages_receiver_id ON public."Messages" USING btree ("receiverId");
+
+
+--
+-- Name: messages_sender_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX messages_sender_id ON public."Messages" USING btree ("senderId");
+
+
+--
+-- Name: Attendance Attendance_salesTeamId_fkey_new; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Attendance"
+    ADD CONSTRAINT "Attendance_salesTeamId_fkey_new" FOREIGN KEY ("salesTeamId") REFERENCES public."SalesTeams"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: Attendances Attendances_salesTeamId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Attendances"
+    ADD CONSTRAINT "Attendances_salesTeamId_fkey" FOREIGN KEY ("salesTeamId") REFERENCES public."SalesTeams"(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: DealerVisits DealerVisits_salesTeamId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."DealerVisits"
+    ADD CONSTRAINT "DealerVisits_salesTeamId_fkey" FOREIGN KEY ("salesTeamId") REFERENCES public."SalesTeams"(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: Leads Leads_assignedBy_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Leads"
+    ADD CONSTRAINT "Leads_assignedBy_fkey" FOREIGN KEY ("assignedBy") REFERENCES public."Users"(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: Leads Leads_assignedTo_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Leads"
+    ADD CONSTRAINT "Leads_assignedTo_fkey" FOREIGN KEY ("assignedTo") REFERENCES public."SalesTeams"(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: Messages Messages_receiverId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Messages"
+    ADD CONSTRAINT "Messages_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES public."SalesTeams"(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: Messages Messages_senderId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Messages"
+    ADD CONSTRAINT "Messages_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES public."Users"(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: SalesTeams SalesTeams_reportingTo_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."SalesTeams"
+    ADD CONSTRAINT "SalesTeams_reportingTo_fkey" FOREIGN KEY ("reportingTo") REFERENCES public."SalesTeams"(id) ON UPDATE CASCADE ON DELETE SET NULL;
+
+
+--
+-- Name: SalesTeams SalesTeams_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."SalesTeams"
+    ADD CONSTRAINT "SalesTeams_userId_fkey" FOREIGN KEY ("userId") REFERENCES public."Users"(id) ON UPDATE CASCADE;
+
+
+--
+-- Name: Transactions Transactions_productId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."Transactions"
+    ADD CONSTRAINT "Transactions_productId_fkey" FOREIGN KEY ("productId") REFERENCES public."Products"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+

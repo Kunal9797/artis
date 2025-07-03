@@ -1,0 +1,5 @@
+invalid argument "db.igkjogpnyppwpfvwdvby.supabase.co:" for "--add-host" flag: invalid IP address in add-host: ""
+
+Usage:  docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+
+Run 'docker run --help' for more information

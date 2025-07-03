@@ -30,5 +30,18 @@ const initializeAssociations = () => {
         as: 'assignedLeads',
         foreignKey: 'assignedTo'
     });
+    // BulkOperation associations
+    index_1.BulkOperation.belongsTo(index_1.User, {
+        foreignKey: 'uploadedBy',
+        as: 'uploader'
+    });
+    index_1.BulkOperation.hasMany(Transaction_1.default, {
+        foreignKey: 'operationId',
+        as: 'transactions'
+    });
+    Transaction_1.default.belongsTo(index_1.BulkOperation, {
+        foreignKey: 'operationId',
+        as: 'operation'
+    });
 };
 exports.initializeAssociations = initializeAssociations;

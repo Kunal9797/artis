@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = void 0;
 const express_1 = __importDefault(require("express"));
@@ -91,8 +92,15 @@ exports.app.get('/api/health', (req, res) => __awaiter(void 0, void 0, void 0, f
 // After database connection
 (0, associations_1.initializeAssociations)();
 const PORT = parseInt(process.env.PORT || '8099', 10);
+// Determine database source
+const isDatabaseUrlSet = !!process.env.DATABASE_URL;
+const isSupabase = (_a = process.env.DATABASE_URL) === null || _a === void 0 ? void 0 : _a.includes('supabase');
+const databaseSource = isDatabaseUrlSet
+    ? (isSupabase ? 'Supabase' : 'Render')
+    : 'Local PostgreSQL';
 exports.app.listen(PORT, '0.0.0.0', () => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+    console.log(`🗄️  Database: ${databaseSource}`);
     try {
         yield sequelize_1.default.authenticate();
         console.log('✓ Database connected');
@@ -111,8 +119,14 @@ exports.app.listen(PORT, '0.0.0.0', () => __awaiter(void 0, void 0, void 0, func
                 throw migrationError;
             }
         }
-        yield sequelize_1.default.sync({ alter: true });
-        console.log('✓ Models synced successfully');
+        // Skip sync for Supabase - schema is already set up
+        if (!isSupabase) {
+            yield sequelize_1.default.sync({ alter: true });
+            console.log('✓ Models synced successfully');
+        }
+        else {
+            console.log('✓ Using existing Supabase schema');
+        }
     }
     catch (error) {
         console.error('Database initialization failed:', error);
