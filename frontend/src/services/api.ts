@@ -8,15 +8,9 @@ const api = axios.create({
   withCredentials: true
 });
 
-// Enhanced request interceptor
+// Request interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  console.log('=== API Request ===');
-  console.log('Environment:', process.env.NODE_ENV);
-  console.log('Base URL:', config.baseURL);
-  console.log('Endpoint:', config.url);
-  console.log('Method:', config.method);
-  console.log('Token present:', !!token);
   
   if (token) {
     // Ensure token is properly formatted with 'Bearer ' prefix
@@ -25,29 +19,21 @@ api.interceptors.request.use((config) => {
       : `Bearer ${token}`;
   }
   
-  console.log('Headers:', config.headers);
   return config;
 }, (error) => {
-  console.error('Request Interceptor Error:', error);
   return Promise.reject(error);
 });
 
-// Enhanced response interceptor
+// Response interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log('=== API Response Success ===');
-    console.log('Endpoint:', response.config.url);
-    console.log('Status:', response.status);
-    console.log('Data:', response.data);
     return response;
   },
   (error) => {
-    console.error('=== API Response Error ===');
-    console.error('Endpoint:', error.config?.url);
-    console.error('Status:', error.response?.status);
-    console.error('Error Data:', error.response?.data);
-    console.error('Error Message:', error.message);
-    console.error('Full Error:', error);
+    // Only log errors in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Error:', error.response?.status, error.config?.url);
+    }
     return Promise.reject(error);
   }
 );

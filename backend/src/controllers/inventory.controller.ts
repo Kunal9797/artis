@@ -148,10 +148,6 @@ export const getProductTransactions = async (req: Request, res: Response) => {
 
     const transactions = await Transaction.findAll({
       where: { productId },
-      include: [{
-        model: Product,
-        attributes: ['artisCodes', 'name', 'supplierCode', 'supplier', 'category']
-      }],
       order: [['date', 'ASC']]
     });
 

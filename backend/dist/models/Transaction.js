@@ -1,29 +1,12 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var sequelize_1 = require("sequelize");
-var sequelize_2 = require("../config/sequelize");
-var Transaction = /** @class */ (function (_super) {
-    __extends(Transaction, _super);
-    function Transaction() {
-        return _super !== null && _super.apply(this, arguments) || this;
-    }
-    return Transaction;
-}(sequelize_1.Model));
+const sequelize_1 = require("sequelize");
+const sequelize_2 = __importDefault(require("../config/sequelize"));
+class Transaction extends sequelize_1.Model {
+}
 Transaction.init({
     id: {
         type: sequelize_1.DataTypes.UUID,
@@ -45,11 +28,11 @@ Transaction.init({
     quantity: {
         type: sequelize_1.DataTypes.DECIMAL(10, 2),
         allowNull: false,
-        get: function () {
-            var value = this.getDataValue('quantity');
+        get() {
+            const value = this.getDataValue('quantity');
             return value ? Number(parseFloat(value).toFixed(2)) : 0;
         },
-        set: function (value) {
+        set(value) {
             this.setDataValue('quantity', Number(parseFloat(value.toString()).toFixed(2)));
         }
     },

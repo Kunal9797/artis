@@ -29,4 +29,11 @@ yarn-error.log*
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Credentials and secrets
+backend/credentials/
+**/credentials/
+*-key.json
+*-credentials.json
+google-sheets-key.json 

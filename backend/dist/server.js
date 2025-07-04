@@ -28,6 +28,8 @@ const child_process_1 = require("child_process");
 const util_1 = require("util");
 const associations_1 = require("./models/associations");
 const sales_routes_1 = __importDefault(require("./routes/sales.routes"));
+const stats_routes_1 = __importDefault(require("./routes/stats.routes"));
+const sheets_routes_1 = __importDefault(require("./routes/sheets.routes"));
 const auth_1 = require("./middleware/auth");
 const execAsync = (0, util_1.promisify)(child_process_1.exec);
 // Load environment variables
@@ -75,6 +77,8 @@ exports.app.use('/api/products', product_routes_1.default);
 exports.app.use('/api/inventory', inventory_routes_1.default);
 exports.app.use('/api/distributors', distributor_routes_1.default);
 exports.app.use('/api/sales', sales_routes_1.default);
+exports.app.use('/api/stats', stats_routes_1.default);
+exports.app.use('/api/sheets', sheets_routes_1.default);
 // Test route
 exports.app.get('/api/test', (req, res) => {
     res.json({ message: 'Backend is working!' });

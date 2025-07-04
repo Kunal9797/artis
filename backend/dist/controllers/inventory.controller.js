@@ -73,7 +73,6 @@ const getAllInventory = (req, res) => __awaiter(void 0, void 0, void 0, function
                     as: 'transactions',
                     attributes: ['id', 'type', 'quantity', 'date', 'notes'],
                     required: false,
-                    limit: 5,
                     order: [['date', 'DESC']]
                 }],
             order: [['artisCodes', 'ASC']]
@@ -248,13 +247,30 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
         // Convert dates to consumption date format
         const consumptionDates = headers
             .map((header, index) => {
-            if (typeof header === 'string' && header.includes('/')) {
-                const [day, month, year] = header.split('/');
-                return {
-                    date: new Date(parseInt('20' + year), parseInt(month) - 1, parseInt(day)),
-                    column: header,
-                    index
-                };
+            if (typeof header === 'string') {
+                // Check if it's an Excel serial number
+                if (!isNaN(Number(header)) && !header.includes('/')) {
+                    const excelSerialNumber = parseInt(header);
+                    const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
+                    const parsedDate = new Date(excelEpoch.getTime() + excelSerialNumber * 24 * 60 * 60 * 1000);
+                    if (!isNaN(parsedDate.getTime())) {
+                        console.log(`Header Excel serial ${excelSerialNumber} converted to: ${parsedDate.toISOString().split('T')[0]}`);
+                        return {
+                            date: parsedDate,
+                            column: header,
+                            index
+                        };
+                    }
+                }
+                else if (header.includes('/')) {
+                    // Parse as DD/MM/YY format
+                    const [day, month, year] = header.split('/');
+                    return {
+                        date: new Date(parseInt('20' + year), parseInt(month) - 1, parseInt(day)),
+                        column: header,
+                        index
+                    };
+                }
             }
             return null;
         })

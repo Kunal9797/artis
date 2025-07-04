@@ -4,6 +4,7 @@ import Transaction from '../models/Transaction';
 import BulkOperation from '../models/BulkOperation';
 import { Op } from 'sequelize';
 import sequelize from '../config/sequelize';
+import { QueryTypes } from 'sequelize';
 import * as XLSX from 'xlsx';
 
 // Simplified bulk upload that only creates transactions
@@ -42,8 +43,8 @@ export const bulkUploadInventorySimplified = async (req: Request, res: Response)
 
     // Find consumption columns (those with dates)
     const consumptionColumns: Array<{index: number, date: Date}> = [];
-    headerRow.forEach((header: any, index: number) => {
-      const dateStr = dateRow[index];
+    (headerRow as any[]).forEach((header: any, index: number) => {
+      const dateStr = (dateRow as any[])[index];
       if (dateStr && typeof dateStr === 'string' && dateStr.includes('/')) {
         // Parse date format DD/MM/YY
         const [day, month, year] = dateStr.split('/');
@@ -62,7 +63,7 @@ export const bulkUploadInventorySimplified = async (req: Request, res: Response)
 
     // Process each product row
     for (const row of dataRows) {
-      const artisCode = row[1]?.toString(); // Assuming DESIGN CODE is column 1
+      const artisCode = (row as any[])[1]?.toString(); // Assuming DESIGN CODE is column 1
       
       if (!artisCode) {
         skipped.push({ artisCode: 'unknown', reason: 'Missing design code' });
@@ -85,7 +86,7 @@ export const bulkUploadInventorySimplified = async (req: Request, res: Response)
 
       // Create consumption transactions
       for (const { index, date } of consumptionColumns) {
-        const quantity = parseFloat(row[index]) || 0;
+        const quantity = parseFloat((row as any[])[index]) || 0;
         
         if (quantity > 0) {
           await Transaction.create({
@@ -111,8 +112,8 @@ export const bulkUploadInventorySimplified = async (req: Request, res: Response)
       recordsTotal: dataRows.length,
       recordsProcessed: processed.length,
       recordsFailed: skipped.length,
-      errorLog: skipped.length > 0 ? JSON.stringify(skipped) : null
-    }, { transaction: t });
+      errorLog: skipped.length > 0 ? JSON.stringify(skipped) : undefined
+    } as any, { transaction: t });
 
     await t.commit();
 
@@ -154,7 +155,7 @@ export const getProductStock = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
     
-    const result = await sequelize.query(`
+    const result = await sequelize.query<{ current_stock: number }>(`
       SELECT 
         COALESCE(SUM(
           CASE 
@@ -167,7 +168,7 @@ export const getProductStock = async (req: Request, res: Response) => {
       WHERE "productId" = :productId
     `, {
       replacements: { productId },
-      type: sequelize.QueryTypes.SELECT
+      type: QueryTypes.SELECT
     });
 
     const currentStock = result[0]?.current_stock || 0;

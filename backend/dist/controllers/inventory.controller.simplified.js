@@ -51,6 +51,7 @@ const Transaction_1 = __importDefault(require("../models/Transaction"));
 const BulkOperation_1 = __importDefault(require("../models/BulkOperation"));
 const sequelize_1 = require("sequelize");
 const sequelize_2 = __importDefault(require("../config/sequelize"));
+const sequelize_3 = require("sequelize");
 const XLSX = __importStar(require("xlsx"));
 // Simplified bulk upload that only creates transactions
 const bulkUploadInventorySimplified = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -136,7 +137,7 @@ const bulkUploadInventorySimplified = (req, res) => __awaiter(void 0, void 0, vo
             recordsTotal: dataRows.length,
             recordsProcessed: processed.length,
             recordsFailed: skipped.length,
-            errorLog: skipped.length > 0 ? JSON.stringify(skipped) : null
+            errorLog: skipped.length > 0 ? JSON.stringify(skipped) : undefined
         }, { transaction: t });
         yield t.commit();
         console.log('=== Upload Completed ===');
@@ -188,7 +189,7 @@ const getProductStock = (req, res) => __awaiter(void 0, void 0, void 0, function
       WHERE "productId" = :productId
     `, {
             replacements: { productId },
-            type: sequelize_2.default.QueryTypes.SELECT
+            type: sequelize_3.QueryTypes.SELECT
         });
         const currentStock = ((_a = result[0]) === null || _a === void 0 ? void 0 : _a.current_stock) || 0;
         res.json({ productId, currentStock });

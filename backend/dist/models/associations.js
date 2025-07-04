@@ -15,6 +15,7 @@ const initializeAssociations = () => {
     });
     Transaction_1.default.belongsTo(Product_1.default, {
         foreignKey: 'productId',
+        as: 'product',
         onDelete: 'CASCADE'
     });
     // Lead associations

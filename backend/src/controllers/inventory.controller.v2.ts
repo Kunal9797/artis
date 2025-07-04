@@ -4,6 +4,7 @@ import Transaction from '../models/Transaction';
 import BulkOperation from '../models/BulkOperation';
 import { Op } from 'sequelize';
 import sequelize from '../config/sequelize';
+import { QueryTypes } from 'sequelize';
 import * as XLSX from 'xlsx';
 import { updateProductAverageConsumption } from './product.controller';
 
@@ -187,13 +188,13 @@ export const bulkUploadInventory = async (req: Request, res: Response) => {
       recordsTotal: data.length,
       recordsProcessed: processedProducts.length,
       recordsFailed: skippedRows.length,
-      errorLog: skippedRows.length > 0 ? JSON.stringify(skippedRows) : null,
+      errorLog: skippedRows.length > 0 ? JSON.stringify(skippedRows) : undefined,
       metadata: {
         ...operation.metadata,
         transactionsCreated: totalTransactions,
         consumptionDates: consumptionDates.map(d => d.date.toISOString())
       }
-    }, { transaction: t });
+    } as any, { transaction: t });
 
     await t.commit();
     
@@ -271,7 +272,7 @@ export const getAllInventory = async (req: Request, res: Response) => {
       FROM "Products" p
       ORDER BY p."artisCodes"[1]
     `, {
-      type: sequelize.QueryTypes.SELECT
+      type: QueryTypes.SELECT
     });
 
     console.log(`Found ${products.length} products`);

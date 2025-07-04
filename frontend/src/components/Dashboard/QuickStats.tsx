@@ -80,6 +80,10 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
   // Add month picker anchor and state
   const [monthPickerAnchor, setMonthPickerAnchor] = useState<null | HTMLElement>(null);
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  // Add state for average period and menu
+  const [avgPeriod, setAvgPeriod] = useState<'4m' | 'all'>('4m');
+  const [avgMenuAnchor, setAvgMenuAnchor] = useState<null | HTMLElement>(null);
+  const [showAvgPurchases, setShowAvgPurchases] = useState(false);
 
   // Get unique suppliers and categories
   const suppliers = useMemo(() => 
@@ -130,6 +134,69 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     
     return filtered;
   }, [inventory, filterType, filterValue, catalogDesignFilter]);
+
+  // Calculate average consumption and purchases based on selected period
+  const averageStats = useMemo(() => {
+    if (avgPeriod === '4m') {
+      // Recent 4 months
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - 4);
+      
+      let totalConsumption = 0;
+      let totalPurchases = 0;
+      const monthsWithData = new Set<string>();
+      
+      filteredInventory.forEach(item => {
+        if (item.transactions) {
+          item.transactions.forEach(transaction => {
+            const transactionDate = new Date(transaction.date);
+            if (transactionDate >= cutoffDate) {
+              const monthKey = transactionDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+              monthsWithData.add(monthKey);
+              
+              if (transaction.type === 'OUT') {
+                totalConsumption += transaction.quantity;
+              } else if (transaction.type === 'IN') {
+                totalPurchases += transaction.quantity;
+              }
+            }
+          });
+        }
+      });
+      
+      const actualMonths = Math.max(monthsWithData.size, 1);
+      return {
+        avgConsumption: totalConsumption / actualMonths,
+        avgPurchases: totalPurchases / actualMonths
+      };
+    } else {
+      // All time
+      let totalConsumption = 0;
+      let totalPurchases = 0;
+      const monthsWithData = new Set<string>();
+      
+      filteredInventory.forEach(item => {
+        if (item.transactions) {
+          item.transactions.forEach(transaction => {
+            const monthKey = new Date(transaction.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+            monthsWithData.add(monthKey);
+            
+            if (transaction.type === 'OUT') {
+              totalConsumption += transaction.quantity;
+            } else if (transaction.type === 'IN') {
+              totalPurchases += transaction.quantity;
+            }
+          });
+        }
+      });
+      
+      const actualMonths = Math.max(monthsWithData.size, 1);
+      return {
+        avgConsumption: totalConsumption / actualMonths,
+        avgPurchases: totalPurchases / actualMonths
+      };
+    }
+  }, [filteredInventory, avgPeriod]);
 
   // Memoize getMonthlyConsumption to avoid recalculating on every render
   const monthlyConsumption = React.useMemo(() => {
@@ -368,7 +435,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
     [memoizedSupplierConsumption, memoizedSupplierPurchases, supplierChartView]
   );
 
-  const StatBox = ({ icon, value, unit, label }: { icon: React.ReactNode, value: string | number, unit?: string, label: string }) => (
+  const StatBox = ({ icon, value, unit, label, onClick }: { icon: React.ReactNode, value: string | number, unit?: string, label: string, onClick?: (event: React.MouseEvent<HTMLDivElement>) => void }) => (
     <Box sx={{ 
       display: 'flex', 
       alignItems: 'center', 
@@ -376,10 +443,13 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
       p: 0,
       borderRadius: 2,
       transition: 'all 0.2s ease',
+      cursor: onClick ? 'pointer' : 'default',
       '&:hover': {
         transform: 'translateY(-2px)',
       }
-    }}>
+    }}
+    onClick={onClick}
+    >
       <Box sx={{ 
         display: 'flex',
         alignItems: 'center',
@@ -1942,21 +2012,43 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
                     />
                   )}
                   
-                  {/* Display average line */}
+                  {/* Display average consumption line */}
                   {(() => {
-                    const average = getFilteredChartData().consumptionData[0]?.average;
-                    return average !== undefined && (
+                    const avgConsumption = averageStats.avgConsumption;
+                    return avgConsumption !== undefined && visibleGraphs.consumption && (
                       <ReferenceLine
-                        y={average}
-                        stroke={isDarkMode ? '#E8B266' : '#D08C39'} 
-                        strokeDasharray="5 3" 
-                        strokeWidth={1.5} 
+                        y={avgConsumption}
+                        stroke={isDarkMode ? '#4FC3F7' : '#0288D1'} 
+                        strokeDasharray="8 4" 
+                        strokeWidth={2} 
                         label={{
                           position: 'left',
-                          value: `${(average/1000).toFixed(1)}k`,
+                          value: `Avg: ${(avgConsumption/1000).toFixed(1)}k`,
                           fontSize: 11,
                           fontWeight: 600,
-                          fill: isDarkMode ? '#E8B266' : '#D08C39'
+                          fill: isDarkMode ? '#4FC3F7' : '#0288D1',
+                          offset: 10
+                        }}
+                      />
+                    );
+                  })()}
+                  
+                  {/* Display average purchases line */}
+                  {(() => {
+                    const avgPurchases = averageStats.avgPurchases;
+                    return avgPurchases !== undefined && visibleGraphs.purchases && (
+                      <ReferenceLine
+                        y={avgPurchases}
+                        stroke={isDarkMode ? '#FF7043' : '#D84315'} 
+                        strokeDasharray="3 3" 
+                        strokeWidth={2} 
+                        label={{
+                          position: 'right',
+                          value: `Avg: ${(avgPurchases/1000).toFixed(1)}k`,
+                          fontSize: 11,
+                          fontWeight: 600,
+                          fill: isDarkMode ? '#FF7043' : '#D84315',
+                          offset: 10
                         }}
                       />
                     );
@@ -2730,6 +2822,32 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
           </CardContent>
         </Card>
       </Grid>
+      
+      {/* Average Stats Menu */}
+      <Menu
+        anchorEl={avgMenuAnchor}
+        open={Boolean(avgMenuAnchor)}
+        onClose={() => setAvgMenuAnchor(null)}
+        sx={{
+          '& .MuiPaper-root': {
+            borderRadius: 2,
+            minWidth: 200,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+          }
+        }}
+      >
+        <MenuItem sx={{ fontWeight: 600, fontSize: '0.9rem', borderBottom: '1px solid', borderColor: 'divider' }} disabled>
+          Select Time Period
+        </MenuItem>
+        <MenuItem onClick={() => { setAvgPeriod('4m'); setAvgMenuAnchor(null); }}>
+          <CalendarMonthIcon sx={{ fontSize: 20, mr: 1 }} />
+          Recent (4 Months) {avgPeriod === '4m' && '✓'}
+        </MenuItem>
+        <MenuItem onClick={() => { setAvgPeriod('all'); setAvgMenuAnchor(null); }}>
+          <CalendarMonthIcon sx={{ fontSize: 20, mr: 1 }} />
+          All Time {avgPeriod === 'all' && '✓'}
+        </MenuItem>
+      </Menu>
     </Grid>
   );
 };

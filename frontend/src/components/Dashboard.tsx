@@ -33,6 +33,7 @@ import SalesTeamManagement from './SalesTeamManagement';
 import LeadManagement from './Leads/LeadManagement';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import DatabaseIndicator from './DatabaseIndicator';
+import SheetsSync from './GoogleSheets/SheetsSync';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -75,6 +76,8 @@ const Dashboard: React.FC = () => {
         return 'Sales Team Management';
       case 'leads':
         return 'Lead Management';
+      case 'sheets':
+        return 'Google Sheets Sync';
       default: 
         return 'Dashboard';
     }
@@ -88,7 +91,8 @@ const Dashboard: React.FC = () => {
     { label: 'Distributors', value: 'distributors' },
     { label: 'User Management', value: 'users', adminOnly: true },
     { label: 'Sales Team', value: 'salesTeam', adminOnly: true },
-    { label: 'Lead Management', value: 'leads', adminOnly: true }
+    { label: 'Lead Management', value: 'leads', adminOnly: true },
+    { label: 'Google Sheets Sync', value: 'sheets', adminOnly: true }
   ];
 
   const renderContent = () => {
@@ -111,6 +115,8 @@ const Dashboard: React.FC = () => {
         return isAdmin() ? <SalesTeamManagement /> : null;
       case 'leads':
         return isAdmin() ? <LeadManagement /> : null;
+      case 'sheets':
+        return isAdmin() ? <SheetsSync /> : null;
       default:
         return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
@@ -243,6 +249,9 @@ const Dashboard: React.FC = () => {
             )}
             {isAdmin() && (
               <MenuItem onClick={() => handlePageChange('leads')}>Lead Management</MenuItem>
+            )}
+            {isAdmin() && (
+              <MenuItem onClick={() => handlePageChange('sheets')}>Google Sheets Sync</MenuItem>
             )}
           </Menu>
 

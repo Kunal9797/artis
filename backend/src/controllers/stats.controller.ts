@@ -56,9 +56,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       SELECT * FROM product_summary
     `, { type: QueryTypes.SELECT });
     
-    // Get recent averages
+    // Get recent averages based on period
+    const period = req.query.period === '4m' ? '4m' : '3m';
     const recentAvg = await sequelize.query(`
-      SELECT * FROM recent_averages
+      SELECT * FROM recent_averages_${period}
     `, { type: QueryTypes.SELECT });
     
     res.json({

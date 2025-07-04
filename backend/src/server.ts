@@ -14,6 +14,7 @@ import { promisify } from 'util';
 import { initializeAssociations } from './models/associations';
 import salesRoutes from './routes/sales.routes';
 import statsRoutes from './routes/stats.routes';
+import sheetsRoutes from './routes/sheets.routes';
 import { auth } from './middleware/auth';
 
 const execAsync = promisify(exec);
@@ -69,6 +70,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/distributors', distributorRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/sheets', sheetsRoutes);
 
 // Test route
 app.get('/api/test', (req: Request, res: Response) => {

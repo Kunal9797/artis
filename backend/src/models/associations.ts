@@ -11,6 +11,7 @@ export const initializeAssociations = () => {
 
   Transaction.belongsTo(Product, {
     foreignKey: 'productId',
+    as: 'product',
     onDelete: 'CASCADE'
   });
 

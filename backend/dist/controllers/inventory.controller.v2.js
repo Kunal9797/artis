@@ -51,6 +51,7 @@ const Transaction_1 = __importDefault(require("../models/Transaction"));
 const BulkOperation_1 = __importDefault(require("../models/BulkOperation"));
 const sequelize_1 = require("sequelize");
 const sequelize_2 = __importDefault(require("../config/sequelize"));
+const sequelize_3 = require("sequelize");
 const XLSX = __importStar(require("xlsx"));
 // Define TransactionType enum
 var TransactionType;
@@ -207,7 +208,7 @@ const bulkUploadInventory = (req, res) => __awaiter(void 0, void 0, void 0, func
             recordsTotal: data.length,
             recordsProcessed: processedProducts.length,
             recordsFailed: skippedRows.length,
-            errorLog: skippedRows.length > 0 ? JSON.stringify(skippedRows) : null,
+            errorLog: skippedRows.length > 0 ? JSON.stringify(skippedRows) : undefined,
             metadata: Object.assign(Object.assign({}, operation.metadata), { transactionsCreated: totalTransactions, consumptionDates: consumptionDates.map(d => d.date.toISOString()) })
         }, { transaction: t });
         yield t.commit();
@@ -282,7 +283,7 @@ const getAllInventory = (req, res) => __awaiter(void 0, void 0, void 0, function
       FROM "Products" p
       ORDER BY p."artisCodes"[1]
     `, {
-            type: sequelize_2.default.QueryTypes.SELECT
+            type: sequelize_3.QueryTypes.SELECT
         });
         console.log(`Found ${products.length} products`);
         res.json(products);
