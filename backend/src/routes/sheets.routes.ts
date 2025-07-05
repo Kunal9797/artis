@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { SheetsManagerService } from '../services/sheets-manager.service';
 import SheetsManagerOptimizedService from '../services/sheets-manager-optimized.service';
 import { auth } from '../middleware/auth';
+import { QueryTypes } from 'sequelize';
 
 // Define AuthRequest interface to match the auth middleware
 interface AuthRequest extends Request {
@@ -54,11 +55,16 @@ router.get('/pending', auth, async (req, res) => {
  */
 router.post('/sync/consumption', auth, async (req, res) => {
   try {
+    // Set user ID for tracking
+    sheetsManager.setUserId((req as AuthRequest).user?.id || '');
+    
+    const { archiveName } = req.body; // Optional archive name from request
+    
     const result = await sheetsManager.syncConsumption();
     
-    // Clear sheet if successful and no errors
-    if (result.added > 0 && result.errors.length === 0) {
-      await sheetsManager.clearSheet('consumption');
+    // Clear sheet if we processed some records (even with errors)
+    if (result.added > 0) {
+      await sheetsManager.clearSheet('consumption', archiveName);
     }
     
     res.json({ 
@@ -89,11 +95,16 @@ router.post('/sync/consumption', auth, async (req, res) => {
  */
 router.post('/sync/purchases', auth, async (req, res) => {
   try {
+    // Set user ID for tracking
+    sheetsManager.setUserId((req as AuthRequest).user?.id || '');
+    
+    const { archiveName } = req.body; // Optional archive name from request
+    
     const result = await sheetsManager.syncPurchases();
     
-    // Clear sheet if successful and no errors
-    if (result.added > 0 && result.errors.length === 0) {
-      await sheetsManager.clearSheet('purchases');
+    // Clear sheet if we processed some records (even with errors)
+    if (result.added > 0) {
+      await sheetsManager.clearSheet('purchases', archiveName);
     }
     
     res.json({ 
@@ -124,11 +135,16 @@ router.post('/sync/purchases', auth, async (req, res) => {
  */
 router.post('/sync/initial-stock', auth, async (req, res) => {
   try {
+    // Set user ID for tracking
+    sheetsManager.setUserId((req as AuthRequest).user?.id || '');
+    
+    const { archiveName } = req.body; // Optional archive name from request
+    
     const result = await sheetsManager.syncInitialStock();
     
-    // Clear sheet if successful and no errors
-    if (result.added > 0 && result.errors.length === 0) {
-      await sheetsManager.clearSheet('initialStock');
+    // Clear sheet if we processed some records (even with errors)
+    if (result.added > 0) {
+      await sheetsManager.clearSheet('initialStock', archiveName);
     }
     
     res.json({ 
@@ -159,11 +175,16 @@ router.post('/sync/initial-stock', auth, async (req, res) => {
  */
 router.post('/sync/corrections', auth, async (req, res) => {
   try {
+    // Set user ID for tracking
+    sheetsManager.setUserId((req as AuthRequest).user?.id || '');
+    
+    const { archiveName } = req.body; // Optional archive name from request
+    
     const result = await sheetsManager.syncCorrections();
     
-    // Clear sheet if successful and no errors
-    if (result.added > 0 && result.errors.length === 0) {
-      await sheetsManager.clearSheet('corrections');
+    // Clear sheet if we processed some records (even with errors)
+    if (result.added > 0) {
+      await sheetsManager.clearSheet('corrections', archiveName);
     }
     
     res.json({ 
@@ -342,5 +363,219 @@ router.post('/clear-inventory', auth, async (req: AuthRequest, res: Response) =>
     });
   }
 });
+
+/**
+ * @swagger
+ * /api/sheets/sync-history:
+ *   get:
+ *     summary: Get sync history
+ *     tags: [Sheets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Sync history records
+ */
+router.get('/sync-history', auth, async (req, res) => {
+  try {
+    const { SyncHistory } = await import('../models');
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = parseInt(req.query.offset as string) || 0;
+    
+    const { count, rows } = await SyncHistory.findAndCountAll({
+      limit,
+      offset,
+      order: [['syncDate', 'DESC']],
+      include: [{
+        model: (await import('../models')).User,
+        as: 'user',
+        attributes: ['id', 'username', 'email']
+      }]
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        total: count,
+        records: rows
+      }
+    });
+  } catch (error: any) {
+    console.error('Error getting sync history:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to get sync history' 
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/sheets/undo-sync/:syncBatchId:
+ *   post:
+ *     summary: Undo a specific sync operation
+ *     tags: [Sheets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: syncBatchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Undo successful
+ */
+router.post('/undo-sync/:syncBatchId', auth, async (req: AuthRequest, res: Response) => {
+  try {
+    // Only allow admin users to undo sync
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Only admin users can undo sync operations' 
+      });
+    }
+
+    const { syncBatchId } = req.params;
+    const { SyncHistory, Transaction, Product } = await import('../models');
+    const sequelize = (await import('../config/sequelize')).default;
+    
+    // Get the specific sync
+    const syncToUndo = await SyncHistory.findOne({
+      where: { 
+        syncBatchId,
+        status: ['completed', 'failed']
+      }
+    });
+    
+    if (!syncToUndo) {
+      return res.status(400).json({
+        success: false,
+        error: 'Sync operation not found or already undone'
+      });
+    }
+    
+    const t = await sequelize.transaction();
+    
+    try {
+      // Get all affected products BEFORE deleting transactions
+      const affectedProducts = await sequelize.query(
+        `SELECT DISTINCT "productId" 
+         FROM "Transactions" 
+         WHERE "syncBatchId" = :syncBatchId`,
+        {
+          replacements: { syncBatchId: syncToUndo.syncBatchId },
+          type: QueryTypes.SELECT,
+          transaction: t
+        }
+      );
+      
+      // Delete all transactions from this sync batch
+      const deletedCount = await Transaction.destroy({
+        where: { syncBatchId: syncToUndo.syncBatchId },
+        transaction: t
+      });
+      
+      // Mark the sync as undone
+      await syncToUndo.update(
+        { status: 'undone' },
+        { transaction: t }
+      );
+      
+      // Recalculate stock for affected products
+      for (const { productId } of affectedProducts as any[]) {
+        // Calculate current stock from all remaining transactions
+        const stockResult = await sequelize.query(
+          `SELECT COALESCE(SUM(
+            CASE 
+              WHEN type = 'IN' THEN quantity
+              WHEN type = 'OUT' THEN -quantity
+              WHEN type = 'CORRECTION' THEN quantity
+            END
+          ), 0) as total_stock
+          FROM "Transactions"
+          WHERE "productId" = :productId`,
+          {
+            replacements: { productId },
+            type: QueryTypes.SELECT,
+            transaction: t
+          }
+        );
+        
+        const currentStock = parseFloat((stockResult as any)[0].total_stock) || 0;
+        
+        // Calculate average monthly consumption
+        const avgResult = await sequelize.query(
+          `SELECT 
+            COUNT(DISTINCT DATE_TRUNC('month', date)) as months,
+            COALESCE(SUM(quantity), 0) as total_consumption
+          FROM "Transactions"
+          WHERE "productId" = :productId
+            AND type = 'OUT'
+            AND "includeInAvg" = true`,
+          {
+            replacements: { productId },
+            type: QueryTypes.SELECT,
+            transaction: t
+          }
+        );
+        
+        const months = parseInt((avgResult as any)[0].months) || 1;
+        const totalConsumption = parseFloat((avgResult as any)[0].total_consumption) || 0;
+        const avgConsumption = totalConsumption / months;
+        
+        // Update product
+        await sequelize.query(
+          `UPDATE "Products" 
+           SET "currentStock" = :currentStock,
+               "avgConsumption" = :avgConsumption,
+               "updatedAt" = NOW()
+           WHERE "id" = :productId`,
+          {
+            replacements: { currentStock, avgConsumption, productId },
+            transaction: t
+          }
+        );
+      }
+      
+      await t.commit();
+      
+      res.json({
+        success: true,
+        message: `Successfully undid ${syncToUndo.syncType} sync`,
+        details: {
+          syncType: syncToUndo.syncType,
+          syncDate: syncToUndo.syncDate,
+          transactionsDeleted: deletedCount,
+          productsRecalculated: affectedProducts.length
+        }
+      });
+      
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+    
+  } catch (error: any) {
+    console.error('Error undoing sync:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to undo sync' 
+    });
+  }
+});
+
 
 export default router;

@@ -11,6 +11,7 @@ interface TransactionAttributes {
   notes?: string;
   includeInAvg: boolean;
   operationId?: string; // New field to track which bulk operation this belongs to
+  syncBatchId?: string; // Track which sync batch this transaction belongs to
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -24,6 +25,7 @@ class Transaction extends Model {
   public notes?: string;
   public includeInAvg!: boolean;
   public operationId?: string;
+  public syncBatchId?: string;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -71,6 +73,10 @@ Transaction.init(
       defaultValue: false
     },
     operationId: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    syncBatchId: {
       type: DataTypes.STRING,
       allowNull: true
     }

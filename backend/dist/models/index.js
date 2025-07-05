@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuditLog = exports.BulkOperation = exports.Transaction = exports.Product = exports.Message = exports.Attendance = exports.Lead = exports.DealerVisit = exports.SalesTeam = exports.User = void 0;
+exports.SyncHistory = exports.AuditLog = exports.BulkOperation = exports.Transaction = exports.Product = exports.Message = exports.Attendance = exports.Lead = exports.DealerVisit = exports.SalesTeam = exports.User = void 0;
 const User_1 = __importDefault(require("./User"));
 exports.User = User_1.default;
 const SalesTeam_1 = __importDefault(require("./SalesTeam"));
@@ -24,3 +24,5 @@ const BulkOperation_1 = __importDefault(require("./BulkOperation"));
 exports.BulkOperation = BulkOperation_1.default;
 const AuditLog_1 = __importDefault(require("./AuditLog"));
 exports.AuditLog = AuditLog_1.default;
+const SyncHistory_1 = __importDefault(require("./SyncHistory"));
+exports.SyncHistory = SyncHistory_1.default;

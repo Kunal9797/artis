@@ -20,7 +20,9 @@ import {
   Link,
   Collapse,
   LinearProgress,
-  Divider
+  Divider,
+  Tooltip,
+  TextField
 } from '@mui/material';
 import {
   CloudSync as SyncIcon,
@@ -37,9 +39,12 @@ import {
   Build as CorrectionIcon,
   Inventory as StockIcon,
   OpenInNew as OpenInNewIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  History as HistoryIcon,
+  Undo as UndoIcon
 } from '@mui/icons-material';
 import sheetsApi from '../../services/sheetsApi';
+import { format } from 'date-fns';
 
 interface SyncCategory {
   type: 'consumption' | 'purchases' | 'corrections' | 'initialStock';
@@ -72,6 +77,11 @@ const SheetsSyncSimple: React.FC = () => {
     errors?: string[];
     warnings?: string[];
   }}>({});
+  const [showSyncHistory, setShowSyncHistory] = useState(false);
+  const [syncHistory, setSyncHistory] = useState<any[]>([]);
+  const [syncHistoryLoading, setSyncHistoryLoading] = useState(false);
+  const [undoLoading, setUndoLoading] = useState<string | null>(null);
+  const [archiveNames, setArchiveNames] = useState<{[key: string]: string}>({});
 
   const categories: SyncCategory[] = [
     {
@@ -155,8 +165,9 @@ const SheetsSyncSimple: React.FC = () => {
     setResults(prev => ({ ...prev, [type]: { success: false, message: 'Syncing...' } }));
     
     try {
+      const archiveName = archiveNames[type];
       const syncMethod = type === 'initialStock' ? 'syncInitialStock' : `sync${type.charAt(0).toUpperCase() + type.slice(1)}`;
-      const response = await sheetsApi[syncMethod as 'syncConsumption' | 'syncPurchases' | 'syncCorrections' | 'syncInitialStock']();
+      const response = await sheetsApi[syncMethod as 'syncConsumption' | 'syncPurchases' | 'syncCorrections' | 'syncInitialStock'](archiveName);
       
       setResults(prev => ({
         ...prev,
@@ -166,6 +177,8 @@ const SheetsSyncSimple: React.FC = () => {
       if (response.success) {
         await fetchPendingCounts();
         await fetchArchives();
+        // Clear archive name after successful sync
+        setArchiveNames(prev => ({ ...prev, [type]: '' }));
       }
     } catch (error: any) {
       setResults(prev => ({
@@ -219,6 +232,48 @@ const SheetsSyncSimple: React.FC = () => {
     }
   };
 
+  const fetchSyncHistory = async () => {
+    setSyncHistoryLoading(true);
+    try {
+      const response = await sheetsApi.getSyncHistory(20);
+      if (response.success) {
+        setSyncHistory(response.data.records);
+      }
+    } catch (error) {
+      console.error('Error fetching sync history:', error);
+    } finally {
+      setSyncHistoryLoading(false);
+    }
+  };
+
+  const handleUndoSync = async (syncBatchId: string) => {
+    setUndoLoading(syncBatchId);
+    try {
+      const response = await sheetsApi.undoSync(syncBatchId);
+      if (response.success) {
+        setResults(prev => ({
+          ...prev,
+          undoSync: {
+            success: true,
+            message: response.message
+          }
+        }));
+        await fetchPendingCounts();
+        await fetchSyncHistory();
+      }
+    } catch (error: any) {
+      setResults(prev => ({
+        ...prev,
+        undoSync: {
+          success: false,
+          message: error.response?.data?.error || 'Failed to undo sync'
+        }
+      }));
+    } finally {
+      setUndoLoading(null);
+    }
+  };
+
   const totalPending = Object.values(pendingCounts).reduce((sum, count) => sum + count, 0);
 
   return (
@@ -239,6 +294,17 @@ const SheetsSyncSimple: React.FC = () => {
             Google Sheets Sync
           </Typography>
           <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<HistoryIcon />}
+              onClick={() => {
+                setShowSyncHistory(true);
+                fetchSyncHistory();
+              }}
+            >
+              History
+            </Button>
             <IconButton 
               size="small"
               onClick={() => setShowClearConfirm(true)}
@@ -373,6 +439,20 @@ const SheetsSyncSimple: React.FC = () => {
                         <Typography variant="caption">{category.helpText}</Typography>
                       </Alert>
 
+                      {/* Archive Name Input */}
+                      <TextField
+                        size="small"
+                        label="Archive Name (optional)"
+                        placeholder={`e.g. June 2025`}
+                        value={archiveNames[category.type] || ''}
+                        onChange={(e) => setArchiveNames(prev => ({ 
+                          ...prev, 
+                          [category.type]: e.target.value 
+                        }))}
+                        fullWidth
+                        helperText="Will be saved as '{name}_Archive'"
+                      />
+
                       {/* Action Buttons */}
                       <Stack direction="row" spacing={1}>
                         <Button
@@ -495,6 +575,129 @@ const SheetsSyncSimple: React.FC = () => {
           <LinearProgress />
         </Box>
       )}
+
+      {/* Sync History Dialog */}
+      <Dialog
+        open={showSyncHistory}
+        onClose={() => setShowSyncHistory(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>
+          <Typography>Sync History</Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          {syncHistoryLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : syncHistory.length === 0 ? (
+            <Typography variant="body2" color="text.secondary" sx={{ p: 3, textAlign: 'center' }}>
+              No sync history available
+            </Typography>
+          ) : (
+            <List>
+              {syncHistory.map((record, index) => (
+                <ListItem 
+                  key={record.id} 
+                  divider={index < syncHistory.length - 1}
+                  secondaryAction={
+                    <Box>
+                      {(record.status === 'completed' || record.status === 'failed') ? (
+                        <Tooltip title={`Undo this ${record.status} sync`}>
+                          <IconButton
+                            edge="end"
+                            aria-label="undo"
+                            onClick={() => handleUndoSync(record.syncBatchId)}
+                            disabled={undoLoading !== null}
+                            color="error"
+                            size="small"
+                          >
+                            {undoLoading === record.syncBatchId ? (
+                              <CircularProgress size={20} />
+                            ) : (
+                              <UndoIcon />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          {record.status === 'undone' ? 'Already undone' : record.status}
+                        </Typography>
+                      )}
+                    </Box>
+                  }
+                >
+                  <ListItemText
+                    primary={
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Typography variant="body1">
+                          {record.syncType.charAt(0).toUpperCase() + record.syncType.slice(1)}
+                        </Typography>
+                        <Chip
+                          label={record.status}
+                          size="small"
+                          color={
+                            record.status === 'completed' ? 'success' : 
+                            record.status === 'failed' ? 'error' : 'default'
+                          }
+                          variant="outlined"
+                        />
+                        {record.itemCount > 0 && (
+                          <Chip
+                            label={`${record.itemCount} items`}
+                            size="small"
+                            variant="outlined"
+                          />
+                        )}
+                      </Stack>
+                    }
+                    secondary={
+                      <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          {format(new Date(record.syncDate), 'PPpp')}
+                        </Typography>
+                        {record.user && (
+                          <Typography variant="caption" color="text.secondary">
+                            By: {record.user.username || record.user.email}
+                          </Typography>
+                        )}
+                        {record.errors && (
+                          <Alert severity="error" sx={{ mt: 1 }}>
+                            <Typography variant="caption">
+                              {JSON.parse(record.errors).slice(0, 3).join(', ')}
+                            </Typography>
+                          </Alert>
+                        )}
+                        {record.warnings && (
+                          <Alert severity="warning" sx={{ mt: 1 }}>
+                            <Typography variant="caption">
+                              {JSON.parse(record.warnings).slice(0, 3).join(', ')}
+                            </Typography>
+                          </Alert>
+                        )}
+                      </Stack>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+          
+          {/* Undo result */}
+          {results.undoSync && (
+            <Alert 
+              severity={results.undoSync.success ? 'success' : 'error'} 
+              sx={{ mt: 2 }}
+            >
+              {results.undoSync.message}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowSyncHistory(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

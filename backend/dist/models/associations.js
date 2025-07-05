@@ -44,5 +44,24 @@ const initializeAssociations = () => {
         foreignKey: 'operationId',
         as: 'operation'
     });
+    // SyncHistory associations
+    index_1.SyncHistory.belongsTo(index_1.User, {
+        foreignKey: 'userId',
+        as: 'user'
+    });
+    index_1.User.hasMany(index_1.SyncHistory, {
+        foreignKey: 'userId',
+        as: 'syncHistories'
+    });
+    index_1.SyncHistory.hasMany(Transaction_1.default, {
+        foreignKey: 'syncBatchId',
+        sourceKey: 'syncBatchId',
+        as: 'transactions'
+    });
+    Transaction_1.default.belongsTo(index_1.SyncHistory, {
+        foreignKey: 'syncBatchId',
+        targetKey: 'syncBatchId',
+        as: 'syncHistory'
+    });
 };
 exports.initializeAssociations = initializeAssociations;

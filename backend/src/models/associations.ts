@@ -1,6 +1,6 @@
 import Product from './Product';
 import Transaction from './Transaction';
-import { Lead, User, SalesTeam, BulkOperation } from './index';
+import { Lead, User, SalesTeam, BulkOperation, SyncHistory } from './index';
 
 export const initializeAssociations = () => {
   Product.hasMany(Transaction, {
@@ -43,5 +43,28 @@ export const initializeAssociations = () => {
   Transaction.belongsTo(BulkOperation, {
     foreignKey: 'operationId',
     as: 'operation'
+  });
+
+  // SyncHistory associations
+  SyncHistory.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user'
+  });
+
+  User.hasMany(SyncHistory, {
+    foreignKey: 'userId',
+    as: 'syncHistories'
+  });
+
+  SyncHistory.hasMany(Transaction, {
+    foreignKey: 'syncBatchId',
+    sourceKey: 'syncBatchId',
+    as: 'transactions'
+  });
+
+  Transaction.belongsTo(SyncHistory, {
+    foreignKey: 'syncBatchId',
+    targetKey: 'syncBatchId',
+    as: 'syncHistory'
   });
 }; 

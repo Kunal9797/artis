@@ -258,19 +258,6 @@ const Dashboard: React.FC = () => {
             ml: { xs: 'auto', sm: 0 }
           }}>
             <IconButton 
-              onClick={() => setCurrentPage('info')}
-              color="inherit"
-              sx={{
-                '&:hover': {
-                  color: '#FFD700',
-                  transform: 'scale(1.1)',
-                },
-                transition: 'all 0.2s ease-in-out'
-              }}
-            >
-              <InfoIcon sx={{ color: '#fff' }} />
-            </IconButton>
-            <IconButton 
               onClick={toggleTheme} 
               color="inherit"
               sx={{

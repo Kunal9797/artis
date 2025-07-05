@@ -48,6 +48,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const sheets_manager_optimized_service_1 = __importDefault(require("../services/sheets-manager-optimized.service"));
 const auth_1 = require("../middleware/auth");
+const sequelize_1 = require("sequelize");
 const router = (0, express_1.Router)();
 // Use optimized service for better performance with large datasets
 const sheetsManager = new sheets_manager_optimized_service_1.default();
@@ -89,11 +90,15 @@ router.get('/pending', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void
  *         description: Sync results
  */
 router.post('/sync/consumption', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        // Set user ID for tracking
+        sheetsManager.setUserId(((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || '');
+        const { archiveName } = req.body; // Optional archive name from request
         const result = yield sheetsManager.syncConsumption();
-        // Clear sheet if successful and no errors
-        if (result.added > 0 && result.errors.length === 0) {
-            yield sheetsManager.clearSheet('consumption');
+        // Clear sheet if we processed some records (even with errors)
+        if (result.added > 0) {
+            yield sheetsManager.clearSheet('consumption', archiveName);
         }
         res.json(Object.assign({ success: true, message: `Synced ${result.added} consumption records` }, result));
     }
@@ -118,11 +123,15 @@ router.post('/sync/consumption', auth_1.auth, (req, res) => __awaiter(void 0, vo
  *         description: Sync results
  */
 router.post('/sync/purchases', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        // Set user ID for tracking
+        sheetsManager.setUserId(((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || '');
+        const { archiveName } = req.body; // Optional archive name from request
         const result = yield sheetsManager.syncPurchases();
-        // Clear sheet if successful and no errors
-        if (result.added > 0 && result.errors.length === 0) {
-            yield sheetsManager.clearSheet('purchases');
+        // Clear sheet if we processed some records (even with errors)
+        if (result.added > 0) {
+            yield sheetsManager.clearSheet('purchases', archiveName);
         }
         res.json(Object.assign({ success: true, message: `Synced ${result.added} purchase records` }, result));
     }
@@ -147,11 +156,15 @@ router.post('/sync/purchases', auth_1.auth, (req, res) => __awaiter(void 0, void
  *         description: Sync results
  */
 router.post('/sync/initial-stock', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        // Set user ID for tracking
+        sheetsManager.setUserId(((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || '');
+        const { archiveName } = req.body; // Optional archive name from request
         const result = yield sheetsManager.syncInitialStock();
-        // Clear sheet if successful and no errors
-        if (result.added > 0 && result.errors.length === 0) {
-            yield sheetsManager.clearSheet('initialStock');
+        // Clear sheet if we processed some records (even with errors)
+        if (result.added > 0) {
+            yield sheetsManager.clearSheet('initialStock', archiveName);
         }
         res.json(Object.assign({ success: true, message: `Set initial stock for ${result.added} products` }, result));
     }
@@ -176,11 +189,15 @@ router.post('/sync/initial-stock', auth_1.auth, (req, res) => __awaiter(void 0, 
  *         description: Sync results
  */
 router.post('/sync/corrections', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
+        // Set user ID for tracking
+        sheetsManager.setUserId(((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || '');
+        const { archiveName } = req.body; // Optional archive name from request
         const result = yield sheetsManager.syncCorrections();
-        // Clear sheet if successful and no errors
-        if (result.added > 0 && result.errors.length === 0) {
-            yield sheetsManager.clearSheet('corrections');
+        // Clear sheet if we processed some records (even with errors)
+        if (result.added > 0) {
+            yield sheetsManager.clearSheet('corrections', archiveName);
         }
         res.json(Object.assign({ success: true, message: `Applied ${result.added} corrections` }, result));
     }
@@ -340,6 +357,188 @@ router.post('/clear-inventory', auth_1.auth, (req, res) => __awaiter(void 0, voi
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to clear inventory'
+        });
+    }
+}));
+/**
+ * @swagger
+ * /api/sheets/sync-history:
+ *   get:
+ *     summary: Get sync history
+ *     tags: [Sheets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Sync history records
+ */
+router.get('/sync-history', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { SyncHistory } = yield Promise.resolve().then(() => __importStar(require('../models')));
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+        const { count, rows } = yield SyncHistory.findAndCountAll({
+            limit,
+            offset,
+            order: [['syncDate', 'DESC']],
+            include: [{
+                    model: (yield Promise.resolve().then(() => __importStar(require('../models')))).User,
+                    as: 'user',
+                    attributes: ['id', 'username', 'email']
+                }]
+        });
+        res.json({
+            success: true,
+            data: {
+                total: count,
+                records: rows
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error getting sync history:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to get sync history'
+        });
+    }
+}));
+/**
+ * @swagger
+ * /api/sheets/undo-sync/:syncBatchId:
+ *   post:
+ *     summary: Undo a specific sync operation
+ *     tags: [Sheets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: syncBatchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Undo successful
+ */
+router.post('/undo-sync/:syncBatchId', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        // Only allow admin users to undo sync
+        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Only admin users can undo sync operations'
+            });
+        }
+        const { syncBatchId } = req.params;
+        const { SyncHistory, Transaction, Product } = yield Promise.resolve().then(() => __importStar(require('../models')));
+        const sequelize = (yield Promise.resolve().then(() => __importStar(require('../config/sequelize')))).default;
+        // Get the specific sync
+        const syncToUndo = yield SyncHistory.findOne({
+            where: {
+                syncBatchId,
+                status: ['completed', 'failed']
+            }
+        });
+        if (!syncToUndo) {
+            return res.status(400).json({
+                success: false,
+                error: 'Sync operation not found or already undone'
+            });
+        }
+        const t = yield sequelize.transaction();
+        try {
+            // Get all affected products BEFORE deleting transactions
+            const affectedProducts = yield sequelize.query(`SELECT DISTINCT "productId" 
+         FROM "Transactions" 
+         WHERE "syncBatchId" = :syncBatchId`, {
+                replacements: { syncBatchId: syncToUndo.syncBatchId },
+                type: sequelize_1.QueryTypes.SELECT,
+                transaction: t
+            });
+            // Delete all transactions from this sync batch
+            const deletedCount = yield Transaction.destroy({
+                where: { syncBatchId: syncToUndo.syncBatchId },
+                transaction: t
+            });
+            // Mark the sync as undone
+            yield syncToUndo.update({ status: 'undone' }, { transaction: t });
+            // Recalculate stock for affected products
+            for (const { productId } of affectedProducts) {
+                // Calculate current stock from all remaining transactions
+                const stockResult = yield sequelize.query(`SELECT COALESCE(SUM(
+            CASE 
+              WHEN type = 'IN' THEN quantity
+              WHEN type = 'OUT' THEN -quantity
+              WHEN type = 'CORRECTION' THEN quantity
+            END
+          ), 0) as total_stock
+          FROM "Transactions"
+          WHERE "productId" = :productId`, {
+                    replacements: { productId },
+                    type: sequelize_1.QueryTypes.SELECT,
+                    transaction: t
+                });
+                const currentStock = parseFloat(stockResult[0].total_stock) || 0;
+                // Calculate average monthly consumption
+                const avgResult = yield sequelize.query(`SELECT 
+            COUNT(DISTINCT DATE_TRUNC('month', date)) as months,
+            COALESCE(SUM(quantity), 0) as total_consumption
+          FROM "Transactions"
+          WHERE "productId" = :productId
+            AND type = 'OUT'
+            AND "includeInAvg" = true`, {
+                    replacements: { productId },
+                    type: sequelize_1.QueryTypes.SELECT,
+                    transaction: t
+                });
+                const months = parseInt(avgResult[0].months) || 1;
+                const totalConsumption = parseFloat(avgResult[0].total_consumption) || 0;
+                const avgConsumption = totalConsumption / months;
+                // Update product
+                yield sequelize.query(`UPDATE "Products" 
+           SET "currentStock" = :currentStock,
+               "avgConsumption" = :avgConsumption,
+               "updatedAt" = NOW()
+           WHERE "id" = :productId`, {
+                    replacements: { currentStock, avgConsumption, productId },
+                    transaction: t
+                });
+            }
+            yield t.commit();
+            res.json({
+                success: true,
+                message: `Successfully undid ${syncToUndo.syncType} sync`,
+                details: {
+                    syncType: syncToUndo.syncType,
+                    syncDate: syncToUndo.syncDate,
+                    transactionsDeleted: deletedCount,
+                    productsRecalculated: affectedProducts.length
+                }
+            });
+        }
+        catch (error) {
+            yield t.rollback();
+            throw error;
+        }
+    }
+    catch (error) {
+        console.error('Error undoing sync:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to undo sync'
         });
     }
 }));

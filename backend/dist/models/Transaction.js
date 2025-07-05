@@ -51,6 +51,10 @@ Transaction.init({
     operationId: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true
+    },
+    syncBatchId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true
     }
 }, {
     sequelize: sequelize_2.default,

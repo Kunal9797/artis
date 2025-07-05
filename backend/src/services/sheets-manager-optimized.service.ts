@@ -1,9 +1,10 @@
 import { google, sheets_v4 } from 'googleapis';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
-import { Product, Transaction } from '../models';
+import { Product, Transaction, SyncHistory } from '../models';
 import { Op, QueryTypes } from 'sequelize';
 import sequelize from '../config/sequelize';
+import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ export class SheetsManagerOptimizedService {
   private sheets: sheets_v4.Sheets;
   private auth: any;
   private productCache: Map<string, Product> = new Map();
+  private currentUserId?: string;
   
   // Validation thresholds
   private readonly MAX_CONSUMPTION_PER_MONTH = 10000; // kg
@@ -37,6 +39,45 @@ export class SheetsManagerOptimizedService {
     });
 
     this.sheets = google.sheets({ version: 'v4', auth: this.auth });
+  }
+
+  /**
+   * Set the current user ID for tracking who initiated the sync
+   */
+  public setUserId(userId: string): void {
+    this.currentUserId = userId;
+  }
+
+  /**
+   * Generate a unique sync batch ID
+   */
+  private generateSyncBatchId(syncType: string): string {
+    const timestamp = new Date().toISOString().replace(/[:-]/g, '').split('.')[0];
+    return `${syncType}_${timestamp}_${uuidv4().substring(0, 8)}`;
+  }
+
+  /**
+   * Create sync history record
+   */
+  private async createSyncHistory(
+    syncBatchId: string,
+    syncType: 'consumption' | 'purchases' | 'corrections' | 'initialStock',
+    itemCount: number,
+    errors: string[],
+    warnings: string[],
+    metadata?: any
+  ): Promise<SyncHistory> {
+    return await SyncHistory.create({
+      syncBatchId,
+      syncType,
+      syncDate: new Date(),
+      itemCount,
+      status: errors.length > 0 ? 'failed' : 'completed',
+      errors: errors.length > 0 ? JSON.stringify(errors) : undefined,
+      warnings: warnings.length > 0 ? JSON.stringify(warnings) : undefined,
+      metadata,
+      userId: this.currentUserId
+    });
   }
 
   /**
@@ -123,8 +164,17 @@ export class SheetsManagerOptimizedService {
       }
     }
     
-    // Validate date
-    const purchaseDate = new Date(date);
+    // Validate date - handle DD.MM.YYYY format
+    let purchaseDate: Date;
+    
+    // Check if date is in DD.MM.YYYY format
+    if (date.includes('.')) {
+      const [day, month, year] = date.split('.');
+      purchaseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      purchaseDate = new Date(date);
+    }
+    
     if (isNaN(purchaseDate.getTime())) {
       errors.push(`Invalid date format: ${date}`);
     } else {
@@ -193,6 +243,9 @@ export class SheetsManagerOptimizedService {
    * Optimized sync consumption data with batch processing
    */
   async syncConsumptionOptimized(): Promise<{ added: number; errors: string[]; warnings: string[] }> {
+    // Generate sync batch ID
+    const syncBatchId = this.generateSyncBatchId('consumption');
+    
     // Starting optimized consumption sync
     
     // Load product cache first
@@ -215,10 +268,13 @@ export class SheetsManagerOptimizedService {
     // Process all rows in memory first
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const [artisCode, consumption, month, notes] = row;
+      const [rawArtisCode, consumption, month, notes] = row;
       
       try {
-        if (!artisCode || !consumption) continue;
+        if (!rawArtisCode || !consumption) continue;
+        
+        // Remove commas from artis code (in case of number formatting)
+        const artisCode = rawArtisCode.toString().replace(/,/g, '');
 
         // Validate data
         const validation = this.validateConsumptionData(artisCode, consumption, month);
@@ -269,7 +325,8 @@ export class SheetsManagerOptimizedService {
           quantity: quantity,
           date: transactionDate,
           notes: notes || `Monthly consumption for ${month || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
-          includeInAvg: true // Important for average calculation
+          includeInAvg: true, // Important for average calculation
+          syncBatchId: syncBatchId
         });
 
         // Track products that need stock recalculation
@@ -278,7 +335,7 @@ export class SheetsManagerOptimizedService {
         }
 
       } catch (error: any) {
-        errors.push(`Error processing row ${artisCode || 'unknown'}: ${error.message}`);
+        errors.push(`Error processing row ${rawArtisCode || 'unknown'}: ${error.message}`);
       }
     }
 
@@ -351,10 +408,31 @@ export class SheetsManagerOptimizedService {
       await t.commit();
       // Successfully processed consumption records
       
+      // Create sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'consumption',
+        transactionsToCreate.length,
+        errors,
+        warnings,
+        { rowsProcessed: rows.length }
+      );
+      
       return { added: transactionsToCreate.length, errors, warnings };
 
     } catch (error: any) {
       await t.rollback();
+      
+      // Create failed sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'consumption',
+        0,
+        [...errors, `Transaction failed: ${error.message}`],
+        warnings,
+        { rowsProcessed: rows.length }
+      );
+      
       throw error;
     }
   }
@@ -363,6 +441,9 @@ export class SheetsManagerOptimizedService {
    * Optimized sync purchases with batch processing
    */
   async syncPurchasesOptimized(): Promise<{ added: number; errors: string[]; warnings: string[] }> {
+    // Generate sync batch ID
+    const syncBatchId = this.generateSyncBatchId('purchases');
+    
     // Starting optimized purchases sync
     
     await this.loadProductCache();
@@ -382,11 +463,14 @@ export class SheetsManagerOptimizedService {
     // Process all rows in memory
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const [artisCode, date, amount, supplier, notes] = row;
+      const [rawArtisCode, date, amount, supplier, notes] = row;
       
       try {
-        if (!artisCode || artisCode.includes('Example:') || artisCode.includes('Instructions:')) continue;
+        if (!rawArtisCode || rawArtisCode.includes('Example:') || rawArtisCode.includes('Instructions:')) continue;
         if (!amount || !date) continue;
+        
+        // Remove commas from artis code (in case of number formatting)
+        const artisCode = rawArtisCode.toString().replace(/,/g, '');
 
         // Validate data
         const validation = this.validatePurchaseData(artisCode, date, amount);
@@ -404,16 +488,26 @@ export class SheetsManagerOptimizedService {
           continue;
         }
 
+        // Parse date - handle DD.MM.YYYY format
+        let purchaseDate: Date;
+        if (date.includes('.')) {
+          const [day, month, year] = date.split('.');
+          purchaseDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        } else {
+          purchaseDate = new Date(date);
+        }
+        
         transactionsToCreate.push({
           productId: product.id,
           type: 'IN',
           quantity: parseFloat(amount),
-          date: new Date(date),
-          notes: `${supplier ? `Supplier: ${supplier}. ` : ''}${notes || ''}`
+          date: purchaseDate,
+          notes: `${supplier ? `Supplier: ${supplier}. ` : ''}${notes || ''}`,
+          syncBatchId: syncBatchId
         });
 
       } catch (error: any) {
-        errors.push(`Error processing purchase row ${artisCode || 'unknown'}: ${error.message}`);
+        errors.push(`Error processing purchase row ${rawArtisCode || 'unknown'}: ${error.message}`);
       }
     }
 
@@ -464,10 +558,31 @@ export class SheetsManagerOptimizedService {
       await t.commit();
       // Successfully processed purchase records
       
+      // Create sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'purchases',
+        transactionsToCreate.length,
+        errors,
+        warnings,
+        { rowsProcessed: rows.length }
+      );
+      
       return { added: transactionsToCreate.length, errors, warnings };
 
     } catch (error: any) {
       await t.rollback();
+      
+      // Create failed sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'purchases',
+        0,
+        [...errors, `Transaction failed: ${error.message}`],
+        warnings,
+        { rowsProcessed: rows.length }
+      );
+      
       throw error;
     }
   }
@@ -476,6 +591,9 @@ export class SheetsManagerOptimizedService {
    * Optimized sync corrections with batch processing
    */
   async syncCorrectionsOptimized(): Promise<{ added: number; errors: string[]; warnings: string[] }> {
+    // Generate sync batch ID
+    const syncBatchId = this.generateSyncBatchId('corrections');
+    
     // Starting optimized corrections sync
     
     await this.loadProductCache();
@@ -497,12 +615,15 @@ export class SheetsManagerOptimizedService {
       const row = rows[i];
       // Updated column mapping based on actual sheet structure:
       // A: Artis Code, B: Correction Amount, C: Type (not used), D: Date Applied, E: Reason
-      const [artisCode, correction, type, date, reason] = row;
+      const [rawArtisCode, correction, type, date, reason] = row;
       
       try {
-        if (!artisCode || artisCode.includes('Instructions:') || !correction) {
+        if (!rawArtisCode || rawArtisCode.includes('Instructions:') || !correction) {
           continue;
         }
+        
+        // Remove commas from artis code (in case of number formatting)
+        const artisCode = rawArtisCode.toString().replace(/,/g, '');
 
         // Validate data
         const validation = this.validateCorrectionData(artisCode, correction, date);
@@ -547,12 +668,12 @@ export class SheetsManagerOptimizedService {
           type: 'CORRECTION',
           quantity: correctionAmount, // Keep positive/negative for CORRECTION type
           date: transactionDate,
-          notes: `CORRECTION: ${correctionAmount > 0 ? '+' : ''}${correctionAmount} kg. ${reason || ''}`
-          // operationId removed - not needed for Google Sheets sync
+          notes: `CORRECTION: ${correctionAmount > 0 ? '+' : ''}${correctionAmount} kg. ${reason || ''}`,
+          syncBatchId: syncBatchId
         });
 
       } catch (error: any) {
-        errors.push(`Error processing correction row ${artisCode || 'unknown'}: ${error.message}`);
+        errors.push(`Error processing correction row ${rawArtisCode || 'unknown'}: ${error.message}`);
       }
     }
 
@@ -601,10 +722,31 @@ export class SheetsManagerOptimizedService {
       await t.commit();
       // Successfully processed corrections
       
+      // Create sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'corrections',
+        transactionsToCreate.length,
+        errors,
+        warnings,
+        { rowsProcessed: rows.length }
+      );
+      
       return { added: transactionsToCreate.length, errors, warnings };
 
     } catch (error: any) {
       await t.rollback();
+      
+      // Create failed sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'corrections',
+        0,
+        [...errors, `Transaction failed: ${error.message}`],
+        warnings,
+        { rowsProcessed: rows.length }
+      );
+      
       throw error;
     }
   }
@@ -613,6 +755,9 @@ export class SheetsManagerOptimizedService {
    * Optimized initial stock sync
    */
   async syncInitialStockOptimized(): Promise<{ added: number; errors: string[] }> {
+    // Generate sync batch ID
+    const syncBatchId = this.generateSyncBatchId('initialStock');
+    
     // Starting optimized initial stock sync
     
     await this.loadProductCache();
@@ -631,10 +776,13 @@ export class SheetsManagerOptimizedService {
 
     // Process all rows in memory
     for (const row of rows) {
-      const [artisCode, initialStock, date, notes] = row;
+      const [rawArtisCode, initialStock, date, notes] = row;
       
       try {
-        if (!artisCode || artisCode.includes('Instructions:') || !initialStock) continue;
+        if (!rawArtisCode || rawArtisCode.includes('Instructions:') || !initialStock) continue;
+        
+        // Remove commas from artis code (in case of number formatting)
+        const artisCode = rawArtisCode.toString().replace(/,/g, '');
 
         const product = this.getProductFromCache(artisCode);
         if (!product) {
@@ -653,7 +801,7 @@ export class SheetsManagerOptimizedService {
             quantity: Math.abs(difference),
             date: date ? new Date(date) : new Date(),
             notes: `INITIAL STOCK: Set to ${initialStockValue} kg. ${notes || ''}`,
-            operationId: `INIT-BATCH-${Date.now()}`
+            syncBatchId: syncBatchId
           });
 
           productUpdates.push({
@@ -663,7 +811,7 @@ export class SheetsManagerOptimizedService {
         }
 
       } catch (error: any) {
-        errors.push(`Error processing initial stock row ${artisCode || 'unknown'}: ${error.message}`);
+        errors.push(`Error processing initial stock row ${rawArtisCode || 'unknown'}: ${error.message}`);
       }
     }
 
@@ -696,10 +844,31 @@ export class SheetsManagerOptimizedService {
       await t.commit();
       // Successfully set initial stock
       
+      // Create sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'initialStock',
+        productUpdates.length,
+        errors,
+        [],
+        { rowsProcessed: rows.length }
+      );
+      
       return { added: productUpdates.length, errors };
 
     } catch (error: any) {
       await t.rollback();
+      
+      // Create failed sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'initialStock',
+        0,
+        [...errors, `Transaction failed: ${error.message}`],
+        [],
+        { rowsProcessed: rows.length }
+      );
+      
       throw error;
     }
   }
@@ -769,7 +938,7 @@ export class SheetsManagerOptimizedService {
     return summary;
   }
 
-  async clearSheet(type: 'consumption' | 'purchases' | 'corrections' | 'initialStock'): Promise<void> {
+  async clearSheet(type: 'consumption' | 'purchases' | 'corrections' | 'initialStock', archiveName?: string): Promise<void> {
     const sheetId = {
       consumption: process.env.GOOGLE_SHEETS_CONSUMPTION_ID,
       purchases: process.env.GOOGLE_SHEETS_PURCHASES_ID,
@@ -780,7 +949,7 @@ export class SheetsManagerOptimizedService {
     if (!sheetId) return;
 
     // Archive current data
-    await this.archiveSheet(type);
+    await this.archiveSheet(type, archiveName);
 
     // Clear the main sheet (keep headers) with large range
     await this.sheets.spreadsheets.values.clear({
@@ -789,7 +958,7 @@ export class SheetsManagerOptimizedService {
     });
   }
 
-  private async archiveSheet(type: string): Promise<void> {
+  private async archiveSheet(type: string, customArchiveName?: string): Promise<void> {
     const sheetId = {
       consumption: process.env.GOOGLE_SHEETS_CONSUMPTION_ID,
       purchases: process.env.GOOGLE_SHEETS_PURCHASES_ID,
@@ -799,8 +968,16 @@ export class SheetsManagerOptimizedService {
 
     if (!sheetId) return;
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 16);
-    const archiveName = `Archive_${timestamp}`;
+    // Use custom archive name if provided, otherwise use timestamp
+    let archiveName: string;
+    if (customArchiveName) {
+      // Clean the custom name and add Archive suffix
+      const cleanName = customArchiveName.replace(/[^a-zA-Z0-9\s-_]/g, '').trim();
+      archiveName = `${cleanName}_Archive`;
+    } else {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 16);
+      archiveName = `Archive_${timestamp}`;
+    }
 
     try {
       // Get current data with large range
@@ -858,7 +1035,7 @@ export class SheetsManagerOptimizedService {
       const sheets = response.data.sheets || [];
       return sheets
         .map(sheet => sheet.properties?.title || '')
-        .filter(title => title.startsWith('Archive_'))
+        .filter(title => title.includes('Archive'))
         .sort()
         .reverse();
     } catch (error) {
