@@ -1,6 +1,6 @@
 import { Client } from 'pg';
-import sequelize from '../config/sequelize';
-import { Product } from '../models';
+import sequelize from '../../config/sequelize';
+import { Product } from '../../models';
 import * as dotenv from 'dotenv';
 
 dotenv.config();

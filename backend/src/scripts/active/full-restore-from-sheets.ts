@@ -1,6 +1,6 @@
-import { SheetsManagerOptimizedService } from '../services/sheets-manager-optimized.service';
-import sequelize from '../config/sequelize';
-import { Product, Transaction } from '../models';
+import { SheetsManagerOptimizedService } from '../../services/sheets-manager-optimized.service';
+import sequelize from '../../config/sequelize';
+import { Product, Transaction } from '../../models';
 import { Op, QueryTypes } from 'sequelize';
 import * as dotenv from 'dotenv';
 
