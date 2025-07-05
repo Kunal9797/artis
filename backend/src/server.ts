@@ -99,14 +99,19 @@ const databaseSource = isDatabaseUrlSet
   ? (isSupabase ? 'Supabase' : 'Render') 
   : 'Local PostgreSQL';
 
-app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  console.log(`🗄️  Database: ${databaseSource}`);
-  try {
-    await sequelize.authenticate();
-    console.log('✓ Database connected');
-    
-    // Only run migrations in production
+// Export app for testing
+export default app;
+
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+    console.log(`🗄️  Database: ${databaseSource}`);
+    try {
+      await sequelize.authenticate();
+      console.log('✓ Database connected');
+      
+      // Only run migrations in production
     if (process.env.NODE_ENV === 'production') {
       console.log('Running migrations...');
       try {
@@ -131,7 +136,6 @@ app.listen(PORT, '0.0.0.0', async () => {
     console.error('Database initialization failed:', error);
     process.exit(1);
   }
-});
-
-export default app;
+  });
+}
 

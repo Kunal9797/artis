@@ -8,7 +8,9 @@ import {
   deleteProduct,
   bulkCreateProducts,
   searchProducts,
-  deleteAllProducts
+  deleteAllProducts,
+  recoverProduct,
+  getDeletedProducts
 } from '../controllers/product.controller';
 import { auth, adminAuth } from '../middleware/auth';
 
@@ -17,6 +19,8 @@ const router = Router();
 // Special routes must come BEFORE parameter routes
 router.delete('/delete-all', [auth, adminAuth], deleteAllProducts);
 router.get('/search/:query', auth, searchProducts);
+router.get('/deleted', [auth, adminAuth], getDeletedProducts);
+router.post('/recover/:id', [auth, adminAuth], recoverProduct);
 
 // View routes (both admin and user)
 router.get('/', auth, getAllProducts);

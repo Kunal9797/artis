@@ -76,7 +76,8 @@ export const productApi = {
   getProduct: (id: string) => api.get(`/api/products/${id}`),
   createProduct: (data: any) => api.post('/api/products', data),
   updateProduct: (id: string, data: any) => api.put(`/api/products/${id}`, data),
-  deleteProduct: (id: string) => api.delete(`/api/products/${id}`),
+  deleteProduct: (id: string, params?: { force?: boolean }) => 
+    api.delete(`/api/products/${id}`, { data: params }),
   searchProducts: (query: string) => api.get(`/api/products/search/${query}`),
   deleteAllProducts: () => api.delete('/api/products/delete-all'),
   bulkCreate: (file: File, updateMode: boolean = false) => {

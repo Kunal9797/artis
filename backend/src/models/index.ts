@@ -7,6 +7,7 @@ import Message from './Message';
 import Product from './Product';
 import Transaction from './Transaction';
 import BulkOperation from './BulkOperation';
+import AuditLog from './AuditLog';
 
 export {
   User,
@@ -17,5 +18,6 @@ export {
   Message,
   Product,
   Transaction,
-  BulkOperation
+  BulkOperation,
+  AuditLog
 }; 

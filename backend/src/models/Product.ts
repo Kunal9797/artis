@@ -16,6 +16,9 @@ class Product extends Model {
   public catalogs?: string[];
   public texture?: string;
   public thickness?: string;
+  public deletedAt?: Date;
+  public deletedBy?: string;
+  public deletionReason?: string;
 
 }
 
@@ -77,11 +80,25 @@ Product.init({
   thickness: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  deletedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  deletedBy: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  deletionReason: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   sequelize,
   modelName: 'Product',
-  tableName: 'Products'
+  tableName: 'Products',
+  paranoid: true,
+  deletedAt: 'deletedAt'
 });
 
 export default Product; 

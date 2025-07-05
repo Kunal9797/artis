@@ -102,39 +102,43 @@ const isSupabase = (_a = process.env.DATABASE_URL) === null || _a === void 0 ? v
 const databaseSource = isDatabaseUrlSet
     ? (isSupabase ? 'Supabase' : 'Render')
     : 'Local PostgreSQL';
-exports.app.listen(PORT, '0.0.0.0', () => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-    console.log(`🗄️  Database: ${databaseSource}`);
-    try {
-        yield sequelize_1.default.authenticate();
-        console.log('✓ Database connected');
-        // Only run migrations in production
-        if (process.env.NODE_ENV === 'production') {
-            console.log('Running migrations...');
-            try {
-                const { stdout, stderr } = yield execAsync('npx sequelize-cli db:migrate');
-                console.log('Migration output:', stdout);
-                if (stderr)
-                    console.error('Migration stderr:', stderr);
-                console.log('✓ Migrations completed');
-            }
-            catch (migrationError) {
-                console.error('Migration error:', migrationError);
-                throw migrationError;
-            }
-        }
-        // Skip sync for Supabase - schema is already set up
-        if (!isSupabase) {
-            yield sequelize_1.default.sync({ alter: true });
-            console.log('✓ Models synced successfully');
-        }
-        else {
-            console.log('✓ Using existing Supabase schema');
-        }
-    }
-    catch (error) {
-        console.error('Database initialization failed:', error);
-        process.exit(1);
-    }
-}));
+// Export app for testing
 exports.default = exports.app;
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+    exports.app.listen(PORT, '0.0.0.0', () => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+        console.log(`🗄️  Database: ${databaseSource}`);
+        try {
+            yield sequelize_1.default.authenticate();
+            console.log('✓ Database connected');
+            // Only run migrations in production
+            if (process.env.NODE_ENV === 'production') {
+                console.log('Running migrations...');
+                try {
+                    const { stdout, stderr } = yield execAsync('npx sequelize-cli db:migrate');
+                    console.log('Migration output:', stdout);
+                    if (stderr)
+                        console.error('Migration stderr:', stderr);
+                    console.log('✓ Migrations completed');
+                }
+                catch (migrationError) {
+                    console.error('Migration error:', migrationError);
+                    throw migrationError;
+                }
+            }
+            // Skip sync for Supabase - schema is already set up
+            if (!isSupabase) {
+                yield sequelize_1.default.sync({ alter: true });
+                console.log('✓ Models synced successfully');
+            }
+            else {
+                console.log('✓ Using existing Supabase schema');
+            }
+        }
+        catch (error) {
+            console.error('Database initialization failed:', error);
+            process.exit(1);
+        }
+    }));
+}

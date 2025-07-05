@@ -65,10 +65,24 @@ Product.init({
     thickness: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true
+    },
+    deletedAt: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true
+    },
+    deletedBy: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true
+    },
+    deletionReason: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true
     }
 }, {
     sequelize: sequelize_2.default,
     modelName: 'Product',
-    tableName: 'Products'
+    tableName: 'Products',
+    paranoid: true,
+    deletedAt: 'deletedAt'
 });
 exports.default = Product;

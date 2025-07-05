@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,12 +41,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const sheets_manager_service_1 = require("../services/sheets-manager.service");
+const sheets_manager_optimized_service_1 = __importDefault(require("../services/sheets-manager-optimized.service"));
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
-const sheetsManager = new sheets_manager_service_1.SheetsManagerService();
+// Use optimized service for better performance with large datasets
+const sheetsManager = new sheets_manager_optimized_service_1.default();
 /**
  * @swagger
  * /api/sheets/pending:
@@ -157,6 +194,39 @@ router.post('/sync/corrections', auth_1.auth, (req, res) => __awaiter(void 0, vo
 }));
 /**
  * @swagger
+ * /api/sheets/archives/{type}:
+ *   get:
+ *     summary: Get list of archive tabs for a sheet type
+ *     tags: [Sheets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [consumption, purchases, corrections, initialStock]
+ *     responses:
+ *       200:
+ *         description: List of archive tab names
+ */
+router.get('/archives/:type', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { type } = req.params;
+        const archives = yield sheetsManager.getArchiveTabs(type);
+        res.json({ success: true, data: archives });
+    }
+    catch (error) {
+        console.error('Error getting archives:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to get archives'
+        });
+    }
+}));
+/**
+ * @swagger
  * /api/sheets/setup/{type}:
  *   post:
  *     summary: Setup Google Sheet with template
@@ -206,6 +276,70 @@ router.post('/setup/:type', auth_1.auth, (req, res) => __awaiter(void 0, void 0,
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to setup sheet'
+        });
+    }
+}));
+/**
+ * @swagger
+ * /api/sheets/clear-inventory:
+ *   post:
+ *     summary: Clear all inventory data
+ *     tags: [Sheets]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Inventory cleared successfully
+ */
+router.post('/clear-inventory', auth_1.auth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        // Only allow admin users to clear inventory
+        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Only admin users can clear inventory'
+            });
+        }
+        // Import models
+        const { Transaction, Product } = yield Promise.resolve().then(() => __importStar(require('../models')));
+        const sequelize = (yield Promise.resolve().then(() => __importStar(require('../config/sequelize')))).default;
+        // Start a transaction
+        const t = yield sequelize.transaction();
+        try {
+            // Delete all transactions
+            const deletedTransactions = yield Transaction.destroy({
+                where: {},
+                transaction: t
+            });
+            // Reset all product stock levels and consumption
+            yield sequelize.query(`UPDATE "Products" 
+         SET "currentStock" = 0, 
+             "avgConsumption" = 0,
+             "updatedAt" = NOW()`, { transaction: t });
+            // Get count of products
+            const productCount = yield Product.count({ transaction: t });
+            // Commit the transaction
+            yield t.commit();
+            res.json({
+                success: true,
+                message: 'Inventory cleared successfully',
+                details: {
+                    transactionsDeleted: deletedTransactions,
+                    productsReset: productCount
+                }
+            });
+        }
+        catch (error) {
+            yield t.rollback();
+            throw error;
+        }
+    }
+    catch (error) {
+        console.error('Error clearing inventory:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to clear inventory'
         });
     }
 }));

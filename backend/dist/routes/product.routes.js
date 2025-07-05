@@ -8,6 +8,8 @@ const router = (0, express_1.Router)();
 // Special routes must come BEFORE parameter routes
 router.delete('/delete-all', [auth_1.auth, auth_1.adminAuth], product_controller_1.deleteAllProducts);
 router.get('/search/:query', auth_1.auth, product_controller_1.searchProducts);
+router.get('/deleted', [auth_1.auth, auth_1.adminAuth], product_controller_1.getDeletedProducts);
+router.post('/recover/:id', [auth_1.auth, auth_1.adminAuth], product_controller_1.recoverProduct);
 // View routes (both admin and user)
 router.get('/', auth_1.auth, product_controller_1.getAllProducts);
 router.get('/:id', auth_1.auth, product_controller_1.getProduct);

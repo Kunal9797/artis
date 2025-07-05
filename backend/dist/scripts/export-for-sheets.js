@@ -50,6 +50,7 @@ const models_1 = require("../models");
 const sequelize_1 = __importDefault(require("../config/sequelize"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const sequelize_2 = require("sequelize");
 function exportForSheets() {
     return __awaiter(this, void 0, void 0, function* () {
         console.log('📊 Exporting data for Google Sheets...\n');
@@ -64,15 +65,15 @@ function exportForSheets() {
             console.log('📝 Exporting consumption summary...');
             const consumptionData = yield sequelize_1.default.query(`
       SELECT 
-        p."artisCodes"->0 as artis_code,
+        p."artisCodes"[1] as artis_code,
         DATE_TRUNC('month', t.date) as month,
         SUM(t.quantity) as total_consumption
       FROM "Transactions" t
       JOIN "Products" p ON t."productId" = p.id
       WHERE t.type = 'OUT'
-      GROUP BY p.id, p.artis_codes, DATE_TRUNC('month', t.date)
+      GROUP BY p.id, p."artisCodes", DATE_TRUNC('month', t.date)
       ORDER BY month DESC, artis_code
-    `, { type: 'SELECT' });
+    `, { type: sequelize_2.QueryTypes.SELECT });
             // Group by month for consumption sheet format
             const consumptionByMonth = {};
             for (const row of consumptionData) {

@@ -167,7 +167,7 @@ This will automatically populate your Google Sheets with existing data
       GROUP BY DATE_TRUNC('month', date)
       ORDER BY month DESC
       LIMIT 6
-    `, { type: 'SELECT' });
+    `, { type: sequelize_2.QueryTypes.SELECT });
             console.log(`\n${colors.cyan}Recent Consumption (by month):${colors.reset}`);
             for (const month of consumptionByMonth) {
                 const monthStr = new Date(month.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });

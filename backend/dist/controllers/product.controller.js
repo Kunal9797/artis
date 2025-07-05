@@ -45,12 +45,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateProductAverageConsumption = exports.deleteAllProducts = exports.searchProducts = exports.deleteProduct = exports.getProduct = exports.updateProduct = exports.getProductByArtisCode = exports.bulkCreateProducts = exports.createProduct = exports.getAllProducts = void 0;
+exports.updateProductAverageConsumption = exports.getDeletedProducts = exports.recoverProduct = exports.deleteAllProducts = exports.searchProducts = exports.deleteProduct = exports.getProduct = exports.updateProduct = exports.getProductByArtisCode = exports.bulkCreateProducts = exports.createProduct = exports.getAllProducts = void 0;
 const Product_1 = __importDefault(require("../models/Product"));
 const XLSX = __importStar(require("xlsx"));
 const sequelize_1 = __importDefault(require("../config/sequelize"));
 const sequelize_2 = require("sequelize");
 const Transaction_1 = __importDefault(require("../models/Transaction"));
+const audit_service_1 = require("../services/audit.service");
 const getAllProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const products = yield Product_1.default.findAll();
@@ -329,17 +330,52 @@ const getProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.getProduct = getProduct;
 const deleteProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const t = yield sequelize_1.default.transaction();
     try {
         const { id } = req.params;
+        const { force, reason } = req.body;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userName = ((_b = req.user) === null || _b === void 0 ? void 0 : _b.name) || 'Unknown';
         const product = yield Product_1.default.findByPk(id, { transaction: t });
         if (!product) {
             yield t.rollback();
             return res.status(404).json({ error: 'Product not found' });
         }
-        yield product.destroy({ transaction: t });
+        // Check if product has transactions
+        const transactionCount = yield Transaction_1.default.count({
+            where: { productId: id },
+            transaction: t
+        });
+        if (transactionCount > 0 && !force) {
+            yield t.rollback();
+            return res.status(400).json({
+                error: 'Product has existing transactions',
+                transactionCount,
+                message: 'This product has transaction history. Use force=true to delete anyway.'
+            });
+        }
+        // Soft delete by default
+        product.deletedAt = new Date();
+        product.deletedBy = userName;
+        product.deletionReason = reason || 'No reason provided';
+        yield product.save({ transaction: t });
+        // Create audit log
+        yield audit_service_1.AuditService.logProductDeletion(product, product.deletionReason || 'No reason provided', req);
+        // Log the deletion
+        console.log(`Product ${product.artisCodes[0]} soft deleted by ${userName}. Reason: ${product.deletionReason}`);
         yield t.commit();
-        res.json({ message: 'Product deleted successfully' });
+        res.json({
+            message: 'Product soft deleted successfully',
+            deletedProduct: {
+                id: product.id,
+                artisCodes: product.artisCodes,
+                name: product.name,
+                deletedAt: product.deletedAt,
+                deletedBy: product.deletedBy,
+                reason: product.deletionReason
+            }
+        });
     }
     catch (error) {
         yield t.rollback();
@@ -370,28 +406,105 @@ const searchProducts = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.searchProducts = searchProducts;
 const deleteAllProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // DISABLED FOR SAFETY - This function is too dangerous
+    return res.status(403).json({
+        error: 'Bulk product deletion is disabled for safety',
+        message: 'This operation has been disabled to prevent accidental data loss. Please delete products individually if needed.'
+    });
+    // Original code commented out for reference:
+    /*
     console.log('Delete All Products - Request received');
     console.log('User info:', req.user);
-    const t = yield sequelize_1.default.transaction();
+    
+    const t = await sequelize.transaction();
+    
     try {
-        console.log('Starting product deletion');
-        const result = yield Product_1.default.destroy({
-            where: {},
-            truncate: true,
-            cascade: true,
-            transaction: t
-        });
-        console.log('Products deleted successfully, count:', result);
-        yield t.commit();
-        res.json({ message: 'All products deleted successfully', count: result });
+      console.log('Starting product deletion');
+      const result = await Product.destroy({
+        where: {},
+        truncate: true,
+        cascade: true,
+        transaction: t
+      });
+      
+      console.log('Products deleted successfully, count:', result);
+      await t.commit();
+      res.json({ message: 'All products deleted successfully', count: result });
+    } catch (error) {
+      console.error('Error in deleteAllProducts:', error);
+      await t.rollback();
+      res.status(500).json({ error: 'Error deleting all products' });
     }
-    catch (error) {
-        console.error('Error in deleteAllProducts:', error);
-        yield t.rollback();
-        res.status(500).json({ error: 'Error deleting all products' });
-    }
+    */
 });
 exports.deleteAllProducts = deleteAllProducts;
+const recoverProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const t = yield sequelize_1.default.transaction();
+    try {
+        const { id } = req.params;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userName = ((_b = req.user) === null || _b === void 0 ? void 0 : _b.name) || 'Unknown';
+        const product = yield Product_1.default.findOne({
+            where: {
+                id,
+                deletedAt: { [sequelize_2.Op.not]: null }
+            },
+            paranoid: false,
+            transaction: t
+        });
+        if (!product) {
+            yield t.rollback();
+            return res.status(404).json({ error: 'Deleted product not found' });
+        }
+        // Recover the product
+        product.deletedAt = undefined;
+        product.deletedBy = undefined;
+        product.deletionReason = undefined;
+        yield product.save({ transaction: t });
+        // Log the recovery
+        yield audit_service_1.AuditService.log({
+            action: 'RECOVER',
+            entityType: 'Product',
+            entityId: product.id,
+            entityData: {
+                artisCodes: product.artisCodes,
+                name: product.name
+            },
+            reason: 'Product recovered from deletion',
+            req
+        });
+        console.log(`Product ${product.artisCodes[0]} recovered by ${userName}`);
+        yield t.commit();
+        res.json({
+            message: 'Product recovered successfully',
+            product
+        });
+    }
+    catch (error) {
+        yield t.rollback();
+        console.error('Error recovering product:', error);
+        res.status(500).json({ error: 'Error recovering product' });
+    }
+});
+exports.recoverProduct = recoverProduct;
+const getDeletedProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const deletedProducts = yield Product_1.default.findAll({
+            where: {
+                deletedAt: { [sequelize_2.Op.not]: null }
+            },
+            paranoid: false,
+            order: [['deletedAt', 'DESC']]
+        });
+        res.json(deletedProducts);
+    }
+    catch (error) {
+        console.error('Error fetching deleted products:', error);
+        res.status(500).json({ error: 'Error fetching deleted products' });
+    }
+});
+exports.getDeletedProducts = getDeletedProducts;
 const updateProductAverageConsumption = (productId, transaction) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const product = yield Product_1.default.findByPk(productId, { transaction });

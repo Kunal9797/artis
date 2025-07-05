@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
-import ProductCatalog from './ProductCatalog';
+import ProductCatalogV2 from './ProductCatalogV2';
 import InfoPage from './InfoPage';
 import OrdersPage from './OrdersPage';
 import Logo from '../assets/artislogo.png';
@@ -32,8 +32,7 @@ import UserManagement from './Users/UserManagement';
 import SalesTeamManagement from './SalesTeamManagement';
 import LeadManagement from './Leads/LeadManagement';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import DatabaseIndicator from './DatabaseIndicator';
-import SheetsSync from './GoogleSheets/SheetsSync';
+import SheetsSyncSimple from './GoogleSheets/SheetsSyncSimple';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -100,7 +99,7 @@ const Dashboard: React.FC = () => {
       case 'home':
         return <DashboardHome setCurrentPage={setCurrentPage} />;
       case 'catalog':
-        return <ProductCatalog />;
+        return <ProductCatalogV2 />;
       case 'orders':
         return <OrdersPage />;
       case 'inventory':
@@ -116,7 +115,7 @@ const Dashboard: React.FC = () => {
       case 'leads':
         return isAdmin() ? <LeadManagement /> : null;
       case 'sheets':
-        return isAdmin() ? <SheetsSync /> : null;
+        return isAdmin() ? <SheetsSyncSimple /> : null;
       default:
         return <DashboardHome setCurrentPage={setCurrentPage} />;
     }
@@ -170,10 +169,6 @@ const Dashboard: React.FC = () => {
                 onClick={() => handlePageChange('home')}
               />
             </Box>
-            {/* Database indicator - only show in development */}
-            {process.env.NODE_ENV === 'development' && (
-              <DatabaseIndicator />
-            )}
           </Box>
 
           <Button

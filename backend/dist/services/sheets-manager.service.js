@@ -102,13 +102,13 @@ class SheetsManagerService {
         return __awaiter(this, void 0, void 0, function* () {
             console.log('📊 Setting up Purchases sheet...');
             const template = [
-                ['Artis Code', 'Date', 'Amount (kg)', 'Supplier', 'Notes'],
-                ['Example: 101', '2025-01-15', '500', 'ABC Suppliers', 'PO #123'],
-                ['', '', '', '', ''],
-                ['Instructions:', '', '', '', ''],
-                ['1. Enter date as YYYY-MM-DD', '', '', '', ''],
-                ['2. One row per purchase transaction', '', '', '', ''],
-                ['3. Multiple purchases for same product are OK', '', '', '', '']
+                ['Artis Code', 'Date', 'Amount (kg)', 'Notes'],
+                ['Example: 101', '2025-01-15', '500', 'PO #123'],
+                ['', '', '', ''],
+                ['Instructions:', '', '', ''],
+                ['1. Enter date as YYYY-MM-DD', '', '', ''],
+                ['2. One row per purchase transaction', '', '', ''],
+                ['3. Multiple purchases for same product are OK', '', '', '']
             ];
             yield this.sheets.spreadsheets.values.update({
                 spreadsheetId: process.env.GOOGLE_SHEETS_PURCHASES_ID,
@@ -130,19 +130,19 @@ class SheetsManagerService {
                 attributes: ['id', 'artisCodes', 'currentStock']
             });
             const template = [
-                ['Artis Code', 'Current Stock (kg)', 'Initial Stock (kg)', 'Notes'],
+                ['Artis Code', 'Initial Stock (kg)', 'Date', 'Notes'],
                 ...products.map(p => [
                     p.artisCodes[0] || '',
-                    p.currentStock || 0,
                     '', // Empty for user to fill
+                    new Date().toISOString().split('T')[0],
                     'Set initial stock value'
                 ]),
                 ['', '', '', ''],
                 ['Instructions:', '', '', ''],
-                ['1. Current Stock shows the system calculated value', '', '', ''],
-                ['2. Enter Initial Stock to set opening balance', '', '', ''],
+                ['1. Enter Initial Stock to set opening balance', '', '', ''],
+                ['2. Date is when the initial stock is recorded', '', '', ''],
                 ['3. This will create an opening balance transaction', '', '', ''],
-                ['4. Use this ONLY for initial setup or corrections', '', '', '']
+                ['4. Use this ONLY for initial setup', '', '', '']
             ];
             yield this.sheets.spreadsheets.values.update({
                 spreadsheetId: this.initialStockSheetId,
@@ -298,7 +298,7 @@ class SheetsManagerService {
             const t = yield sequelize_2.default.transaction();
             try {
                 for (const row of rows) {
-                    const [artisCode, currentStock, initialStock, notes] = row;
+                    const [artisCode, initialStock, date, notes] = row;
                     // Skip instruction rows
                     if (!artisCode || artisCode.includes('Instructions:') || !initialStock)
                         continue;
@@ -316,7 +316,7 @@ class SheetsManagerService {
                         continue;
                     }
                     const initialStockValue = parseFloat(initialStock);
-                    const currentStockValue = parseFloat(currentStock) || 0;
+                    const currentStockValue = product.currentStock || 0;
                     // Calculate the difference to apply
                     const difference = initialStockValue - currentStockValue;
                     if (difference !== 0) {
@@ -325,7 +325,7 @@ class SheetsManagerService {
                             productId: product.id,
                             type: difference > 0 ? 'IN' : 'OUT',
                             quantity: Math.abs(difference),
-                            date: new Date(),
+                            date: date ? new Date(date) : new Date(),
                             notes: `INITIAL STOCK: Set to ${initialStockValue} kg. ${notes || ''}`,
                             operationId: `INIT-${Date.now()}`
                         }, { transaction: t });
@@ -408,9 +408,9 @@ class SheetsManagerService {
         });
     }
     /**
-     * Clear a sheet after successful sync (optional)
+     * Archive synced data to a timestamped tab instead of clearing
      */
-    clearSheet(sheetType) {
+    archiveSheet(sheetType) {
         return __awaiter(this, void 0, void 0, function* () {
             const sheetIds = {
                 consumption: process.env.GOOGLE_SHEETS_CONSUMPTION_ID,
@@ -418,12 +418,99 @@ class SheetsManagerService {
                 corrections: process.env.GOOGLE_SHEETS_CORRECTIONS_ID,
                 initialStock: this.initialStockSheetId
             };
-            // Keep header row, clear data
-            yield this.sheets.spreadsheets.values.clear({
-                spreadsheetId: sheetIds[sheetType],
-                range: 'Sheet1!A2:Z1000',
-            });
-            console.log(`🧹 Cleared ${sheetType} sheet data`);
+            const spreadsheetId = sheetIds[sheetType];
+            // Create archive tab name with timestamp
+            const now = new Date();
+            const archiveTabName = `Archive_${now.toLocaleDateString('en-US', {
+                month: 'short',
+                year: 'numeric'
+            })}_${now.getDate()}_${now.getHours()}${now.getMinutes()}`;
+            try {
+                // 1. Get all data from current sheet
+                const dataResponse = yield this.sheets.spreadsheets.values.get({
+                    spreadsheetId,
+                    range: 'Sheet1!A1:Z1000',
+                });
+                const data = dataResponse.data.values || [];
+                if (data.length <= 1) {
+                    console.log(`📊 No data to archive in ${sheetType} sheet`);
+                    return;
+                }
+                // 2. Create new archive sheet
+                yield this.sheets.spreadsheets.batchUpdate({
+                    spreadsheetId,
+                    requestBody: {
+                        requests: [{
+                                addSheet: {
+                                    properties: {
+                                        title: archiveTabName,
+                                        gridProperties: {
+                                            rowCount: data.length + 100,
+                                            columnCount: 26
+                                        }
+                                    }
+                                }
+                            }]
+                    }
+                });
+                // 3. Copy data to archive sheet
+                yield this.sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: `${archiveTabName}!A1`,
+                    valueInputOption: 'USER_ENTERED',
+                    requestBody: {
+                        values: data
+                    }
+                });
+                // 4. Clear original sheet (keep header)
+                yield this.sheets.spreadsheets.values.clear({
+                    spreadsheetId,
+                    range: 'Sheet1!A2:Z1000',
+                });
+                console.log(`📦 Archived ${data.length - 1} rows to ${archiveTabName}`);
+            }
+            catch (error) {
+                console.error(`Error archiving ${sheetType} sheet:`, error);
+                throw error;
+            }
+        });
+    }
+    /**
+     * Clear a sheet after successful sync (optional)
+     * @deprecated Use archiveSheet instead
+     */
+    clearSheet(sheetType) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Redirect to archive functionality
+            yield this.archiveSheet(sheetType);
+        });
+    }
+    /**
+     * Get list of archive tabs for a sheet
+     */
+    getArchiveTabs(sheetType) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const sheetIds = {
+                consumption: process.env.GOOGLE_SHEETS_CONSUMPTION_ID,
+                purchases: process.env.GOOGLE_SHEETS_PURCHASES_ID,
+                corrections: process.env.GOOGLE_SHEETS_CORRECTIONS_ID,
+                initialStock: this.initialStockSheetId
+            };
+            try {
+                const response = yield this.sheets.spreadsheets.get({
+                    spreadsheetId: sheetIds[sheetType],
+                    fields: 'sheets.properties.title'
+                });
+                const sheets = response.data.sheets || [];
+                return sheets
+                    .map(sheet => { var _a; return ((_a = sheet.properties) === null || _a === void 0 ? void 0 : _a.title) || ''; })
+                    .filter(title => title.startsWith('Archive_'))
+                    .sort((a, b) => b.localeCompare(a)); // Most recent first
+            }
+            catch (error) {
+                console.error(`Error getting archive tabs for ${sheetType}:`, error);
+                return [];
+            }
         });
     }
     /**

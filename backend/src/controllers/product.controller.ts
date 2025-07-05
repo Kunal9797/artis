@@ -5,6 +5,7 @@ import sequelize from '../config/sequelize';
 import { Op } from 'sequelize';
 import Transaction from '../models/Transaction';
 import { UserRole } from '../models/User';
+import { AuditService } from '../services/audit.service';
 
 interface ExcelRow {
   NAME?: string;
@@ -342,6 +343,10 @@ export const deleteProduct = async (req: Request, res: Response) => {
   
   try {
     const { id } = req.params;
+    const { force, reason } = req.body;
+    const userId = (req as any).user?.id;
+    const userName = (req as any).user?.name || 'Unknown';
+    
     const product = await Product.findByPk(id, { transaction: t });
     
     if (!product) {
@@ -349,9 +354,45 @@ export const deleteProduct = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    await product.destroy({ transaction: t });
+    // Check if product has transactions
+    const transactionCount = await Transaction.count({
+      where: { productId: id },
+      transaction: t
+    });
+
+    if (transactionCount > 0 && !force) {
+      await t.rollback();
+      return res.status(400).json({ 
+        error: 'Product has existing transactions',
+        transactionCount,
+        message: 'This product has transaction history. Use force=true to delete anyway.'
+      });
+    }
+
+    // Soft delete by default
+    product.deletedAt = new Date();
+    product.deletedBy = userName;
+    product.deletionReason = reason || 'No reason provided';
+    await product.save({ transaction: t });
+
+    // Create audit log
+    await AuditService.logProductDeletion(product, product.deletionReason || 'No reason provided', req);
+
+    // Log the deletion
+    console.log(`Product ${product.artisCodes[0]} soft deleted by ${userName}. Reason: ${product.deletionReason}`);
+
     await t.commit();
-    res.json({ message: 'Product deleted successfully' });
+    res.json({ 
+      message: 'Product soft deleted successfully',
+      deletedProduct: {
+        id: product.id,
+        artisCodes: product.artisCodes,
+        name: product.name,
+        deletedAt: product.deletedAt,
+        deletedBy: product.deletedBy,
+        reason: product.deletionReason
+      }
+    });
   } catch (error) {
     await t.rollback();
     console.error('Error deleting product:', error);
@@ -381,6 +422,14 @@ export const searchProducts = async (req: Request, res: Response) => {
 };
 
 export const deleteAllProducts = async (req: AuthRequest, res: Response) => {
+  // DISABLED FOR SAFETY - This function is too dangerous
+  return res.status(403).json({ 
+    error: 'Bulk product deletion is disabled for safety',
+    message: 'This operation has been disabled to prevent accidental data loss. Please delete products individually if needed.'
+  });
+  
+  // Original code commented out for reference:
+  /*
   console.log('Delete All Products - Request received');
   console.log('User info:', req.user);
   
@@ -402,6 +451,79 @@ export const deleteAllProducts = async (req: AuthRequest, res: Response) => {
     console.error('Error in deleteAllProducts:', error);
     await t.rollback();
     res.status(500).json({ error: 'Error deleting all products' });
+  }
+  */
+};
+
+export const recoverProduct = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  
+  try {
+    const { id } = req.params;
+    const userId = (req as any).user?.id;
+    const userName = (req as any).user?.name || 'Unknown';
+    
+    const product = await Product.findOne({
+      where: { 
+        id,
+        deletedAt: { [Op.not]: null }
+      },
+      paranoid: false,
+      transaction: t
+    });
+    
+    if (!product) {
+      await t.rollback();
+      return res.status(404).json({ error: 'Deleted product not found' });
+    }
+
+    // Recover the product
+    product.deletedAt = undefined;
+    product.deletedBy = undefined;
+    product.deletionReason = undefined;
+    await product.save({ transaction: t });
+
+    // Log the recovery
+    await AuditService.log({
+      action: 'RECOVER',
+      entityType: 'Product',
+      entityId: product.id,
+      entityData: {
+        artisCodes: product.artisCodes,
+        name: product.name
+      },
+      reason: 'Product recovered from deletion',
+      req
+    });
+
+    console.log(`Product ${product.artisCodes[0]} recovered by ${userName}`);
+
+    await t.commit();
+    res.json({ 
+      message: 'Product recovered successfully',
+      product
+    });
+  } catch (error) {
+    await t.rollback();
+    console.error('Error recovering product:', error);
+    res.status(500).json({ error: 'Error recovering product' });
+  }
+};
+
+export const getDeletedProducts = async (req: Request, res: Response) => {
+  try {
+    const deletedProducts = await Product.findAll({
+      where: {
+        deletedAt: { [Op.not]: null }
+      },
+      paranoid: false,
+      order: [['deletedAt', 'DESC']]
+    });
+
+    res.json(deletedProducts);
+  } catch (error) {
+    console.error('Error fetching deleted products:', error);
+    res.status(500).json({ error: 'Error fetching deleted products' });
   }
 };
 

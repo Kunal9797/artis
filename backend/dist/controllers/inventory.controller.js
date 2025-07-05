@@ -170,10 +170,6 @@ const getProductTransactions = (req, res) => __awaiter(void 0, void 0, void 0, f
         }
         const transactions = yield Transaction_1.default.findAll({
             where: { productId },
-            include: [{
-                    model: Product_1.default,
-                    attributes: ['artisCodes', 'name', 'supplierCode', 'supplier', 'category']
-                }],
             order: [['date', 'ASC']]
         });
         let currentStock = 0;

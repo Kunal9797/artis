@@ -96,18 +96,18 @@ function autoMigrateToSheets() {
             threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
             const consumptionData = yield sequelize_1.default.query(`
       SELECT 
-        p."artisCodes"->0 as artis_code,
+        p."artisCodes"[1] as artis_code,
         DATE_TRUNC('month', t.date) as month,
         SUM(t.quantity) as total_consumption
       FROM "Transactions" t
       JOIN "Products" p ON t."productId" = p.id
       WHERE t.type = 'OUT' 
         AND t.date >= :startDate
-      GROUP BY p.id, p.artis_codes, DATE_TRUNC('month', t.date)
+      GROUP BY p.id, p."artisCodes", DATE_TRUNC('month', t.date)
       ORDER BY month DESC, artis_code
     `, {
                 replacements: { startDate: threeMonthsAgo },
-                type: 'SELECT'
+                type: sequelize_2.QueryTypes.SELECT
             });
             const consumptionRows = consumptionData.map(row => [
                 row.artis_code,
