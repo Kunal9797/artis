@@ -111,8 +111,8 @@ if (process.env.NODE_ENV !== 'test') {
       await sequelize.authenticate();
       console.log('✓ Database connected');
       
-      // Only run migrations in production
-    if (process.env.NODE_ENV === 'production') {
+      // Skip migrations for Supabase - schema is already set up
+    if (process.env.NODE_ENV === 'production' && !isSupabase) {
       console.log('Running migrations...');
       try {
         const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate');
