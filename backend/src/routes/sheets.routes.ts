@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { SheetsManagerService } from '../services/sheets-manager.service';
 import SheetsManagerOptimizedService from '../services/sheets-manager-optimized.service';
 import { auth } from '../middleware/auth';
 import { QueryTypes } from 'sequelize';
