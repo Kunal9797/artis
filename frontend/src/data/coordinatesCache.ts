@@ -48,5 +48,6 @@ export const coordinatesCache: { [key: string]: { lat: number; lng: number } } =
   'Haldwani-Uttarakhand': { lat: 29.2144809, lng: 79.5279012 },
   'Srinagar-Kashmir': { lat: 34.0747444, lng: 74.8204443 },
   'Satna-Madhya Pradesh': { lat: 24.6005, lng: 80.8322 },
-  'Patiala-Punjab': { lat: 30.3398, lng: 76.3869 }
+  'Patiala-Punjab': { lat: 30.3398, lng: 76.3869 },
+  'Dhule-Maharashtra': { lat: 20.9042, lng: 74.7775 }
 }; 

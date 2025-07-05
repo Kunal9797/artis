@@ -32,12 +32,11 @@ import {
   List,
   ListItem,
   ListItemText,
+  OutlinedInput,
+  Checkbox,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import UploadIcon from '@mui/icons-material/Upload';
-import GridViewIcon from '@mui/icons-material/GridView';
-import ListIcon from '@mui/icons-material/List';
 import InfoIcon from '@mui/icons-material/Info';
 import { inventoryApi } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
@@ -55,11 +54,6 @@ import MobileInventoryCard from './MobileInventoryCard';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SortIcon from '@mui/icons-material/Sort';
 import CloseIcon from '@mui/icons-material/Close';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import MenuIcon from '@mui/icons-material/Menu';
-import TuneIcon from '@mui/icons-material/Tune';
-import AppsIcon from '@mui/icons-material/Apps';
 import SettingsIcon from '@mui/icons-material/Settings';
 import debounce from 'lodash/debounce';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -104,8 +98,8 @@ const InventoryList: React.FC = () => {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [supplierFilter, setSupplierFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [sortField, setSortField] = useState<keyof InventoryItem>('currentStock');
   const [dialogState, setDialogState] = useState({
@@ -114,7 +108,7 @@ const InventoryList: React.FC = () => {
     bulkUpload: false,
     manageOperations: false
   });
-  const [catalogFilter, setCatalogFilter] = useState('');
+  const [catalogFilter, setCatalogFilter] = useState<string[]>([]);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
   const [showBulkUploadDialog, setShowBulkUploadDialog] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -149,17 +143,21 @@ const InventoryList: React.FC = () => {
       );
     }
 
-    if (supplierFilter) {
-      filtered = filtered.filter(item => item.supplier === supplierFilter);
-    }
-
-    if (categoryFilter) {
-      filtered = filtered.filter(item => item.category === categoryFilter);
-    }
-
-    if (catalogFilter) {
+    if (supplierFilter.length > 0) {
       filtered = filtered.filter(item => 
-        item.catalogs?.includes(catalogFilter)
+        item.supplier && supplierFilter.includes(item.supplier)
+      );
+    }
+
+    if (categoryFilter.length > 0) {
+      filtered = filtered.filter(item => 
+        item.category && categoryFilter.includes(item.category)
+      );
+    }
+
+    if (catalogFilter.length > 0) {
+      filtered = filtered.filter(item => 
+        item.catalogs?.some(catalog => catalogFilter.includes(catalog))
       );
     }
 
@@ -398,7 +396,7 @@ const InventoryList: React.FC = () => {
           <FormControl key={label} variant="outlined" size="small">
             <InputLabel 
               sx={{ 
-                color: value ? '#1976d2' : 'inherit',
+                color: value.length > 0 ? '#1976d2' : 'inherit',
                 '&.Mui-focused': {
                   color: '#1976d2'
                 }
@@ -407,13 +405,15 @@ const InventoryList: React.FC = () => {
               {label}
             </InputLabel>
             <Select
+              multiple
               value={value}
-              onChange={(e) => setter(e.target.value)}
-              label={label}
+              onChange={(e) => setter(e.target.value as string[])}
+              input={<OutlinedInput label={label} />}
+              renderValue={(selected) => selected.length > 0 ? `${selected.length} selected` : `All ${label}s`}
               sx={{
                 borderRadius: 2,
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: value ? '#1976d2' : theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                  borderColor: value.length > 0 ? '#1976d2' : theme => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
                   borderColor: '#1976d2'
@@ -421,14 +421,9 @@ const InventoryList: React.FC = () => {
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                   borderColor: '#1976d2'
                 },
-                bgcolor: value ? theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)' : 'transparent'
+                bgcolor: value.length > 0 ? theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(25, 118, 210, 0.04)' : 'transparent'
               }}
             >
-              <MenuItem value="">
-                <Typography sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
-                  All {label}s
-                </Typography>
-              </MenuItem>
               {options.map(option => (
                 <MenuItem 
                   key={option} 
@@ -436,16 +431,11 @@ const InventoryList: React.FC = () => {
                   sx={{
                     borderRadius: 1,
                     mx: 0.5,
-                    my: 0.25,
-                    '&.Mui-selected': {
-                      bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.15)' : 'rgba(25, 118, 210, 0.08)',
-                      '&:hover': {
-                        bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.25)' : 'rgba(25, 118, 210, 0.12)'
-                      }
-                    }
+                    my: 0.25
                   }}
                 >
-                  {option}
+                  <Checkbox checked={value.includes(option || '')} />
+                  <ListItemText primary={option} />
                 </MenuItem>
               ))}
             </Select>
@@ -456,7 +446,7 @@ const InventoryList: React.FC = () => {
   );
 
   const ActiveFilters = () => {
-    const hasActiveFilters = supplierFilter || categoryFilter || catalogFilter;
+    const hasActiveFilters = supplierFilter.length > 0 || categoryFilter.length > 0 || catalogFilter.length > 0;
 
     if (!hasActiveFilters) return null;
 
@@ -472,39 +462,42 @@ const InventoryList: React.FC = () => {
           alignItems: 'flex-end'
         }}
       >
-        {supplierFilter && (
+        {supplierFilter.map(supplier => (
           <Chip
-            label={`Supplier: ${supplierFilter}`}
-            onDelete={() => setSupplierFilter('')}
+            key={supplier}
+            label={`Supplier: ${supplier}`}
+            onDelete={() => setSupplierFilter(prev => prev.filter(s => s !== supplier))}
             size="small"
             sx={{ 
               bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
               '& .MuiChip-label': { px: 1 }
             }}
           />
-        )}
-        {categoryFilter && (
+        ))}
+        {categoryFilter.map(category => (
           <Chip
-            label={`Category: ${categoryFilter}`}
-            onDelete={() => setCategoryFilter('')}
+            key={category}
+            label={`Category: ${category}`}
+            onDelete={() => setCategoryFilter(prev => prev.filter(c => c !== category))}
             size="small"
             sx={{ 
               bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
               '& .MuiChip-label': { px: 1 }
             }}
           />
-        )}
-        {catalogFilter && (
+        ))}
+        {catalogFilter.map(catalog => (
           <Chip
-            label={`Catalog: ${catalogFilter}`}
-            onDelete={() => setCatalogFilter('')}
+            key={catalog}
+            label={`Catalog: ${catalog}`}
+            onDelete={() => setCatalogFilter(prev => prev.filter(c => c !== catalog))}
             size="small"
             sx={{ 
               bgcolor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
               '& .MuiChip-label': { px: 1 }
             }}
           />
-        )}
+        ))}
       </Box>
     );
   };
@@ -689,7 +682,7 @@ const InventoryList: React.FC = () => {
             )}
           </Box>
           
-          {(searchQuery || supplierFilter || categoryFilter || catalogFilter) && (
+          {(searchQuery || supplierFilter.length > 0 || categoryFilter.length > 0 || catalogFilter.length > 0) && (
             <Box sx={{ 
               display: 'flex', 
               gap: 0.5,
@@ -701,10 +694,11 @@ const InventoryList: React.FC = () => {
                 display: 'none'
               }
             }}>
-              {supplierFilter && (
+              {supplierFilter.map(supplier => (
                 <Chip
-                  label={`${supplierFilter}`}
-                  onDelete={() => setSupplierFilter('')}
+                  key={supplier}
+                  label={supplier}
+                  onDelete={() => setSupplierFilter(prev => prev.filter(s => s !== supplier))}
                   size="small"
                   sx={{ 
                     bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.08)',
@@ -712,11 +706,12 @@ const InventoryList: React.FC = () => {
                     height: 24
                   }}
                 />
-              )}
-              {categoryFilter && (
+              ))}
+              {categoryFilter.map(category => (
                 <Chip
-                  label={`${categoryFilter}`}
-                  onDelete={() => setCategoryFilter('')}
+                  key={category}
+                  label={category}
+                  onDelete={() => setCategoryFilter(prev => prev.filter(c => c !== category))}
                   size="small"
                   sx={{ 
                     bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.08)',
@@ -724,11 +719,12 @@ const InventoryList: React.FC = () => {
                     height: 24
                   }}
                 />
-              )}
-              {catalogFilter && (
+              ))}
+              {catalogFilter.map(catalog => (
                 <Chip
-                  label={`${catalogFilter}`}
-                  onDelete={() => setCatalogFilter('')}
+                  key={catalog}
+                  label={catalog}
+                  onDelete={() => setCatalogFilter(prev => prev.filter(c => c !== catalog))}
                   size="small"
                   sx={{ 
                     bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.12)' : 'rgba(25, 118, 210, 0.08)',
@@ -736,7 +732,7 @@ const InventoryList: React.FC = () => {
                     height: 24
                   }}
                 />
-              )}
+              ))}
             </Box>
           )}
         </Box>
@@ -813,16 +809,20 @@ const InventoryList: React.FC = () => {
                 <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
                   <InputLabel>Supplier</InputLabel>
                   <Select
+                    multiple
                     value={supplierFilter}
-                    onChange={(e) => setSupplierFilter(e.target.value)}
-                    label="Supplier"
+                    onChange={(e) => setSupplierFilter(e.target.value as string[])}
+                    input={<OutlinedInput label="Supplier" />}
+                    renderValue={(selected) => selected.length > 0 ? `${selected.length} selected` : 'All'}
                   >
-                    <MenuItem value="">All</MenuItem>
                     {Array.from(new Set(inventory.map(item => item.supplier)))
                       .filter(Boolean)
                       .sort()
                       .map(supplier => (
-                        <MenuItem key={supplier} value={supplier}>{supplier}</MenuItem>
+                        <MenuItem key={supplier} value={supplier}>
+                          <Checkbox checked={supplierFilter.includes(supplier || '')} />
+                          <ListItemText primary={supplier} />
+                        </MenuItem>
                       ))
                     }
                   </Select>
@@ -831,18 +831,40 @@ const InventoryList: React.FC = () => {
                 <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
                   <InputLabel>Category</InputLabel>
                   <Select
+                    multiple
                     value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    label="Category"
+                    onChange={(e) => setCategoryFilter(e.target.value as string[])}
+                    input={<OutlinedInput label="Category" />}
+                    renderValue={(selected) => selected.length > 0 ? `${selected.length} selected` : 'All'}
                   >
-                    <MenuItem value="">All</MenuItem>
                     {Array.from(new Set(inventory.map(item => item.category)))
                       .filter(Boolean)
                       .sort()
                       .map(category => (
-                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                        <MenuItem key={category} value={category}>
+                          <Checkbox checked={categoryFilter.includes(category || '')} />
+                          <ListItemText primary={category} />
+                        </MenuItem>
                       ))
                     }
+                  </Select>
+                </FormControl>
+
+                <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
+                  <InputLabel>Catalog</InputLabel>
+                  <Select
+                    multiple
+                    value={catalogFilter}
+                    onChange={(e) => setCatalogFilter(e.target.value as string[])}
+                    input={<OutlinedInput label="Catalog" />}
+                    renderValue={(selected) => selected.length > 0 ? `${selected.length} selected` : 'All'}
+                  >
+                    {uniqueCatalogs.map(catalog => (
+                      <MenuItem key={catalog} value={catalog}>
+                        <Checkbox checked={catalogFilter.includes(catalog)} />
+                        <ListItemText primary={catalog} />
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
 
