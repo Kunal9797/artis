@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Contact } from '../models';
+import { ContactStatus } from '../models/Contact';
 
 const router = Router();
 
@@ -66,7 +67,7 @@ router.post('/wix-form', async (req: Request, res: Response) => {
       address: address || '',
       query: message || '',
       source: 'wix_webhook',
-      status: 'NEW',
+      status: ContactStatus.NEW,
       isNew: true,
       externalId: submissionId || contactId // Store Wix IDs for reference
     });
