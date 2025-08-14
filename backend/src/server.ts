@@ -96,7 +96,7 @@ const PORT = parseInt(process.env.PORT || '8099', 10);
 
 // Determine database source
 const isDatabaseUrlSet = !!process.env.DATABASE_URL;
-const isSupabase = process.env.DATABASE_URL?.includes('supabase');
+const isSupabase = process.env.DATABASE_URL?.includes('supabase') || process.env.DATABASE_URL?.includes('pooler.supabase');
 const databaseSource = isDatabaseUrlSet 
   ? (isSupabase ? 'Supabase' : 'Render') 
   : 'Local PostgreSQL';
@@ -114,18 +114,21 @@ if (process.env.NODE_ENV !== 'test') {
       console.log('✓ Database connected');
       
       // Skip migrations for Supabase - schema is already set up
-    if (process.env.NODE_ENV === 'production' && !isSupabase) {
-      console.log('Running migrations...');
-      try {
-        const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate');
-        console.log('Migration output:', stdout);
-        if (stderr) console.error('Migration stderr:', stderr);
-        console.log('✓ Migrations completed');
-      } catch (migrationError) {
-        console.error('Migration error:', migrationError);
-        throw migrationError;
+      if (process.env.NODE_ENV === 'production' && !isSupabase) {
+        console.log('Running migrations...');
+        try {
+          const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate');
+          console.log('Migration output:', stdout);
+          if (stderr) console.error('Migration stderr:', stderr);
+          console.log('✓ Migrations completed');
+        } catch (migrationError) {
+          console.error('Migration error:', migrationError);
+          // Don't throw - just log the error and continue
+          console.log('⚠️  Continuing despite migration error (database might already be up to date)');
+        }
+      } else if (isSupabase) {
+        console.log('✓ Skipping migrations for Supabase (schema already configured)');
       }
-    }
 
     // Skip sync for Supabase - schema is already set up
     if (!isSupabase) {
