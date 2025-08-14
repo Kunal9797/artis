@@ -5,6 +5,8 @@ export interface Distributor {
   state: string;
   phoneNumber: string;
   catalogs: string[];
+  latitude?: number;
+  longitude?: number;
   coordinates?: {
     lat: number;
     lng: number;

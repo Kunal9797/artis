@@ -3,6 +3,7 @@ import {
   Box,
   Typography,
   Container,
+  Grid,
 } from '@mui/material';
 import { useTheme } from '../context/ThemeContext';
 import QuickStats from './Dashboard/QuickStats';
@@ -12,6 +13,7 @@ import { InventoryItem } from './Inventory/InventoryList';
 import { Distributor } from '../types/distributor';
 import { useAuth } from '../context/AuthContext';
 import NavigationMenu from './NavigationMenu';
+import NewContactsWidget from './Contacts/NewContactsWidget';
 
 interface DashboardHomeProps {
   setCurrentPage: (page: string) => void;
@@ -112,6 +114,12 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ setCurrentPage }) => {
             distributors={distributors}
           />
         </Box>
+
+        <Grid container spacing={3} sx={{ mt: 2 }}>
+          <Grid item xs={12} md={4}>
+            <NewContactsWidget setCurrentPage={setCurrentPage} />
+          </Grid>
+        </Grid>
       </Container>
     </Box>
   );

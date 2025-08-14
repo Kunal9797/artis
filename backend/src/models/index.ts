@@ -9,6 +9,7 @@ import Transaction from './Transaction';
 import BulkOperation from './BulkOperation';
 import AuditLog from './AuditLog';
 import SyncHistory from './SyncHistory';
+import Contact from './Contact';
 
 export {
   User,
@@ -21,5 +22,6 @@ export {
   Transaction,
   BulkOperation,
   AuditLog,
-  SyncHistory
+  SyncHistory,
+  Contact
 }; 

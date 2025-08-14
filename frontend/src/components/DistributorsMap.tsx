@@ -422,7 +422,16 @@ const DistributorsMap: React.FC = () => {
       distributors.forEach(distributor => {
         const key = `${distributor.city}-${distributor.state}`;
         
-        // First check if coordinates exist in distributor object
+        // First check if latitude and longitude exist in distributor object
+        if (distributor.latitude && distributor.longitude) {
+          newLocations.set(key, {
+            lat: distributor.latitude,
+            lng: distributor.longitude
+          });
+          return;
+        }
+        
+        // Then check if coordinates exist in distributor object (legacy support)
         if (distributor.coordinates) {
           newLocations.set(key, distributor.coordinates);
           return;

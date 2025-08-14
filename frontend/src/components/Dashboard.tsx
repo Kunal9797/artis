@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   AppBar,
@@ -33,14 +34,31 @@ import SalesTeamManagement from './SalesTeamManagement';
 import LeadManagement from './Leads/LeadManagement';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import SheetsSyncSimple from './GoogleSheets/SheetsSyncSimple';
+import ContactList from './Contacts/ContactList';
+import ContactDetails from './Contacts/ContactDetails';
+import { Routes, Route } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState('home');
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
+  
+  // Listen for navigation events from child components
+  useEffect(() => {
+    const handleNavigateEvent = (event: CustomEvent) => {
+      setCurrentPage(event.detail);
+    };
+    
+    window.addEventListener('navigate-to-page', handleNavigateEvent as EventListener);
+    
+    return () => {
+      window.removeEventListener('navigate-to-page', handleNavigateEvent as EventListener);
+    };
+  }, []);
 
   const handlePageClick = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget);
@@ -77,6 +95,8 @@ const Dashboard: React.FC = () => {
         return 'Lead Management';
       case 'sheets':
         return 'Google Sheets Sync';
+      case 'contacts':
+        return 'Contacts';
       default: 
         return 'Dashboard';
     }
@@ -88,6 +108,7 @@ const Dashboard: React.FC = () => {
     { label: 'Orders', value: 'orders' },
     { label: 'Inventory', value: 'inventory' },
     { label: 'Distributors', value: 'distributors' },
+    { label: 'Contacts', value: 'contacts' },
     { label: 'User Management', value: 'users', adminOnly: true },
     { label: 'Sales Team', value: 'salesTeam', adminOnly: true },
     { label: 'Lead Management', value: 'leads', adminOnly: true },
@@ -116,6 +137,15 @@ const Dashboard: React.FC = () => {
         return isAdmin() ? <LeadManagement /> : null;
       case 'sheets':
         return isAdmin() ? <SheetsSyncSimple /> : null;
+      case 'contacts':
+        return selectedContactId ? (
+          <ContactDetails 
+            contactId={selectedContactId} 
+            onBack={() => setSelectedContactId(null)} 
+          />
+        ) : (
+          <ContactList onViewContact={setSelectedContactId} />
+        );
       default:
         return <DashboardHome setCurrentPage={setCurrentPage} />;
     }

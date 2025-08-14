@@ -12,6 +12,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import CategoryIcon from '@mui/icons-material/Category';
 import InfoIcon from '@mui/icons-material/Info';
 import PeopleIcon from '@mui/icons-material/People';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { useTheme } from '../context/ThemeContext';
 
 interface NavigationItem {
@@ -86,6 +87,15 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({ setCurrentPage }) => {
       subtitle: "Manage users",
       highlight: true,
       onClick: () => setCurrentPage('users')
+    },
+    {
+      title: "Leads",
+      icon: <PersonAddIcon />,
+      page: 'contacts',
+      subtitle: "Form submissions",
+      highlight: true,
+      isNew: true,
+      onClick: () => setCurrentPage('contacts')
     }
   ];
 

@@ -1,7 +1,7 @@
 import { google, sheets_v4 } from 'googleapis';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
-import { Product, Transaction, SyncHistory } from '../models';
+import { Product, Transaction, SyncHistory, Contact } from '../models';
 import { Op, QueryTypes } from 'sequelize';
 import sequelize from '../config/sequelize';
 import { v4 as uuidv4 } from 'uuid';
@@ -885,7 +885,8 @@ export class SheetsManagerOptimizedService {
       consumption: 0,
       purchases: 0,
       corrections: 0,
-      initialStock: 0
+      initialStock: 0,
+      contacts: 0
     };
 
     try {
@@ -930,6 +931,9 @@ export class SheetsManagerOptimizedService {
           row[0] && row[1] && !row[0].includes('Instructions:')
         ).length;
       }
+
+      // Check contacts sheet for pending count
+      summary.contacts = await this.getPendingContactsCount();
 
     } catch (error: any) {
       // Error getting pending summary
@@ -1151,6 +1155,165 @@ export class SheetsManagerOptimizedService {
     });
 
     // Initial Stock sheet ready
+  }
+
+  /**
+   * Sync contacts from Wix Google Sheet
+   */
+  async syncContacts(): Promise<{ added: number; skipped: number; errors: string[]; warnings: string[] }> {
+    console.log('Starting contact sync from Wix sheet...');
+    
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    let added = 0;
+    let skipped = 0;
+    
+    const syncBatchId = this.generateSyncBatchId('contacts');
+    
+    try {
+      // Fetch data from the contacts sheet
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: process.env.GOOGLE_SHEETS_CONTACTS_ID!,
+        range: 'A2:F', // Skip header row, get all data rows
+      });
+      
+      const rows = response.data.values || [];
+      
+      if (rows.length === 0) {
+        console.log('No contacts to sync');
+        return { added: 0, skipped: 0, errors: [], warnings: [] };
+      }
+      
+      console.log(`Found ${rows.length} potential contacts to sync`);
+      
+      // Process contacts in batches
+      const batchSize = 50;
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, Math.min(i + batchSize, rows.length));
+        
+        for (const row of batch) {
+          const [submissionTime, name, phone, interestedIn, address, query] = row;
+          
+          // Skip empty rows
+          if (!submissionTime || !name || !phone) {
+            skipped++;
+            continue;
+          }
+          
+          try {
+            // Parse submission time (assuming format like "2025-01-14 10:30:00")
+            let parsedDate: Date;
+            if (submissionTime.includes('/')) {
+              // Handle MM/DD/YYYY format
+              const [month, day, year] = submissionTime.split(' ')[0].split('/');
+              const time = submissionTime.split(' ')[1] || '00:00:00';
+              parsedDate = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${time}`);
+            } else if (submissionTime.includes('-')) {
+              // Handle YYYY-MM-DD format
+              parsedDate = new Date(submissionTime);
+            } else {
+              // Try direct parsing
+              parsedDate = new Date(submissionTime);
+            }
+            
+            if (isNaN(parsedDate.getTime())) {
+              warnings.push(`Invalid date format for contact ${name}: ${submissionTime}`);
+              parsedDate = new Date(); // Use current date as fallback
+            }
+            
+            // Clean phone number (remove spaces, dashes, etc.)
+            const cleanPhone = phone.toString().replace(/[\s\-\(\)]/g, '');
+            
+            // Check if contact already exists
+            const existingContact = await Contact.findOne({
+              where: { 
+                phone: cleanPhone,
+                source: 'wix'
+              }
+            });
+            
+            if (existingContact) {
+              skipped++;
+              continue;
+            }
+            
+            // Create new contact
+            await Contact.create({
+              submissionTime: parsedDate,
+              name: name.trim(),
+              phone: cleanPhone,
+              interestedIn: interestedIn || null,
+              address: address || null,
+              query: query || null,
+              source: 'wix',
+              syncBatchId,
+              isNew: true
+            });
+            
+            added++;
+            
+          } catch (error: any) {
+            errors.push(`Error processing contact ${name}: ${error.message}`);
+          }
+        }
+      }
+      
+      // Create sync history record
+      await this.createSyncHistory(
+        syncBatchId,
+        'contacts' as any, // We'll need to update the type definition
+        added,
+        errors,
+        warnings,
+        { totalRows: rows.length, skipped }
+      );
+      
+      console.log(`Contact sync completed: ${added} added, ${skipped} skipped`);
+      
+    } catch (error: any) {
+      console.error('Error syncing contacts:', error);
+      errors.push(`Sync failed: ${error.message}`);
+    }
+    
+    return { added, skipped, errors, warnings };
+  }
+
+  /**
+   * Get pending contacts count
+   */
+  async getPendingContactsCount(): Promise<number> {
+    try {
+      const response = await this.sheets.spreadsheets.values.get({
+        spreadsheetId: process.env.GOOGLE_SHEETS_CONTACTS_ID!,
+        range: 'A2:C', // Just get minimal data to count
+      });
+      
+      const rows = response.data.values || [];
+      let pendingCount = 0;
+      
+      for (const row of rows) {
+        const [submissionTime, name, phone] = row;
+        if (!submissionTime || !name || !phone) continue;
+        
+        const cleanPhone = phone.toString().replace(/[\s\-\(\)]/g, '');
+        
+        // Check if already exists
+        const exists = await Contact.findOne({
+          where: { 
+            phone: cleanPhone,
+            source: 'wix'
+          }
+        });
+        
+        if (!exists) pendingCount++;
+      }
+      
+      return pendingCount;
+      
+    } catch (error) {
+      console.error('Error getting pending contacts count:', error);
+      return 0;
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import Product from './Product';
 import Transaction from './Transaction';
-import { Lead, User, SalesTeam, BulkOperation, SyncHistory } from './index';
+import { Lead, User, SalesTeam, BulkOperation, SyncHistory, Contact } from './index';
 
 export const initializeAssociations = () => {
   Product.hasMany(Transaction, {
@@ -66,5 +66,16 @@ export const initializeAssociations = () => {
     foreignKey: 'syncBatchId',
     targetKey: 'syncBatchId',
     as: 'syncHistory'
+  });
+
+  // Contact associations
+  Contact.belongsTo(SalesTeam, {
+    foreignKey: 'assignedTo',
+    as: 'salesTeam'
+  });
+
+  SalesTeam.hasMany(Contact, {
+    foreignKey: 'assignedTo',
+    as: 'contacts'
   });
 }; 
