@@ -12,28 +12,39 @@ router.post('/wix-form', async (req: Request, res: Response) => {
   try {
     console.log('Received Wix webhook:', JSON.stringify(req.body, null, 2));
     
+    // Extract the actual data from the nested structure
+    const webhookData = req.body.data || req.body;
+    
     // Extract form data from the Wix webhook payload
     const {
       submissionTime,
       submissionId,
       formName,
       contactId,
+      contact,
+      submissions,
       // Wix sends field data with "field:" prefix
       'field:full_name': fullName,
       'field:phone_6a9f': phone,
       'field:address_7898': address,
       'field:interested_in': interestedIn,
       'field:message': message
-    } = req.body;
+    } = webhookData;
+    
+    // Extract phone from contact object if available (more reliable)
+    const finalPhone = phone || contact?.phone || contact?.phones?.[0]?.e164Phone;
+    const finalAddress = address || contact?.address?.formattedAddress || contact?.addresses?.[0]?.address?.formattedAddress;
     
     // Validate required fields
-    if (!fullName || !phone) {
+    if (!fullName || !finalPhone) {
       console.error('Missing required fields. Received:', {
         fullName,
-        phone,
-        address,
+        finalPhone,
+        address: finalAddress,
         interestedIn,
-        message
+        message,
+        rawPhone: phone,
+        contactPhone: contact?.phone
       });
       return res.status(400).json({ 
         success: false, 
@@ -44,7 +55,7 @@ router.post('/wix-form', async (req: Request, res: Response) => {
     // Check if contact already exists (to prevent duplicates)
     const existingContact = await Contact.findOne({
       where: {
-        phone: phone,
+        phone: finalPhone,
         name: fullName
       }
     });
@@ -58,18 +69,30 @@ router.post('/wix-form', async (req: Request, res: Response) => {
       });
     }
     
+    // Store additional metadata in notes
+    const metadata = {
+      wixContactId: contactId || contact?.contactId,
+      submissionId: submissionId,
+      formName: formName,
+      formId: webhookData.formId,
+      metaSiteId: webhookData.context?.metaSiteId,
+      submittedAt: submissionTime,
+      phoneCountry: contact?.phones?.[0]?.countryCode
+    };
+    
     // Create the contact in the database
     const newContact = await Contact.create({
       submissionTime: submissionTime || new Date(),
       name: fullName,
-      phone: phone,
+      phone: finalPhone,
       interestedIn: interestedIn || '',
-      address: address || '',
+      address: finalAddress || '',
       query: message || '',
       source: 'wix_webhook',
       status: ContactStatus.NEW,
       isNew: true,
-      externalId: submissionId || contactId // Store Wix IDs for reference
+      externalId: submissionId || contactId, // Store Wix IDs for reference
+      notes: `[Webhook Metadata] ${JSON.stringify(metadata, null, 2)}`
     });
     
     console.log('Contact created from webhook:', {
