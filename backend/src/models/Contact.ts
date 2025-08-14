@@ -25,11 +25,17 @@ interface ContactAttributes {
   source: string;
   syncBatchId?: string;
   externalId?: string;
+  formId?: string;
+  formName?: string;
+  metaSiteId?: string;
+  phoneCountryCode?: string;
+  formattedPhone?: string;
+  metadata?: any;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'status' | 'isNew' | 'source' | 'externalId' | 'createdAt' | 'updatedAt'> {}
+interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'status' | 'isNew' | 'source' | 'externalId' | 'formId' | 'formName' | 'metaSiteId' | 'phoneCountryCode' | 'formattedPhone' | 'metadata' | 'createdAt' | 'updatedAt'> {}
 
 class Contact extends Model<ContactAttributes, ContactCreationAttributes> implements ContactAttributes {
   public id!: string;
@@ -46,6 +52,12 @@ class Contact extends Model<ContactAttributes, ContactCreationAttributes> implem
   public source!: string;
   public syncBatchId?: string;
   public externalId?: string;
+  public formId?: string;
+  public formName?: string;
+  public metaSiteId?: string;
+  public phoneCountryCode?: string;
+  public formattedPhone?: string;
+  public metadata?: any;
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -157,6 +169,31 @@ Contact.init(
       type: DataTypes.STRING,
       allowNull: true,
       comment: 'External ID from Wix or other sources',
+    },
+    formId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    formName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    metaSiteId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    phoneCountryCode: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    formattedPhone: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    metadata: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      comment: 'Additional metadata from webhook',
     },
   },
   {

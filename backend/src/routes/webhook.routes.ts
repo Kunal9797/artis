@@ -69,18 +69,21 @@ router.post('/wix-form', async (req: Request, res: Response) => {
       });
     }
     
-    // Store additional metadata in notes
+    // Store additional metadata
     const metadata = {
       wixContactId: contactId || contact?.contactId,
       submissionId: submissionId,
-      formName: formName,
-      formId: webhookData.formId,
-      metaSiteId: webhookData.context?.metaSiteId,
-      submittedAt: submissionTime,
-      phoneCountry: contact?.phones?.[0]?.countryCode
+      activationId: webhookData._context?.activation?.id,
+      configurationId: webhookData._context?.configuration?.id,
+      appId: webhookData._context?.app?.id,
+      actionId: webhookData._context?.action?.id,
+      triggerKey: webhookData._context?.trigger?.key,
+      contactCreatedDate: contact?.createdDate,
+      contactUpdatedDate: contact?.updatedDate,
+      submissionsLink: webhookData.submissionsLink
     };
     
-    // Create the contact in the database
+    // Create the contact in the database with all captured data
     const newContact = await Contact.create({
       submissionTime: submissionTime || new Date(),
       name: fullName,
@@ -91,8 +94,13 @@ router.post('/wix-form', async (req: Request, res: Response) => {
       source: 'wix_webhook',
       status: ContactStatus.NEW,
       isNew: true,
-      externalId: submissionId || contactId, // Store Wix IDs for reference
-      notes: `[Webhook Metadata] ${JSON.stringify(metadata, null, 2)}`
+      externalId: submissionId || contactId,
+      formId: webhookData.formId,
+      formName: formName || 'Unknown Form',
+      metaSiteId: webhookData.context?.metaSiteId || webhookData._context?.metaSiteId,
+      phoneCountryCode: contact?.phones?.[0]?.countryCode,
+      formattedPhone: contact?.phones?.[0]?.formattedPhone || phone,
+      metadata: metadata
     });
     
     console.log('Contact created from webhook:', {
