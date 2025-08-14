@@ -1224,11 +1224,11 @@ export class SheetsManagerOptimizedService {
             // Clean phone number (remove spaces, dashes, etc.)
             const cleanPhone = phone.toString().replace(/[\s\-\(\)]/g, '');
             
-            // Check if contact already exists
+            // Check if contact already exists (from any source)
             const existingContact = await Contact.findOne({
               where: { 
                 phone: cleanPhone,
-                source: 'wix'
+                name: name
               }
             });
             

@@ -54,6 +54,30 @@ const NewContactsWidget: React.FC<NewContactsWidgetProps> = ({ setCurrentPage })
     fetchNewContacts();
   }, []);
 
+  // Auto-sync every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!syncing) {
+        setSyncing(true);
+        try {
+          const response = await contactApi.syncContacts();
+          if (response.success && response.added > 0) {
+            // Only show message and refresh if new contacts were added
+            setSyncMessage(`${response.added} new lead${response.added > 1 ? 's' : ''} added`);
+            await fetchNewContacts();
+            setTimeout(() => setSyncMessage(null), 3000);
+          }
+        } catch (error) {
+          console.error('Auto-sync error:', error);
+        } finally {
+          setSyncing(false);
+        }
+      }
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [syncing]);
+
   const fetchNewContacts = async () => {
     setLoading(true);
     setError(null);

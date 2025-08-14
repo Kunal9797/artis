@@ -16,6 +16,7 @@ import salesRoutes from './routes/sales.routes';
 import statsRoutes from './routes/stats.routes';
 import sheetsRoutes from './routes/sheets.routes';
 import contactsRoutes from './routes/contacts.routes';
+import webhookRoutes from './routes/webhook.routes';
 import { auth } from './middleware/auth';
 
 const execAsync = promisify(exec);
@@ -40,6 +41,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Webhook routes (no auth required - Wix will call these directly)
+app.use('/webhook', webhookRoutes);
 
 // Add global auth middleware for /api routes
 app.use('/api', (req, res, next) => {

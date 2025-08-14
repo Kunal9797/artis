@@ -24,11 +24,12 @@ interface ContactAttributes {
   notes?: string;
   source: string;
   syncBatchId?: string;
+  externalId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'status' | 'isNew' | 'source' | 'createdAt' | 'updatedAt'> {}
+interface ContactCreationAttributes extends Optional<ContactAttributes, 'id' | 'status' | 'isNew' | 'source' | 'externalId' | 'createdAt' | 'updatedAt'> {}
 
 class Contact extends Model<ContactAttributes, ContactCreationAttributes> implements ContactAttributes {
   public id!: string;
@@ -44,6 +45,7 @@ class Contact extends Model<ContactAttributes, ContactCreationAttributes> implem
   public notes?: string;
   public source!: string;
   public syncBatchId?: string;
+  public externalId?: string;
 
   // Timestamps
   public readonly createdAt!: Date;
@@ -150,6 +152,11 @@ Contact.init(
     syncBatchId: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    externalId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'External ID from Wix or other sources',
     },
   },
   {
