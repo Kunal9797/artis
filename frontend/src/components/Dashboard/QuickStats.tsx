@@ -119,7 +119,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({ inventory, distributors = [] })
         );
       } else if (catalogDesignFilter === '1MM') {
         filtered = filtered.filter(item => 
-          item.catalogs?.some(catalog => catalog.includes('1MM'))
+          item.catalogs?.includes('Artis')
         );
       }
     }
