@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import inventoryRoutes from './routes/inventory.routes';
 import distributorRoutes from './routes/distributor.routes';
+import distributorOrdersRoutes from './routes/distributorOrders';
 import swaggerUi from 'swagger-ui-express';
 import specs from './config/swagger';
 import { exec } from 'child_process';
@@ -33,6 +34,7 @@ app.use(cors({
     'https://artis-rust.vercel.app',
     'https://artis-backend.onrender.com',
     'http://localhost:3000',
+    'http://localhost:3003',
     'http://localhost:8099'
   ],
   credentials: true,
@@ -73,6 +75,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/distributors', distributorRoutes);
+app.use('/api/distributor-orders', distributorOrdersRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/sheets', sheetsRoutes);

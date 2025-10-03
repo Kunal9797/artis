@@ -37,6 +37,7 @@ import SheetsSyncSimple from './GoogleSheets/SheetsSyncSimple';
 import ContactList from './Contacts/ContactList';
 import ContactDetails from './Contacts/ContactDetails';
 import { Routes, Route } from 'react-router-dom';
+import DistributorOrders from '../pages/DistributorOrders';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -75,18 +76,20 @@ const Dashboard: React.FC = () => {
 
   const getCurrentPageTitle = () => {
     switch (currentPage) {
-      case 'home': 
+      case 'home':
         return 'Dashboard';
-      case 'inventory': 
+      case 'inventory':
         return isMobile ? 'Inventory' : 'Inventory Management';
-      case 'catalog': 
+      case 'catalog':
         return isMobile ? 'Products' : 'Product Catalog';
-      case 'orders': 
+      case 'orders':
         return isMobile ? 'Orders' : 'Paper Orders';
-      case 'info': 
+      case 'info':
         return 'Information';
       case 'distributors':
         return 'Distributors';
+      case 'distributor-orders':
+        return isMobile ? 'Dist. Orders' : 'Distributor Orders';
       case 'users':
         return isMobile ? 'Users' : 'User Management';
       case 'salesTeam':
@@ -97,7 +100,7 @@ const Dashboard: React.FC = () => {
         return 'Google Sheets Sync';
       case 'contacts':
         return 'Contacts';
-      default: 
+      default:
         return 'Dashboard';
     }
   };
@@ -108,6 +111,7 @@ const Dashboard: React.FC = () => {
     { label: 'Orders', value: 'orders' },
     { label: 'Inventory', value: 'inventory' },
     { label: 'Distributors', value: 'distributors' },
+    { label: 'Distributor Orders', value: 'distributor-orders' },
     { label: 'Contacts', value: 'contacts' },
     { label: 'User Management', value: 'users', adminOnly: true },
     { label: 'Sales Team', value: 'salesTeam', adminOnly: true },
@@ -127,6 +131,8 @@ const Dashboard: React.FC = () => {
         return <InventoryList />;
       case 'distributors':
         return <DistributorsMap />;
+      case 'distributor-orders':
+        return <DistributorOrders />;
       case 'info':
         return <InfoPage />;
       case 'users':
@@ -139,9 +145,9 @@ const Dashboard: React.FC = () => {
         return isAdmin() ? <SheetsSyncSimple /> : null;
       case 'contacts':
         return selectedContactId ? (
-          <ContactDetails 
-            contactId={selectedContactId} 
-            onBack={() => setSelectedContactId(null)} 
+          <ContactDetails
+            contactId={selectedContactId}
+            onBack={() => setSelectedContactId(null)}
           />
         ) : (
           <ContactList onViewContact={setSelectedContactId} />
@@ -266,6 +272,8 @@ const Dashboard: React.FC = () => {
             <MenuItem onClick={() => handlePageChange('orders')}>Purchase Orders</MenuItem>
             <MenuItem onClick={() => handlePageChange('info')}>Information</MenuItem>
             <MenuItem onClick={() => handlePageChange('distributors')}>Distributors</MenuItem>
+            <MenuItem onClick={() => handlePageChange('distributor-orders')}>Distributor Orders</MenuItem>
+            <MenuItem onClick={() => handlePageChange('contacts')}>Contacts</MenuItem>
             {isAdmin() && (
               <MenuItem onClick={() => handlePageChange('users')}>User Management</MenuItem>
             )}

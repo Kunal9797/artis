@@ -1,0 +1,153 @@
+============================================================
+DISTRIBUTOR ORDERS CLEANING REPORT
+============================================================
+Processed on: 9/29/2025, 3:19:52 PM
+Input file: /Users/kunal/Downloads/DECORATIVE PARTY (1).xlsx
+
+PROCESSING SUMMARY
+------------------------------------------------------------
+Total records processed: 845
+Valid orders: 458
+Invalid/skipped rows: 66
+Total warnings: 0
+Total errors: 66
+
+STATISTICS
+------------------------------------------------------------
+Total pieces: 460,100
+Average order size: 1,005 pieces
+
+Thickness Distribution:
+  .72/.82/.92 mm: 65,661 pieces (14.3%)
+  0.8 mm: 334,227 pieces (72.6%)
+  1 mm: 60,212 pieces (13.1%)
+
+TOP 10 DISTRIBUTORS BY VOLUME
+------------------------------------------------------------
+1. Mahadev Trading Co
+   Total: 85,449 pieces
+   Orders: 30
+   Locations: Delhi
+
+2. Mittal Traders
+   Total: 42,151 pieces
+   Orders: 22
+   Locations: Jaipur
+
+3. Kailash Sales
+   Total: 27,950 pieces
+   Orders: 8
+   Locations: Ahmedabad
+
+4. Innovative World
+   Total: 27,372 pieces
+   Orders: 25
+   Locations: Kanpur
+
+5. Mica Sales
+   Total: 16,728 pieces
+   Orders: 19
+   Locations: Gurgaon
+
+6. Gopalji Laminates
+   Total: 15,696 pieces
+   Orders: 40
+   Locations: Dehradun
+
+7. Shri Mahalaxmi
+   Total: 13,966 pieces
+   Orders: 4
+   Locations: Nagpur
+
+8. Rajkot Mill store
+   Total: 13,172 pieces
+   Orders: 14
+   Locations: Patiala
+
+9. New Pyare Lal
+   Total: 12,208 pieces
+   Orders: 18
+   Locations: Chandigarh
+
+10. Pakeeza Ply
+   Total: 11,534 pieces
+   Orders: 4
+   Locations: Kashmir
+
+ERRORS
+------------------------------------------------------------
+Row 37: Invalid date format - Date
+Row 55: Invalid date format - Date
+Row 97: Invalid date format - Date
+Row 110: Invalid date format - Date
+Row 120: Invalid date format - Date
+Row 135: Invalid date format - Date
+Row 163: Invalid date format - Date
+Row 222: Invalid date format - Date
+Row 275: Invalid date format - Date
+Row 277: Invalid date format - APRIL
+Row 278: Invalid date format - MAY
+Row 279: Invalid date format - JUNE
+Row 280: Invalid date format - JULY
+Row 281: Invalid date format - AUG
+Row 282: Invalid date format - SEP
+Row 284: Invalid date format - APRIL
+Row 285: Invalid date format - MAY
+Row 286: Invalid date format - JUNE
+Row 287: Invalid date format - JULY
+Row 288: Invalid date format - SEP
+Row 290: Invalid date format - APRIL
+Row 291: Invalid date format - MAY
+Row 292: Invalid date format - JUNE
+Row 293: Invalid date format - AUG
+Row 294: Invalid date format - SEP
+Row 298: Invalid date format - Date
+Row 311: Invalid date format - Date
+Row 329: Invalid date format - Date
+Row 347: Invalid date format - Date
+Row 361: Invalid date format - Date
+Row 369: Invalid date format - Date
+Row 383: Invalid date format - Date
+Row 396: Invalid date format - Date
+Row 407: Invalid date format - Date
+Row 417: Invalid date format - Date
+Row 437: Invalid date format - Date
+Row 449: Invalid date format - Date
+Row 463: Invalid date format - Date
+Row 475: Invalid date format - Date
+Row 481: Invalid date format - Date
+Row 495: Invalid date format - Date
+Row 501: Invalid date format - Date
+Row 508: Invalid date format - Date
+Row 514: Invalid date format - Date
+Row 520: Invalid date format - Date
+Row 529: Invalid date format - Date
+Row 535: Invalid date format - Date
+Row 549: Invalid date format - Date
+Row 559: Invalid date format - Date
+Row 567: Invalid date format - Date
+Row 574: Invalid date format - Date
+Row 581: Invalid date format - Date
+Row 590: Invalid date format - Date
+Row 603: Invalid date format - Date
+Row 618: Invalid date format - Date
+Row 663: Invalid date format - Date
+Row 686: Invalid date format - Date
+Row 693: Invalid date format - Date
+Row 702: Invalid date format - Date
+Row 716: Invalid date format - Date
+Row 723: Invalid date format - Date
+Row 732: Invalid date format - Date
+Row 760: Invalid date format - Date
+Row 770: Invalid date format - Date
+Row 793: Invalid date format - Date
+Row 824: Invalid date format - Date
+
+OUTPUT FILES
+------------------------------------------------------------
+Cleaned data: /Users/kunal/.cursor-tutor/artis/backend/output/distributor_orders_cleaned.xlsx
+Validation report: /Users/kunal/.cursor-tutor/artis/backend/output/distributor_orders_validation_report.txt
+
+============================================================
+Processing completed successfully!
+============================================================
