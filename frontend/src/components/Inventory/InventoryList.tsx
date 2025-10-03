@@ -57,6 +57,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 import debounce from 'lodash/debounce';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
+import * as XLSX from 'xlsx';
 
 export interface InventoryItem {
   id: string;
@@ -242,6 +244,30 @@ const InventoryList: React.FC = () => {
     setDialogState(prev => ({ ...prev, details: true }));
   };
 
+  const handleExportStock = () => {
+    // Prepare data with only Artis Code and Current Stock
+    const exportData = inventory.map(item => ({
+      'Artis Code': item.artisCodes.join(', '),
+      'Current Stock': item.currentStock
+    }));
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportData);
+
+    // Set column widths
+    ws['!cols'] = [
+      { width: 20 },  // Artis Code
+      { width: 15 }   // Current Stock
+    ];
+
+    // Generate filename with current date
+    const fileName = `stock-export-${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Stock');
+    XLSX.writeFile(wb, fileName);
+  };
+
   const renderProductCodes = (artisCodes: string[]) => (
     <Box>
       {artisCodes.map((code, index) => (
@@ -272,23 +298,28 @@ const InventoryList: React.FC = () => {
   const effectiveViewMode = isMobile ? 'grid' : viewMode;
 
   const actions = [
-    { 
-      icon: <SearchIcon />, 
+    {
+      icon: <SearchIcon />,
       name: 'Search',
       onClick: () => setShowMobileSearch(true)
     },
-    { 
+    {
       icon: <SortIcon />,
-      name: 'Sort', 
+      name: 'Sort',
       onClick: () => setShowMobileSort(true)
     },
-    { 
+    {
       icon: <FilterListIcon />,
       name: 'Filter',
       onClick: () => setShowMobileFilter(true)
     },
-    { 
-      icon: <DeleteIcon />, 
+    {
+      icon: <DownloadIcon />,
+      name: 'Export Stock',
+      onClick: handleExportStock
+    },
+    {
+      icon: <DeleteIcon />,
       name: 'Manage Operations',
       onClick: handleManageOperations
     },
@@ -757,6 +788,14 @@ const InventoryList: React.FC = () => {
                 onClick={() => setDialogState(prev => ({ ...prev, bulkUpload: true }))}
               >
                 Bulk Upload
+              </Button>
+              <Button
+                variant="outlined"
+                color="success"
+                startIcon={<DownloadIcon />}
+                onClick={handleExportStock}
+              >
+                Export Stock
               </Button>
               <Button
                 variant="outlined"
