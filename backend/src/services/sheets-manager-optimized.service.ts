@@ -916,8 +916,8 @@ export class SheetsManagerOptimizedService {
         range: 'Sheet1!A2:C10000',
       });
       const correctionRows = correctionsResponse.data.values || [];
-      summary.corrections = correctionRows.filter(row => 
-        row[0] && row[2] && !row[0].includes('Instructions:')
+      summary.corrections = correctionRows.filter(row =>
+        row[0] && row[1] && !row[0].includes('Instructions:')
       ).length;
 
       // Check initial stock sheet with large range
