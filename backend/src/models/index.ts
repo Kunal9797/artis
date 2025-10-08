@@ -11,6 +11,8 @@ import AuditLog from './AuditLog';
 import SyncHistory from './SyncHistory';
 import Contact from './Contact';
 import DistributorOrder from './DistributorOrder';
+import PurchaseOrder from './PurchaseOrder';
+import ConsumptionForecast from './ConsumptionForecast';
 
 export {
   User,
@@ -25,5 +27,7 @@ export {
   AuditLog,
   SyncHistory,
   Contact,
-  DistributorOrder
+  DistributorOrder,
+  PurchaseOrder,
+  ConsumptionForecast
 }; 

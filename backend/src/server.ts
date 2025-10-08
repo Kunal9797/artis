@@ -18,6 +18,7 @@ import statsRoutes from './routes/stats.routes';
 import sheetsRoutes from './routes/sheets.routes';
 import contactsRoutes from './routes/contacts.routes';
 import webhookRoutes from './routes/webhook.routes';
+import procurementRoutes from './routes/procurement';
 import { auth } from './middleware/auth';
 
 const execAsync = promisify(exec);
@@ -80,6 +81,7 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/sheets', sheetsRoutes);
 app.use('/api/contacts', contactsRoutes);
+app.use('/api/procurement', procurementRoutes);
 
 // Test route
 app.get('/api/test', (req: Request, res: Response) => {

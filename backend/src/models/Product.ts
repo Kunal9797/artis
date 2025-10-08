@@ -20,6 +20,15 @@ class Product extends Model {
   public deletedBy?: string;
   public deletionReason?: string;
 
+  // Procurement fields
+  public leadTimeDays?: number;
+  public safetyStockDays?: number;
+  public reorderPoint?: number;
+  public orderQuantity?: number;
+  public isImported?: boolean;
+  public lastOrderDate?: Date;
+  public nextReorderDate?: Date;
+
 }
 
 Product.init({
@@ -92,6 +101,45 @@ Product.init({
   deletionReason: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  // Procurement fields
+  leadTimeDays: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 10, // Default 10 days for domestic suppliers
+    comment: 'Lead time in days from order to delivery'
+  },
+  safetyStockDays: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 15, // Default 15 days of safety stock
+    comment: 'Safety stock in days of average consumption'
+  },
+  reorderPoint: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    comment: 'Stock level at which to reorder (kg)'
+  },
+  orderQuantity: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    comment: 'Optimal order quantity (kg)'
+  },
+  isImported: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'Whether this design is imported (longer lead times)'
+  },
+  lastOrderDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Date of last purchase order'
+  },
+  nextReorderDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Suggested next reorder date'
   }
 }, {
   sequelize,

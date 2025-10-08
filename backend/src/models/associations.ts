@@ -1,6 +1,6 @@
 import Product from './Product';
 import Transaction from './Transaction';
-import { Lead, User, SalesTeam, BulkOperation, SyncHistory, Contact } from './index';
+import { Lead, User, SalesTeam, BulkOperation, SyncHistory, Contact, PurchaseOrder, ConsumptionForecast } from './index';
 
 export const initializeAssociations = () => {
   Product.hasMany(Transaction, {
@@ -77,5 +77,41 @@ export const initializeAssociations = () => {
   SalesTeam.hasMany(Contact, {
     foreignKey: 'assignedTo',
     as: 'contacts'
+  });
+
+  // Procurement associations
+  Product.hasMany(PurchaseOrder, {
+    foreignKey: 'productId',
+    as: 'purchaseOrders'
+  });
+
+  Product.hasMany(ConsumptionForecast, {
+    foreignKey: 'productId',
+    as: 'forecasts'
+  });
+
+  PurchaseOrder.belongsTo(Product, {
+    foreignKey: 'productId',
+    as: 'product'
+  });
+
+  PurchaseOrder.belongsTo(User, {
+    foreignKey: 'createdBy',
+    as: 'creator'
+  });
+
+  PurchaseOrder.belongsTo(User, {
+    foreignKey: 'approvedBy',
+    as: 'approver'
+  });
+
+  ConsumptionForecast.belongsTo(Product, {
+    foreignKey: 'productId',
+    as: 'product'
+  });
+
+  ConsumptionForecast.belongsTo(User, {
+    foreignKey: 'createdBy',
+    as: 'creator'
   });
 }; 

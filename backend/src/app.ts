@@ -9,6 +9,7 @@ import distributorRoutes from './routes/distributor.routes';
 import salesRoutes from './routes/sales.routes';
 import contactsRoutes from './routes/contacts.routes';
 import sheetsRoutes from './routes/sheets.routes';
+import procurementRoutes from './routes/procurement';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 
 const app = express();
@@ -39,5 +40,6 @@ app.use('/api/distributors', distributorRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/sheets', sheetsRoutes);
+app.use('/api/procurement', procurementRoutes);
 
 export default app; 

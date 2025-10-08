@@ -38,6 +38,7 @@ import ContactList from './Contacts/ContactList';
 import ContactDetails from './Contacts/ContactDetails';
 import { Routes, Route } from 'react-router-dom';
 import DistributorOrders from '../pages/DistributorOrders';
+import ProcurementDashboard from './Procurement/ProcurementDashboard';
 
 const Dashboard: React.FC = () => {
   const { logout, isAdmin } = useAuth();
@@ -100,6 +101,8 @@ const Dashboard: React.FC = () => {
         return 'Google Sheets Sync';
       case 'contacts':
         return 'Contacts';
+      case 'procurement':
+        return isMobile ? 'Procurement' : 'Procurement Intelligence';
       default:
         return 'Dashboard';
     }
@@ -110,6 +113,7 @@ const Dashboard: React.FC = () => {
     { label: 'Products', value: 'catalog' },
     { label: 'Orders', value: 'orders' },
     { label: 'Inventory', value: 'inventory' },
+    { label: 'Procurement', value: 'procurement' },
     { label: 'Distributors', value: 'distributors' },
     { label: 'Distributor Orders', value: 'distributor-orders' },
     { label: 'Contacts', value: 'contacts' },
@@ -143,6 +147,8 @@ const Dashboard: React.FC = () => {
         return isAdmin() ? <LeadManagement /> : null;
       case 'sheets':
         return isAdmin() ? <SheetsSyncSimple /> : null;
+      case 'procurement':
+        return <ProcurementDashboard />;
       case 'contacts':
         return selectedContactId ? (
           <ContactDetails
@@ -270,6 +276,7 @@ const Dashboard: React.FC = () => {
             <MenuItem onClick={() => handlePageChange('inventory')}>Inventory Management</MenuItem>
             <MenuItem onClick={() => handlePageChange('catalog')}>Product Catalog</MenuItem>
             <MenuItem onClick={() => handlePageChange('orders')}>Purchase Orders</MenuItem>
+            <MenuItem onClick={() => handlePageChange('procurement')}>Procurement Intelligence</MenuItem>
             <MenuItem onClick={() => handlePageChange('info')}>Information</MenuItem>
             <MenuItem onClick={() => handlePageChange('distributors')}>Distributors</MenuItem>
             <MenuItem onClick={() => handlePageChange('distributor-orders')}>Distributor Orders</MenuItem>
