@@ -19,7 +19,6 @@ interface ContactAttributes {
   query?: string;
   status: ContactStatus;
   isNew: boolean;
-  assignedTo?: string;
   notes?: string;
   source: string;
   syncBatchId?: string;
@@ -46,7 +45,6 @@ class Contact extends Model<ContactAttributes, ContactCreationAttributes> implem
   public query?: string;
   public status!: ContactStatus;
   public isNew!: boolean;
-  public assignedTo?: string;
   public notes?: string;
   public source!: string;
   public syncBatchId?: string;
@@ -129,14 +127,6 @@ Contact.init(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
       allowNull: false,
-    },
-    assignedTo: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'SalesTeams',
-        key: 'id',
-      },
     },
     notes: {
       type: DataTypes.TEXT,
