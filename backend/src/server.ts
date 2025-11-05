@@ -33,6 +33,7 @@ export const app = express();
 app.use(cors({
   origin: [
     'https://artis-rust.vercel.app',
+    'https://inventory.artislaminates.com',  // NEW DOMAIN ADDED!
     'https://artis-backend.onrender.com',
     'http://localhost:3000',
     'http://localhost:3003',
