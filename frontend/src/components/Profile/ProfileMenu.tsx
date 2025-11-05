@@ -62,6 +62,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
 
   if (!user) return null;
 
+  const isDark = theme.palette.mode === 'dark';
+
   // MOBILE: Bottom Sheet Drawer
   if (isMobile) {
     return (
@@ -73,29 +75,20 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
           PaperProps={{
             sx: {
               borderRadius: '16px 16px 0 0',
-              maxHeight: '60vh'
+              maxHeight: '65vh',
+              bgcolor: isDark ? '#1e1e1e' : 'background.paper'
             }
           }}
         >
           {/* Drag Handle */}
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            pt: 1.5,
-            pb: 1
-          }}>
-            <Box sx={{
-              width: 40,
-              height: 4,
-              bgcolor: 'divider',
-              borderRadius: 2
-            }} />
+          <Box sx={{ display: 'flex', justifyContent: 'center', pt: 1.5, pb: 1 }}>
+            <Box sx={{ width: 40, height: 4, bgcolor: isDark ? 'rgba(255,255,255,0.3)' : 'divider', borderRadius: 2 }} />
           </Box>
 
           {/* User Info Header */}
           <Box sx={{ px: 3, py: 2.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.35rem', lineHeight: 1.1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.35rem', lineHeight: 1.1, color: isDark ? 'white' : 'text.primary' }}>
                 {user.firstName} {user.lastName}
               </Typography>
               <Chip
@@ -110,7 +103,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
                 }}
               />
             </Box>
-            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.9rem', mt: 0.5 }}>
+            <Typography variant="body2" sx={{ color: isDark ? 'rgba(255,255,255,0.6)' : 'text.secondary', fontSize: '0.9rem', mt: 0.5 }}>
               {user.email}
             </Typography>
           </Box>
@@ -127,22 +120,22 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
                 px: 2.5,
                 borderRadius: 2.5,
                 border: '2px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
+                borderColor: isDark ? 'rgba(25, 118, 210, 0.5)' : 'divider',
+                bgcolor: isDark ? 'rgba(25, 118, 210, 0.15)' : 'background.paper',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                boxShadow: isDark ? '0 2px 12px rgba(25, 118, 210, 0.25)' : '0 2px 4px rgba(0,0,0,0.05)',
                 '&:hover': {
                   borderColor: 'primary.main',
                   bgcolor: 'primary.main',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                  boxShadow: '0 4px 16px rgba(25, 118, 210, 0.5)',
                   '& .MuiSvgIcon-root': { color: 'white' },
                   '& .MuiTypography-root': { color: 'white' }
                 }
               }}
             >
-              <Edit sx={{ fontSize: 24, color: 'primary.main', transition: 'color 0.2s' }} />
-              <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, transition: 'color 0.2s' }}>
+              <Edit sx={{ fontSize: 24, color: isDark ? 'primary.light' : 'primary.main', transition: 'color 0.2s' }} />
+              <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: isDark ? 'white' : 'text.primary', transition: 'color 0.2s' }}>
                 Edit Profile
               </Typography>
             </Box>
@@ -157,22 +150,22 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
                 px: 2.5,
                 borderRadius: 2.5,
                 border: '2px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
+                borderColor: isDark ? 'rgba(237, 108, 2, 0.5)' : 'divider',
+                bgcolor: isDark ? 'rgba(237, 108, 2, 0.15)' : 'background.paper',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                boxShadow: isDark ? '0 2px 12px rgba(237, 108, 2, 0.25)' : '0 2px 4px rgba(0,0,0,0.05)',
                 '&:hover': {
                   borderColor: 'warning.main',
                   bgcolor: 'warning.main',
-                  boxShadow: '0 4px 12px rgba(237, 108, 2, 0.2)',
+                  boxShadow: '0 4px 16px rgba(237, 108, 2, 0.5)',
                   '& .MuiSvgIcon-root': { color: 'white' },
                   '& .MuiTypography-root': { color: 'white' }
                 }
               }}
             >
-              <Lock sx={{ fontSize: 24, color: 'warning.main', transition: 'color 0.2s' }} />
-              <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, transition: 'color 0.2s' }}>
+              <Lock sx={{ fontSize: 24, color: isDark ? 'warning.light' : 'warning.main', transition: 'color 0.2s' }} />
+              <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: isDark ? 'white' : 'text.primary', transition: 'color 0.2s' }}>
                 Change Password
               </Typography>
             </Box>
@@ -188,22 +181,22 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
                   px: 2.5,
                   borderRadius: 2.5,
                   border: '2px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper',
+                  borderColor: isDark ? 'rgba(46, 125, 50, 0.5)' : 'divider',
+                  bgcolor: isDark ? 'rgba(46, 125, 50, 0.15)' : 'background.paper',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  boxShadow: isDark ? '0 2px 12px rgba(46, 125, 50, 0.25)' : '0 2px 4px rgba(0,0,0,0.05)',
                   '&:hover': {
                     borderColor: 'success.main',
                     bgcolor: 'success.main',
-                    boxShadow: '0 4px 12px rgba(46, 125, 50, 0.2)',
+                    boxShadow: '0 4px 16px rgba(46, 125, 50, 0.5)',
                     '& .MuiSvgIcon-root': { color: 'white' },
                     '& .MuiTypography-root': { color: 'white' }
                   }
                 }}
               >
-                <PersonAdd sx={{ fontSize: 24, color: 'success.main', transition: 'color 0.2s' }} />
-                <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, transition: 'color 0.2s' }}>
+                <PersonAdd sx={{ fontSize: 24, color: isDark ? 'success.light' : 'success.main', transition: 'color 0.2s' }} />
+                <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: isDark ? 'white' : 'text.primary', transition: 'color 0.2s' }}>
                   Add New User
                 </Typography>
               </Box>
@@ -214,26 +207,24 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
               sx={{
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 2,
                 py: 2,
                 px: 2.5,
                 borderRadius: 2.5,
-                border: '2px solid',
-                borderColor: 'error.main',
-                bgcolor: 'background.paper',
+                bgcolor: 'error.main',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                boxShadow: isDark ? '0 2px 12px rgba(211, 47, 47, 0.5)' : '0 2px 8px rgba(211, 47, 47, 0.3)',
                 '&:hover': {
-                  bgcolor: 'error.main',
-                  boxShadow: '0 4px 12px rgba(211, 47, 47, 0.3)',
-                  '& .MuiSvgIcon-root': { color: 'white' },
-                  '& .MuiTypography-root': { color: 'white' }
+                  bgcolor: 'error.dark',
+                  boxShadow: '0 4px 16px rgba(211, 47, 47, 0.6)',
+                  transform: 'scale(1.02)'
                 }
               }}
             >
-              <Logout sx={{ fontSize: 24, color: 'error.main', transition: 'color 0.2s' }} />
-              <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: 'error.main', transition: 'color 0.2s' }}>
+              <Logout sx={{ fontSize: 24, color: 'white' }} />
+              <Typography sx={{ fontSize: '1.05rem', fontWeight: 600, color: 'white' }}>
                 Logout
               </Typography>
             </Box>
@@ -401,16 +392,16 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
               py: 1.25,
               px: 2,
               borderRadius: 1.5,
-              color: 'error.main',
+              bgcolor: 'error.main',
+              color: 'white',
               '&:hover': {
-                bgcolor: 'error.main',
-                color: 'white',
+                bgcolor: 'error.dark',
                 '& .MuiListItemIcon-root': { color: 'white' }
               }
             }}
           >
             <ListItemIcon sx={{ minWidth: 36 }}>
-              <Logout fontSize="small" sx={{ color: 'inherit' }} />
+              <Logout fontSize="small" sx={{ color: 'white' }} />
             </ListItemIcon>
             <ListItemText
               primary="Logout"
