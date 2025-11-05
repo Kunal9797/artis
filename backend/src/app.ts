@@ -16,7 +16,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://artis-rust.vercel.app', 'http://localhost:3000'],
+  origin: ['https://artis-rust.vercel.app', 'https://inventory.artislaminates.com', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
