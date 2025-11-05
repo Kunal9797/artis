@@ -5,9 +5,6 @@ import {
   getAllUsers,
   updateUser,
   deleteUser,
-  registerWithSalesTeam,
-  updateUserWithSalesTeam,
-  getSalesTeamMembers,
   validateToken
 } from '../controllers/auth.controller';
 import { adminAuth } from '../middleware/auth';
@@ -112,10 +109,11 @@ router.get('/validate', auth, validateToken);
 // Admin only routes
 router.get('/users', auth, adminAuth, getAllUsers);
 router.post('/register', auth, adminAuth, register);
-router.post('/register-with-sales-team', auth, adminAuth, registerWithSalesTeam);
+// Sales team routes removed - no longer needed
+// router.post('/register-with-sales-team', auth, adminAuth, registerWithSalesTeam);
 router.put('/users/:userId', auth, adminAuth, updateUser);
 router.delete('/users/:userId', auth, adminAuth, deleteUser);
-router.put('/users/:userId/with-sales-team', auth, adminAuth, updateUserWithSalesTeam);
-router.get('/sales-team-members', auth, getSalesTeamMembers);
+// router.put('/users/:userId/with-sales-team', auth, adminAuth, updateUserWithSalesTeam);
+// router.get('/sales-team-members', auth, getSalesTeamMembers);
 
 export default router; 

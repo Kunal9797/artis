@@ -14,7 +14,6 @@ import {
   Alert,
 } from '@mui/material';
 import { authApi } from '../../services/api';
-import { salesApi } from '../../services/salesApi';
 import { User, UserFormData, ROLE_LABELS } from '../../types/user';
 
 interface UserFormProps {
@@ -67,32 +66,7 @@ const UserForm: React.FC<UserFormProps> = ({ open, onClose, onSubmit, user }) =>
         ? await authApi.updateUser(user.id, formData)
         : await authApi.register(formData);
 
-      // Create sales team member in two cases:
-      // 1. New user with sales role
-      // 2. Existing user being updated to a sales role
-      const isSalesRole = ['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(formData.role);
-      const wasNotSalesRole = user && !['SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD'].includes(user.role);
-      
-      if (isSalesRole && (!user || wasNotSalesRole)) {
-        try {
-          const userId = user ? user.id : response.data.user.id;
-          console.log('Creating sales team member for:', userId);
-          await salesApi.createSalesTeamMember({
-            userId,
-            territory: '',
-            targetQuarter: new Date().getMonth() < 3 ? 1 : 
-                          new Date().getMonth() < 6 ? 2 : 
-                          new Date().getMonth() < 9 ? 3 : 4,
-            targetYear: new Date().getFullYear(),
-            targetAmount: 0,
-            reportingTo: null
-          });
-        } catch (err) {
-          console.error('Error creating sales team member:', err);
-          setError('User updated but failed to set up sales team member');
-          return;
-        }
-      }
+      // Sales team member creation removed - no longer needed
 
       setError('');
       onSubmit();

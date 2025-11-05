@@ -30,8 +30,6 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import DistributorsMap from './DistributorsMap';
 import InfoIcon from '@mui/icons-material/Info';
 import UserManagement from './Users/UserManagement';
-import SalesTeamManagement from './SalesTeamManagement';
-import LeadManagement from './Leads/LeadManagement';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import SheetsSyncSimple from './GoogleSheets/SheetsSyncSimple';
 import ContactList from './Contacts/ContactList';
@@ -94,10 +92,6 @@ const Dashboard: React.FC = () => {
         return isMobile ? 'Dist. Orders' : 'Distributor Orders';
       case 'users':
         return isMobile ? 'Users' : 'User Management';
-      case 'salesTeam':
-        return 'Sales Team Management';
-      case 'leads':
-        return 'Lead Management';
       case 'sheets':
         return 'Google Sheets Sync';
       case 'contacts':
@@ -122,8 +116,6 @@ const Dashboard: React.FC = () => {
     { label: 'Distributor Orders', value: 'distributor-orders' },
     { label: 'Contacts', value: 'contacts' },
     { label: 'User Management', value: 'users', adminOnly: true },
-    { label: 'Sales Team', value: 'salesTeam', adminOnly: true },
-    { label: 'Lead Management', value: 'leads', adminOnly: true },
     { label: 'Google Sheets Sync', value: 'sheets', adminOnly: true }
   ];
 
@@ -145,10 +137,6 @@ const Dashboard: React.FC = () => {
         return <InfoPage />;
       case 'users':
         return <UserManagement />;
-      case 'salesTeam':
-        return isAdmin() ? <SalesTeamManagement /> : null;
-      case 'leads':
-        return isAdmin() ? <LeadManagement /> : null;
       case 'sheets':
         return isAdmin() ? <SheetsSyncSimple /> : null;
       case 'procurement':
@@ -290,12 +278,6 @@ const Dashboard: React.FC = () => {
             <MenuItem onClick={() => handlePageChange('contacts')}>Contacts</MenuItem>
             {isAdmin() && (
               <MenuItem onClick={() => handlePageChange('users')}>User Management</MenuItem>
-            )}
-            {isAdmin() && (
-              <MenuItem onClick={() => handlePageChange('salesTeam')}>Sales Team Management</MenuItem>
-            )}
-            {isAdmin() && (
-              <MenuItem onClick={() => handlePageChange('leads')}>Lead Management</MenuItem>
             )}
             {isAdmin() && (
               <MenuItem onClick={() => handlePageChange('sheets')}>Google Sheets Sync</MenuItem>

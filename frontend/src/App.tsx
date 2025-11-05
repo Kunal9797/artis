@@ -48,7 +48,7 @@ const App: React.FC = () => {
                       <CircularProgress />
                     </div>
                   }>
-                    <RoleRoute allowedRoles={['admin', 'user', 'SALES_EXECUTIVE', 'ZONAL_HEAD', 'COUNTRY_HEAD']}>
+                    <RoleRoute allowedRoles={['admin', 'user']}>
                       <DashboardRouter />
                     </RoleRoute>
                   </Suspense>

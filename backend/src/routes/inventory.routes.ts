@@ -9,11 +9,9 @@ import {
   getRecentTransactions,
   bulkUploadPurchaseOrder,
   getInventoryDetails,
-  bulkUploadCorrections
+  bulkUploadCorrections,
+  bulkUploadInventory
 } from '../controllers/inventory.controller';
-import bulkUploadInventory from '../controllers/inventory.controller.optimized';
-import bulkUploadPurchaseOrderOptimized from '../controllers/purchase.controller.optimized';
-import bulkUploadCorrectionsOptimized from '../controllers/corrections.controller.optimized';
 import {
   getOperationsHistory,
   deleteOperation,
@@ -39,8 +37,8 @@ router.post('/bulk-test', auth, (req, res) => {
 
 // Bulk operations - Add auth middleware before adminAuth
 router.post('/bulk', [auth, adminAuth], upload.single('file'), bulkUploadInventory);
-router.post('/purchase', [auth, adminAuth], upload.single('file'), bulkUploadPurchaseOrderOptimized);
-router.post('/corrections', [auth, adminAuth], upload.single('file'), bulkUploadCorrectionsOptimized);
+router.post('/purchase', [auth, adminAuth], upload.single('file'), bulkUploadPurchaseOrder);
+router.post('/corrections', [auth, adminAuth], upload.single('file'), bulkUploadCorrections);
 router.delete('/clear', [auth, adminAuth], clearInventory);
 
 // Individual transactions

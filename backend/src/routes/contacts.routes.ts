@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Contact, SalesTeam } from '../models';
+import { Contact } from '../models';
 import { auth } from '../middleware/auth';
 import SheetsManagerOptimizedService from '../services/sheets-manager-optimized.service';
 import { Op } from 'sequelize';
@@ -91,12 +91,7 @@ router.get('/', auth, async (req: AuthRequest, res: Response) => {
       where,
       limit: Number(limit),
       offset,
-      order: [['submissionTime', 'DESC']],
-      include: [{
-        model: SalesTeam,
-        as: 'salesTeam',
-        attributes: ['id', 'territory']
-      }]
+      order: [['submissionTime', 'DESC']]
     });
     
     res.json({
@@ -210,12 +205,7 @@ router.get('/latest', auth, async (req: AuthRequest, res: Response) => {
  */
 router.get('/:id', auth, async (req: AuthRequest, res: Response) => {
   try {
-    const contact = await Contact.findByPk(req.params.id, {
-      include: [{
-        model: SalesTeam,
-        as: 'salesTeam'
-      }]
-    });
+    const contact = await Contact.findByPk(req.params.id);
     
     if (!contact) {
       return res.status(404).json({ 
@@ -284,22 +274,15 @@ router.put('/:id', auth, async (req: AuthRequest, res: Response) => {
       });
     }
     
-    const { status, assignedTo, notes } = req.body;
-    
+    const { status, notes } = req.body;
+
     if (status) {
       await contact.updateStatus(status, notes);
-    } else if (assignedTo) {
-      await contact.assignToSalesTeam(assignedTo, notes);
     } else {
       await contact.update({ notes });
     }
     
-    const updatedContact = await Contact.findByPk(req.params.id, {
-      include: [{
-        model: SalesTeam,
-        as: 'salesTeam'
-      }]
-    });
+    const updatedContact = await Contact.findByPk(req.params.id);
     
     res.json({
       success: true,

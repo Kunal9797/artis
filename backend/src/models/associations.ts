@@ -1,6 +1,6 @@
 import Product from './Product';
 import Transaction from './Transaction';
-import { Lead, User, SalesTeam, BulkOperation, SyncHistory, Contact, PurchaseOrder, ConsumptionForecast } from './index';
+import { User, BulkOperation, SyncHistory, Contact, PurchaseOrder, ConsumptionForecast } from './index';
 
 export const initializeAssociations = () => {
   Product.hasMany(Transaction, {
@@ -13,20 +13,6 @@ export const initializeAssociations = () => {
     foreignKey: 'productId',
     as: 'product',
     onDelete: 'CASCADE'
-  });
-
-  // Lead associations
-  Lead.belongsTo(SalesTeam, { 
-    as: 'assignee', 
-    foreignKey: 'assignedTo'
-  });
-  Lead.belongsTo(User, { 
-    as: 'assigner', 
-    foreignKey: 'assignedBy'
-  });
-  SalesTeam.hasMany(Lead, {
-    as: 'assignedLeads',
-    foreignKey: 'assignedTo'
   });
 
   // BulkOperation associations
@@ -66,17 +52,6 @@ export const initializeAssociations = () => {
     foreignKey: 'syncBatchId',
     targetKey: 'syncBatchId',
     as: 'syncHistory'
-  });
-
-  // Contact associations
-  Contact.belongsTo(SalesTeam, {
-    foreignKey: 'assignedTo',
-    as: 'salesTeam'
-  });
-
-  SalesTeam.hasMany(Contact, {
-    foreignKey: 'assignedTo',
-    as: 'contacts'
   });
 
   // Procurement associations

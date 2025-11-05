@@ -1,6 +1,5 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '../config/sequelize';
-import SalesTeam from './SalesTeam';
 
 export enum ContactStatus {
   NEW = 'NEW',
@@ -63,8 +62,7 @@ class Contact extends Model<ContactAttributes, ContactCreationAttributes> implem
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
-  // Associations
-  public readonly salesTeam?: SalesTeam;
+  // Associations removed - no longer using sales team
 
   // Helper method to mark as read
   public async markAsRead(): Promise<void> {
@@ -85,19 +83,7 @@ class Contact extends Model<ContactAttributes, ContactCreationAttributes> implem
     await this.update(updates);
   }
 
-  // Helper method to assign to sales team
-  public async assignToSalesTeam(salesTeamId: string, notes?: string): Promise<void> {
-    const updates: any = { assignedTo: salesTeamId };
-    
-    if (notes) {
-      const existingNotes = this.notes || '';
-      const timestamp = new Date().toISOString();
-      updates.notes = existingNotes + 
-        `\n[${timestamp}] Assigned to sales team${notes ? ': ' + notes : ''}`;
-    }
-    
-    await this.update(updates);
-  }
+  // Sales team assignment removed - no longer used
 }
 
 Contact.init(
