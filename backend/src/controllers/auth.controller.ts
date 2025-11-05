@@ -249,6 +249,113 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// Update own profile (non-admin users)
+export const updateOwnProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { firstName, lastName, email, phoneNumber } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const updates: any = {};
+
+    // Check if email is being changed and if it's already taken
+    if (email && email !== user.email) {
+      const existingEmail = await User.findOne({ where: { email } });
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+      updates.email = email;
+    }
+
+    // Update other fields
+    if (firstName) updates.firstName = firstName;
+    if (lastName) updates.lastName = lastName;
+    if (phoneNumber !== undefined) updates.phoneNumber = phoneNumber;
+
+    // Increment version for optimistic locking
+    updates.version = (user.version || 1) + 1;
+
+    await user.update(updates);
+
+    const updatedUser = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+      version: user.version
+    };
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+};
+
+// Change own password
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await user.update({
+      password: hashedPassword,
+      version: (user.version || 1) + 1
+    }, {
+      hooks: false
+    });
+
+    res.json({
+      message: 'Password changed successfully. Please login again.',
+      success: true
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+};
+
 export const deleteUser = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   

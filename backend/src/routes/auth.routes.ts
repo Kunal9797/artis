@@ -5,7 +5,9 @@ import {
   getAllUsers,
   updateUser,
   deleteUser,
-  validateToken
+  validateToken,
+  updateOwnProfile,
+  changePassword
 } from '../controllers/auth.controller';
 import { adminAuth } from '../middleware/auth';
 import { auth } from '../middleware/auth';
@@ -105,6 +107,8 @@ router.post('/login', login);
 
 // Protected routes
 router.get('/validate', auth, validateToken);
+router.put('/profile', auth, updateOwnProfile);
+router.put('/change-password', auth, changePassword);
 
 // Admin only routes
 router.get('/users', auth, adminAuth, getAllUsers);

@@ -14,7 +14,6 @@ import {
   useMediaQuery,
   useTheme as useMuiTheme,
 } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../context/AuthContext';
 import ProductCatalogV2 from './ProductCatalogV2';
 import InfoPage from './InfoPage';
@@ -38,9 +37,10 @@ import { Routes, Route } from 'react-router-dom';
 import DistributorOrders from '../pages/DistributorOrders';
 import ProcurementDashboard from './Procurement/ProcurementDashboard';
 import QuickLookupModern from './QuickLookupModern';
+import ProfileButton from './Profile/ProfileButton';
 
 const Dashboard: React.FC = () => {
-  const { logout, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { isDarkMode, toggleTheme } = useTheme();
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
@@ -291,8 +291,8 @@ const Dashboard: React.FC = () => {
             flexShrink: 0,
             ml: { xs: 'auto', sm: 0 }
           }}>
-            <IconButton 
-              onClick={toggleTheme} 
+            <IconButton
+              onClick={toggleTheme}
               color="inherit"
               sx={{
                 '&:hover': {
@@ -301,24 +301,12 @@ const Dashboard: React.FC = () => {
                 transition: 'all 0.2s ease-in-out'
               }}
             >
-              {isDarkMode ? 
-                <Brightness7Icon sx={{ color: '#FFD700' }} /> : 
+              {isDarkMode ?
+                <Brightness7Icon sx={{ color: '#FFD700' }} /> :
                 <Brightness4Icon sx={{ color: '#4169E1' }} />
               }
             </IconButton>
-            <IconButton 
-              onClick={logout} 
-              color="inherit"
-              sx={{
-                '&:hover': {
-                  color: '#FF4444',
-                  transform: 'scale(1.1)',
-                },
-                transition: 'all 0.2s ease-in-out'
-              }}
-            >
-              <LogoutIcon sx={{ color: '#fff' }} />
-            </IconButton>
+            <ProfileButton />
           </Box>
         </Toolbar>
       </AppBar>

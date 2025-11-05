@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'user' | 'SALES_EXECUTIVE' | 'ZONAL_HEAD' | 'COUNTRY_HEAD';
+export type UserRole = 'admin' | 'user';
 
 export interface User {
   id: string;
@@ -25,16 +25,10 @@ export interface UserFormData {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Admin',
-  user: 'User',
-  SALES_EXECUTIVE: 'Sales Executive',
-  ZONAL_HEAD: 'Zonal Head',
-  COUNTRY_HEAD: 'Country Head'
+  user: 'User'
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
   admin: '#d32f2f',
-  user: '#1976d2',
-  SALES_EXECUTIVE: '#2e7d32',
-  ZONAL_HEAD: '#ed6c02',
-  COUNTRY_HEAD: '#9c27b0'
+  user: '#1976d2'
 };
