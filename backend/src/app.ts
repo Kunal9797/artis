@@ -14,12 +14,28 @@ import { apiLimiter, authLimiter } from './middleware/rateLimiter';
 
 const app = express();
 
-// Middleware
+// CORS configuration with explicit origin function
+const allowedOrigins = [
+  'https://artis-rust.vercel.app',
+  'https://inventory.artislaminates.com',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: ['https://artis-rust.vercel.app', 'https://inventory.artislaminates.com', 'http://localhost:3000'],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
