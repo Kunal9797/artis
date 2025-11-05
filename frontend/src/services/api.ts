@@ -30,6 +30,17 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Handle 401 Unauthorized errors - token expired or invalid
+    if (error.response?.status === 401) {
+      // Don't redirect if already on login page
+      if (!window.location.pathname.includes('/login')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return Promise.reject(new Error('Session expired. Please login again.'));
+      }
+    }
+
     // Only log errors in development
     if (process.env.NODE_ENV === 'development') {
       console.error('API Error:', error.response?.status, error.config?.url);

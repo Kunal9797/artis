@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { 
-  register, 
-  login, 
-  getAllUsers, 
-  updateUser, 
+import {
+  register,
+  login,
+  getAllUsers,
+  updateUser,
   deleteUser,
   registerWithSalesTeam,
   updateUserWithSalesTeam,
-  getSalesTeamMembers
+  getSalesTeamMembers,
+  validateToken
 } from '../controllers/auth.controller';
 import { adminAuth } from '../middleware/auth';
 import { auth } from '../middleware/auth';
@@ -104,6 +105,9 @@ const router = Router();
 
 // Public routes
 router.post('/login', login);
+
+// Protected routes
+router.get('/validate', auth, validateToken);
 
 // Admin only routes
 router.get('/users', auth, adminAuth, getAllUsers);

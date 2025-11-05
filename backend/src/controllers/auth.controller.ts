@@ -121,6 +121,20 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+// Token validation endpoint
+export const validateToken = async (req: AuthRequest, res: Response) => {
+  try {
+    // The auth middleware has already validated the token
+    // If we reach here, the token is valid
+    res.status(200).json({
+      valid: true,
+      user: req.user
+    });
+  } catch (error) {
+    res.status(401).json({ valid: false });
+  }
+};
+
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.findAll({

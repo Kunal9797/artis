@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import api from '../services/api';
 
 interface User {
   id: string;
@@ -29,15 +30,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    console.log('AuthContext initial load:', { storedToken, storedUser });
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-    }
-    setLoading(false);
+    const validateStoredToken = async () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      console.log('AuthContext initial load:', { storedToken, storedUser });
+
+      if (storedToken && storedUser) {
+        try {
+          // Validate the token with the backend
+          const response = await api.get('/api/auth/validate');
+
+          if (response.data.valid) {
+            // Token is valid, set authentication state
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
+            setIsAuthenticated(true);
+          } else {
+            // Token is invalid, clear storage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        } catch (error) {
+          // Token validation failed, clear storage
+          console.log('Token validation failed, clearing storage');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+      setLoading(false);
+    };
+
+    validateStoredToken();
   }, []);
 
   const login = (token: string, user: User) => {
