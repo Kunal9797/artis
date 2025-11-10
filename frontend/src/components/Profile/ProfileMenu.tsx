@@ -76,7 +76,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ anchorEl, open, onClose }) =>
             sx: {
               borderRadius: '16px 16px 0 0',
               maxHeight: '65vh',
-              bgcolor: isDark ? '#1e1e1e' : 'background.paper'
+              bgcolor: isDark ? '#151515' : 'background.paper'
             }
           }}
         >
