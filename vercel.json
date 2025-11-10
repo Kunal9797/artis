@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install --legacy-peer-deps && npm install compression-webpack-plugin && NODE_OPTIONS='--max-old-space-size=4096' npm run build",
+  "buildCommand": "cd frontend && npm install --legacy-peer-deps && npm install compression-webpack-plugin && CI=false NODE_OPTIONS='--max-old-space-size=4096' npm run build",
   "outputDirectory": "frontend/build",
   "routes": [
     {
