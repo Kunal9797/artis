@@ -20,7 +20,10 @@ export class SheetsManagerOptimizedService {
   private auth: any;
   private productCache: Map<string, Product> = new Map();
   private currentUserId?: string;
-  
+
+  // Sheet tab name for uploading data (change this to rename the tab in all sheets)
+  private readonly UPLOAD_SHEET_NAME = 'To_Upload';
+
   // Validation thresholds
   private readonly MAX_CONSUMPTION_PER_MONTH = 10000; // kg
   private readonly MAX_PURCHASE_AMOUNT = 50000; // kg
@@ -254,7 +257,7 @@ export class SheetsManagerOptimizedService {
     // Get all rows by specifying a very large range
     const response = await this.sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEETS_CONSUMPTION_ID!,
-      range: 'Sheet1!A2:D10000', // Explicitly set large range to avoid limits
+      range: `${this.UPLOAD_SHEET_NAME}!A2:D10000`, // Explicitly set large range to avoid limits
     });
 
     const rows = response.data.values || [];
@@ -450,7 +453,7 @@ export class SheetsManagerOptimizedService {
     
     const response = await this.sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEETS_PURCHASES_ID!,
-      range: 'Sheet1!A2:E10000', // Explicitly set large range
+      range: `${this.UPLOAD_SHEET_NAME}!A2:E10000`, // Explicitly set large range
     });
 
     const rows = response.data.values || [];
@@ -600,7 +603,7 @@ export class SheetsManagerOptimizedService {
     
     const response = await this.sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEETS_CORRECTIONS_ID!,
-      range: 'Sheet1!A2:E10000', // Updated to include column E for reason
+      range: `${this.UPLOAD_SHEET_NAME}!A2:E10000`, // Updated to include column E for reason
     });
 
     const rows = response.data.values || [];
@@ -764,7 +767,7 @@ export class SheetsManagerOptimizedService {
     
     const response = await this.sheets.spreadsheets.values.get({
       spreadsheetId: this.initialStockSheetId!,
-      range: 'Sheet1!A2:D10000', // Explicitly set large range
+      range: `${this.UPLOAD_SHEET_NAME}!A2:D10000`, // Explicitly set large range
     });
 
     const rows = response.data.values || [];
@@ -889,54 +892,71 @@ export class SheetsManagerOptimizedService {
       contacts: 0
     };
 
+    // Each sheet check is wrapped in its own try-catch so one failure doesn't affect others
+
+    // Check consumption sheet
     try {
-      // Check consumption sheet with large range
       const consumptionResponse = await this.sheets.spreadsheets.values.get({
         spreadsheetId: process.env.GOOGLE_SHEETS_CONSUMPTION_ID!,
-        range: 'Sheet1!A2:B10000',
+        range: `${this.UPLOAD_SHEET_NAME}!A2:B10000`,
       });
       const consumptionRows = consumptionResponse.data.values || [];
       summary.consumption = consumptionRows.filter(row => row[0] && row[1]).length;
+    } catch (error: any) {
+      console.error('Error checking consumption sheet:', error.message);
+    }
 
-      // Check purchases sheet with large range
+    // Check purchases sheet
+    try {
       const purchasesResponse = await this.sheets.spreadsheets.values.get({
         spreadsheetId: process.env.GOOGLE_SHEETS_PURCHASES_ID!,
-        range: 'Sheet1!A2:C10000',
+        range: `${this.UPLOAD_SHEET_NAME}!A2:C10000`,
       });
       const purchaseRows = purchasesResponse.data.values || [];
-      summary.purchases = purchaseRows.filter(row => 
-        row[0] && row[1] && row[2] && 
-        !row[0].includes('Example:') && 
+      summary.purchases = purchaseRows.filter(row =>
+        row[0] && row[1] && row[2] &&
+        !row[0].includes('Example:') &&
         !row[0].includes('Instructions:')
       ).length;
+    } catch (error: any) {
+      console.error('Error checking purchases sheet:', error.message);
+    }
 
-      // Check corrections sheet with large range
+    // Check corrections sheet
+    try {
       const correctionsResponse = await this.sheets.spreadsheets.values.get({
         spreadsheetId: process.env.GOOGLE_SHEETS_CORRECTIONS_ID!,
-        range: 'Sheet1!A2:C10000',
+        range: `${this.UPLOAD_SHEET_NAME}!A2:C10000`,
       });
       const correctionRows = correctionsResponse.data.values || [];
       summary.corrections = correctionRows.filter(row =>
         row[0] && row[1] && !row[0].includes('Instructions:')
       ).length;
+    } catch (error: any) {
+      console.error('Error checking corrections sheet:', error.message);
+    }
 
-      // Check initial stock sheet with large range
+    // Check initial stock sheet
+    try {
       if (this.initialStockSheetId) {
         const initialStockResponse = await this.sheets.spreadsheets.values.get({
           spreadsheetId: this.initialStockSheetId!,
-          range: 'Sheet1!A2:B10000',
+          range: `${this.UPLOAD_SHEET_NAME}!A2:B10000`,
         });
         const initialStockRows = initialStockResponse.data.values || [];
-        summary.initialStock = initialStockRows.filter(row => 
+        summary.initialStock = initialStockRows.filter(row =>
           row[0] && row[1] && !row[0].includes('Instructions:')
         ).length;
       }
-
-      // Check contacts sheet for pending count
-      summary.contacts = await this.getPendingContactsCount();
-
     } catch (error: any) {
-      // Error getting pending summary
+      console.error('Error checking initial stock sheet:', error.message);
+    }
+
+    // Check contacts sheet for pending count
+    try {
+      summary.contacts = await this.getPendingContactsCount();
+    } catch (error: any) {
+      console.error('Error checking contacts sheet:', error.message);
     }
 
     return summary;
@@ -958,7 +978,7 @@ export class SheetsManagerOptimizedService {
     // Clear the main sheet (keep headers) with large range
     await this.sheets.spreadsheets.values.clear({
       spreadsheetId: sheetId,
-      range: 'Sheet1!A2:Z10000',
+      range: `${this.UPLOAD_SHEET_NAME}!A2:Z10000`,
     });
   }
 
@@ -987,7 +1007,7 @@ export class SheetsManagerOptimizedService {
       // Get current data with large range
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: sheetId,
-        range: 'Sheet1!A1:Z10000',
+        range: `${this.UPLOAD_SHEET_NAME}!A1:Z10000`,
       });
 
       const values = response.data.values;
@@ -1074,7 +1094,7 @@ export class SheetsManagerOptimizedService {
 
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: process.env.GOOGLE_SHEETS_CONSUMPTION_ID!,
-      range: 'Sheet1!A1',
+      range: `${this.UPLOAD_SHEET_NAME}!A1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: template },
     });
@@ -1097,7 +1117,7 @@ export class SheetsManagerOptimizedService {
 
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: process.env.GOOGLE_SHEETS_PURCHASES_ID!,
-      range: 'Sheet1!A1',
+      range: `${this.UPLOAD_SHEET_NAME}!A1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: template },
     });
@@ -1121,7 +1141,7 @@ export class SheetsManagerOptimizedService {
 
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: process.env.GOOGLE_SHEETS_CORRECTIONS_ID!,
-      range: 'Sheet1!A1',
+      range: `${this.UPLOAD_SHEET_NAME}!A1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: template },
     });
@@ -1149,7 +1169,7 @@ export class SheetsManagerOptimizedService {
 
     await this.sheets.spreadsheets.values.update({
       spreadsheetId: this.initialStockSheetId!,
-      range: 'Sheet1!A1',
+      range: `${this.UPLOAD_SHEET_NAME}!A1`,
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: template },
     });
